@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `employeetraining` ADD COLUMN `employeeNotes` TEXT NULL,
+    MODIFY `status` ENUM('ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'REJECTED') NOT NULL DEFAULT 'ASSIGNED';

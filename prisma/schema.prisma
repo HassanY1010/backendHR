@@ -1,0 +1,789 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AIQualityMetric {
+  id             String   @id @default(uuid())
+  modelName      String   @unique(map: "AIQualityMetric_modelName_key")
+  accuracy       Float
+  precision      Float
+  recall         Float
+  latency        Int
+  costPerRequest Float
+  status         String   @default("production")
+  lastUpdated    DateTime @default(now())
+
+  @@map("aiqualitymetric")
+}
+
+model AIUsageLog {
+  id        String   @id @default(uuid())
+  companyId String
+  service   String
+  model     String
+  tokens    Int      @default(0)
+  cost      Float    @default(0)
+  prompt    String?  @db.Text
+  response  String?  @db.Text
+  timestamp DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "AIUsageLog_companyId_fkey")
+
+  @@index([companyId], map: "AIUsageLog_companyId_idx")
+  @@index([service], map: "AIUsageLog_service_idx")
+  @@map("aiusagelog")
+}
+
+model Answer {
+  id            String        @id @default(uuid())
+  employeeId    String
+  questionId    String
+  content       String
+  aiSentiment   Float?
+  createdAt     DateTime      @default(now())
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "Answer_employeeId_fkey")
+  dailyquestion DailyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "Answer_questionId_fkey")
+
+  @@index([employeeId], map: "Answer_employeeId_fkey")
+  @@index([questionId], map: "Answer_questionId_fkey")
+  @@index([employeeId, createdAt], map: "Answer_employeeId_createdAt_idx")
+  @@map("answer")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  actionType String
+  severity   String   @default("low")
+  target     String?
+  status     String   @default("success")
+  ip         String?
+  details    String?  @db.Text
+  companyId  String?
+  timestamp  DateTime @default(now())
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "AuditLog_companyId_fkey")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "AuditLog_userId_fkey")
+
+  @@index([actionType], map: "AuditLog_actionType_idx")
+  @@index([companyId], map: "AuditLog_companyId_idx")
+  @@index([userId], map: "AuditLog_userId_idx")
+  @@map("auditlog")
+}
+
+model Candidate {
+  id                String           @id @default(uuid())
+  jobId             String
+  fullName          String           @map("name")
+  email             String
+  phone             String?
+  resumeUrl         String?
+  coverLetter       String?          @db.Text
+  experience        Int?
+  education         String?          @db.LongText
+  skills            String?          @db.LongText
+  aiScore           Float?
+  aiSummary         String?          @db.Text
+  status            candidate_status @default(NEW)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  aiStatus          String?
+  interviewCode     String?          @unique(map: "Candidate_interviewCode_key")
+  aiAnalysisDetails String?          @db.LongText
+  resumePath        String?
+  location          String?
+  termsAcceptedAt   DateTime?
+  recruitmentjob    RecruitmentJob   @relation(fields: [jobId], references: [id], onDelete: Cascade, map: "Candidate_jobId_fkey")
+  interviews         Interview[]
+
+  @@index([jobId], map: "Candidate_jobId_fkey")
+  @@index([jobId, deletedAt])
+  @@index([status, deletedAt])
+  @@map("candidate")
+}
+
+model CheckInAssessment {
+  id             String         @id @default(uuid())
+  employeeId     String
+  date           DateTime       @default(now())
+  status         String         @default("PENDING")
+  score          Float?
+  riskLevel      String?
+  recommendation String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  deletedAt      DateTime?
+  employee       Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "CheckInAssessment_employeeId_fkey")
+  checkinentries   CheckInEntry[]
+
+  @@index([employeeId], map: "CheckInAssessment_employeeId_fkey")
+  @@map("checkinassessment")
+}
+
+model CheckInEntry {
+  id                String            @id @default(uuid())
+  assessmentId      String
+  order             Int
+  questionType      String
+  questionText      String
+  answerText        String?
+  answerValue       Int?
+  isSkipped         Boolean           @default(false)
+  timeToAnswer      Int?
+  unlockTime        DateTime
+  answeredAt        DateTime?
+  createdAt         DateTime          @default(now())
+  checkinassessment CheckInAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade, map: "CheckInEntry_assessmentId_fkey")
+
+  @@index([assessmentId], map: "CheckInEntry_assessmentId_fkey")
+  @@map("checkinentry")
+}
+
+model CheckInQuestion {
+  id         String   @id @default(uuid())
+  text       String
+  type       String
+  answerType String
+  isActive   Boolean  @default(true)
+  createdBy  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([type, isActive], map: "CheckInQuestion_type_isActive_idx")
+  @@map("checkinquestion")
+}
+
+model Company {
+  id                 String            @id @default(uuid())
+  name               String
+  subscriptionStatus String            @default("TRIAL")
+  subscriptionExpiry DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime
+  address            String?
+  employeeLimit      Int               @default(10)
+  language           String            @default("ar")
+  logo               String?
+  settings           String?           @db.LongText
+  website            String?
+  aiUsageLogs        AIUsageLog[]
+  auditLogs          AuditLog[]
+  dailyQuestions     DailyQuestion[]
+  employees          Employee[]
+  projects           Project[]
+  recruitmentJobs    RecruitmentJob[]
+  subscriptions      Subscription[]
+  subscriptionCode   SubscriptionCode?
+  users              User[]
+  departments        Department[]
+
+  @@map("company")
+}
+
+model Department {
+  id        String           @id @default(uuid())
+  name      String
+  companyId String
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobs      RecruitmentJob[]
+
+  @@map("department")
+}
+
+model Competitor {
+  id          String   @id @default(uuid())
+  name        String
+  marketShare Float
+  growthRate  Float?
+  strengths   String?  @db.LongText
+  weaknesses  String?  @db.LongText
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("competitor")
+}
+
+model DailyQuestion {
+  id        String   @id @default(uuid())
+  companyId String
+  question  String
+  type      String   @default("TEXT")
+  createdAt DateTime @default(now())
+  answers    Answer[]
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "DailyQuestion_companyId_fkey")
+
+  @@index([companyId], map: "DailyQuestion_companyId_fkey")
+  @@map("dailyquestion")
+}
+
+model Employee {
+  id                String              @id @default(uuid())
+  userId            String              @unique(map: "Employee_userId_key")
+  department        String?
+  position          String?
+  riskLevel         Float               @default(0)
+  performanceScore  Float               @default(0)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  deletedAt         DateTime?
+  companyId         String
+  startDate         DateTime            @default(now())
+  status            String              @default("active")
+  answers            Answer[]
+  checkInAssessments CheckInAssessment[]
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Employee_companyId_fkey")
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Employee_userId_fkey")
+  assignments        TrainingAssignment[]
+  notifications     Notification[]
+  projects           Project[]
+  tasks              Task[]
+  trainingRequests   TrainingRequest[]
+
+  @@index([companyId], map: "Employee_companyId_idx")
+  @@index([companyId, deletedAt])
+  @@index([department], map: "Employee_department_idx")
+  @@index([userId], map: "Employee_userId_idx")
+  @@map("employee")
+}
+
+
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  enabled     Boolean  @default(false)
+  risk        featureflag_risk @default(LOW)
+  updatedAt   DateTime
+
+  @@map("featureflag")
+}
+
+model FinanceMetric {
+  id        String   @id @default(uuid())
+  name      String   @unique(map: "FinanceMetric_name_key")
+  value     Float
+  change    Float    @default(0)
+  trend     String   @default("stable")
+  timestamp DateTime @default(now())
+
+  @@map("financemetric")
+}
+
+model FinancialTransaction {
+  id          String                        @id @default(uuid())
+  amount      Float
+  type        financialtransaction_type
+  category    financialtransaction_category
+  description String?
+  date        DateTime                      @default(now())
+  companyId   String?
+
+  @@map("financialtransaction")
+}
+
+model Interview {
+  id                String    @id @default(uuid())
+  candidateId       String
+  jobId             String
+  type              String
+  score             Float?
+  notes             String?   @db.Text
+  completed         Boolean   @default(false)
+  scheduledAt       DateTime?
+  createdAt         DateTime  @default(now())
+  aiAnalysis        String?   @db.LongText
+  videoUrl          String?
+  duration          Int?
+  interviewerName   String?
+  status            String    @default("scheduled")
+  candidateFeedback String?   @db.Text
+  candidateRating   Int?
+  token             String?   @unique
+  expiresAt         DateTime?
+  completedAt       DateTime?
+  aiScore           Float?
+  aiSummary         String?   @db.LongText
+  transcript        String?   @db.LongText
+  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
+
+  @@index([candidateId], map: "Interview_candidateId_fkey")
+  @@map("interview")
+}
+
+model MarketMetric {
+  id        String   @id @default(uuid())
+  metric    String
+  value     Float
+  unit      String
+  source    String?
+  updatedAt DateTime @updatedAt
+
+  @@map("marketmetric")
+}
+
+model Milestone {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  targetDate  DateTime
+  status      String   @default("upcoming")
+  progress    Int      @default(0)
+  features    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@map("milestone")
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  employeeId String?
+  title      String
+  message    String    @db.Text
+  type       String    @default("info")
+  priority   String    @default("medium")
+  isRead     Boolean   @default(false)
+  metadata   String?   @db.LongText
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  userId     String?
+  employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "Notification_employeeId_fkey")
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Notification_userId_fkey")
+
+  @@index([employeeId], map: "Notification_employeeId_idx")
+  @@index([isRead], map: "Notification_isRead_idx")
+  @@index([userId], map: "Notification_userId_fkey")
+  @@map("notification")
+}
+
+model PlatformFeature {
+  id          String    @id @default(uuid())
+  name        String
+  description String?   @db.Text
+  status      String    @default("planned")
+  releaseDate DateTime?
+  votes       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+
+  @@map("platformfeature")
+}
+
+model ProductMetric {
+  id        String                 @id @default(uuid())
+  name      String
+  category  productmetric_category
+  value     Float
+  unit      String?
+  change    Float?
+  trend     String?
+  timestamp DateTime               @default(now())
+  metadata  String?                @db.LongText
+
+  @@map("productmetric")
+}
+
+model ProductUsage {
+  id                 String   @id @default(uuid())
+  date               DateTime @unique(map: "ProductUsage_date_key")
+  activeUsers        Int
+  sessions           Int
+  avgSessionDuration Int
+  timestamp          DateTime @default(now())
+
+  @@map("productusage")
+}
+
+model Project {
+  id               String    @id @default(uuid())
+  name             String
+  description      String?   @db.Text
+  companyId        String
+  managerId        String?
+  status           String    @default("PLANNING")
+  startDate        DateTime?
+  deadline         DateTime?
+  budget           Float?
+  spent            Float?    @default(0)
+  priority         String    @default("MEDIUM")
+  riskLevel        String    @default("LOW")
+  aiRecommendation String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  deletedAt        DateTime?
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Project_companyId_fkey")
+  employee         Employee? @relation(fields: [managerId], references: [id], onDelete: SetNull, map: "Project_managerId_fkey")
+  tasks             Task[]
+
+  @@index([companyId], map: "Project_companyId_fkey")
+  @@index([companyId, deletedAt])
+  @@index([managerId], map: "Project_managerId_fkey")
+  @@index([status], map: "Project_status_idx")
+  @@map("project")
+}
+
+model RecruitmentJob {
+  id               String                @id @default(uuid())
+  companyId        String
+  departmentId     String?
+  title            String
+  department       String?
+  location         String?
+  type             String?
+  employmentType   recruitmentjob_employment_type @default(FULL_TIME)
+  city             String?
+  workMode         recruitmentjob_work_mode       @default(ONSITE)
+  seniorityLevel   recruitmentjob_seniority_level @default(MID)
+  yearsOfExperience Int?
+  previousCompanyType recruitmentjob_company_type?
+  managedTeamBefore Boolean?
+  teamSize         Int?
+  salaryMin        Int?
+  salaryMax        Int?
+  workEnvironment  recruitmentjob_work_environment?
+  openingReason    recruitmentjob_opening_reason @default(NEW_ROLE)
+  description      String                @db.Text
+  requirements     String?               @db.LongText
+  responsibilities String?               @db.LongText
+  salaryRange      String?               @db.LongText
+  status           recruitmentjob_status @default(OPEN)
+  aiGenerated      Boolean               @default(false)
+  createdBy        String?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  deletedAt         DateTime?
+  aiDescription    String?               @db.Text
+  candidates        Candidate[]
+  company          Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "RecruitmentJob_companyId_fkey")
+  departmentRel    Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([companyId], map: "RecruitmentJob_companyId_fkey")
+  @@index([companyId, status], map: "RecruitmentJob_companyId_status_idx")
+  @@index([companyId, deletedAt])
+  @@map("recruitmentjob")
+}
+
+model RoadmapItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  status      String   @default("planned")
+  priority    String   @default("medium")
+  startDate   DateTime
+  endDate     DateTime
+  progress    Int      @default(0)
+  category    String?
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@map("roadmapitem")
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  companyId String
+  plan      String   @default("FREE_TRIAL")
+  startDate DateTime @default(now())
+  endDate   DateTime
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Subscription_companyId_fkey")
+
+  @@index([companyId], map: "Subscription_companyId_fkey")
+  @@map("subscription")
+}
+
+model SubscriptionCode {
+  id        String    @id @default(uuid())
+  code      String    @unique(map: "SubscriptionCode_code_key")
+  status    String    @default("UNUSED")
+  companyId String?   @unique(map: "SubscriptionCode_companyId_key")
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
+  company   Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "SubscriptionCode_companyId_fkey")
+
+  @@map("subscriptioncode")
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String   @db.Text
+  description String?
+  updatedAt   DateTime
+
+  @@map("systemsetting")
+}
+
+model Task {
+  id            String    @id @default(uuid())
+  title         String
+  description   String?   @db.Text
+  priority      String    @default("MEDIUM")
+  status        String    @default("pending")
+  employeeId    String?
+  dueDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  deletedAt     DateTime?
+  actualTime    Float?
+  aiScore       Float?
+  complexity    String?
+  dependencies  String?   @db.LongText
+  estimatedTime Float?
+  estimatedTimeUnit String?   @default("HOURS")
+  progress      Int       @default(0)
+  projectId     String?
+  attachments   String?   @db.LongText
+  employee      Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull, map: "Task_employeeId_fkey")
+  project       Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "Task_projectId_fkey")
+
+  @@index([employeeId], map: "Task_employeeId_fkey")
+  @@index([projectId], map: "Task_projectId_fkey")
+  @@index([projectId, deletedAt])
+  @@index([employeeId, deletedAt])
+  @@index([status], map: "Task_status_idx")
+  @@map("task")
+}
+
+model TrainingCourse {
+  id               String             @id @default(uuid())
+  title            String
+  description      String             @db.Text
+  provider         String?
+  category         String?
+  url              String?            // External Link
+  language         String?            @default("ar")
+  level            String?            @default("beginner")
+  duration         Int                // In Minutes/Hours
+  skills           String?            @db.LongText // JSON tags
+  isFree           Boolean            @default(true)
+  status           String             @default("active")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
+  
+  // Relations
+  assignments      TrainingAssignment[]
+  trainingRequests TrainingRequest[]
+
+  @@index([status, deletedAt])
+  @@map("training_course")
+}
+
+model TrainingAssignment {
+  id             String                  @id @default(uuid())
+  employeeId     String
+  courseId       String
+  status         trainingassignment_status @default(PENDING)
+  progress       Float                   @default(0)
+  
+  // Dates
+  assignedAt     DateTime                @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  evaluatedAt    DateTime?
+  
+  // Impact Analysis
+  impactScore    Float?
+  impactAnalysis String?                 @db.Text
+  
+  // Detailed Spec Fields
+  trainingPlan   String?                 @db.LongText // JSON: { duration_days, daily_tasks: [] }
+  quiz           String?                 @db.LongText // JSON: [{ question, options, answer }]
+  quizAnswers    String?                 @db.LongText // JSON: Answers provided by employee
+  quizScore      Float?                  // Score of the quiz
+  
+  certificateUrl String?
+  employeeNotes  String?                 @db.Text
+  updatedAt      DateTime                @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  employee       Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  course         TrainingCourse          @relation(fields: [courseId], references: [id])
+
+  @@index([employeeId])
+  @@index([courseId])
+  @@index([employeeId, deletedAt])
+  @@map("training_assignment")
+}
+
+model TrainingRequest {
+  id         String    @id @default(uuid())
+  employeeId String
+  courseId   String?
+  topic      String?
+  reason     String    @db.Text
+  status     String    @default("PENDING")
+  aiScore    Float?
+  aiAnalysis String?   @db.Text
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "TrainingRequest_employeeId_fkey")
+  course     TrainingCourse? @relation(fields: [courseId], references: [id], map: "TrainingRequest_courseId_fkey")
+
+  @@index([employeeId], map: "TrainingRequest_employeeId_fkey")
+  @@index([courseId], map: "TrainingRequest_courseId_fkey")
+  @@map("trainingrequest")
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique(map: "User_email_key")
+  passwordHash String
+  name         String
+  role         user_role      @default(EMPLOYEE)
+  status       String         @default("ACTIVE")
+  companyId    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime
+  deletedAt    DateTime?
+  avatar       String?
+  bio          String?        @db.Text
+  lastLogin    DateTime?
+  phone        String?
+  settings     String?        @db.LongText
+  managerId    String?
+  location     String?
+  nameEn       String?
+  auditLogs     AuditLog[]
+  employee      Employee?
+  notifications Notification[]
+  company       Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "User_companyId_fkey")
+  manager       User?          @relation("userTouser", fields: [managerId], references: [id], map: "User_managerId_fkey")
+  managedUsers  User[]         @relation("userTouser")
+
+  @@index([companyId], map: "User_companyId_fkey")
+  @@index([companyId, deletedAt])
+  @@index([email], map: "User_email_idx")
+  @@index([managerId], map: "User_managerId_fkey")
+  @@index([role], map: "User_role_idx")
+  @@map("user")
+}
+
+model SearchIndex {
+  id           String   @id @default(uuid())
+  companyId    String
+  documentId   String   // ID of the original record (Candidate, Task, etc.)
+  documentType String   // Type: 'CANDIDATE_CV', 'TASK_ATTACHMENT', 'JOB', 'COURSE', etc.
+  content      String   @db.LongText
+  metadata     String?  @db.LongText // JSON: Original name, specific permissions
+  vector       String?  @db.LongText // Store embedding as stringified JSON array
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([documentType])
+  @@map("searchindex")
+}
+
+enum financialtransaction_type {
+  INCOME
+  EXPENSE
+}
+
+enum productmetric_category {
+  ENGAGEMENT
+  ADOPTION
+  PERFORMANCE
+  USAGE
+}
+
+enum trainingassignment_status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  EVALUATED
+  ARCHIVED
+}
+
+enum financialtransaction_category {
+  SALARIES
+  INFRASTRUCTURE
+  MARKETING
+  DEVELOPMENT
+  SUBSCRIPTIONS
+  OTHER
+}
+
+enum featureflag_risk {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum user_role {
+  ADMIN
+  SUPER_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum recruitmentjob_status {
+  OPEN
+  CLOSED
+  ON_HOLD
+}
+
+enum candidate_status {
+  NEW
+  INTERVIEW_SENT
+  INTERVIEW_COMPLETED
+  SCREENING
+  PRE_ACCEPTED
+  INTERVIEWING
+  OFFERED
+  REJECTED
+  HIRED
+}
+
+enum recruitmentjob_employment_type {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+}
+
+enum recruitmentjob_work_mode {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum recruitmentjob_seniority_level {
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+  MANAGER
+}
+
+enum recruitmentjob_company_type {
+  STARTUP
+  CORPORATE
+  TECH
+  GOVERNMENT
+}
+
+enum recruitmentjob_work_environment {
+  STARTUP
+  CORPORATE
+  HIGH_PRESSURE
+  STABLE
+}
+
+enum recruitmentjob_opening_reason {
+  NEW_ROLE
+  EXPANSION
+  REPLACEMENT
+  PROJECT
+  RESTRUCTURE
+}

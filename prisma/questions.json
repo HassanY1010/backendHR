@@ -1,0 +1,7002 @@
+[
+  {
+    "text": "كيف تصف شعورك بالتشتت في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بشأن التطورات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت جدولك الزمني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتفاؤل تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت المهام اليومية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حسنت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"ضوضاء المكتب\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتركيز تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل خططت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإنجاز تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"مشاكل تقنية\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل حللت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أتممت أولوياتك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل وثقت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت قائمة أعمالك كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالضغط بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل نظمت الخطة الأسبوعية كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"بطء النظام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"نقص المعلومات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالحماس بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق في الاجتماعات اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالتشتت حول مستقبلك اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا في بداية اليوم اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت مشروعك الحالي كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل بدأت أهدافك لهذا اليوم كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالقلق مع الفريق اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"انتظار الموافقة\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تغير الأولويات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق تجاه العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"قاطع الزملاء\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"غموض المتطلبات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل راجعت البريد العاجل كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"تداخل المهام\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء في نهاية الدوام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل أنجزت التوثيق الفني كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل سلمت التقرير المطلوب كما كنت تخطط؟",
+    "type": "FACT",
+    "answerType": "YES_NO",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "هل شكل \"كثرة الاجتماعات\" عائقاً رئيسياً أمام إنجازك اليوم؟",
+    "type": "BARRIER",
+    "answerType": "TEXT",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالإرهاق بخصوص المهام اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالهدوء أثناء العمل اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  },
+  {
+    "text": "كيف تصف شعورك بالرضا تجاه الإدارة اليوم من 1 إلى 5؟",
+    "type": "FEELING",
+    "answerType": "SCALE_1_5",
+    "isActive": true,
+    "createdBy": "1"
+  }
+]

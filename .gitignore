@@ -1,0 +1,20 @@
+# جميع مجلدات node_modules في المشروع (جذر أو مجلدات فرعية)
+**/node_modules/
+
+# جميع ملفات البيئة (.env) في أي مكان
+**/.env
+
+
+# ملفات البناء
+dist/
+.build/
+.next/
+
+# ملفات النظام (macOS / Windows)
+.DS_Store
+Thumbs.db
+
+# ملفات القفل لإدارة الحزم
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
