@@ -34,7 +34,10 @@ import {
     getDailyRecruitmentAnalysis,
     getSmartInterviewNotes,
     handleInteractiveAiJobFlow,
-    getDepartments
+    getDepartments,
+    createDepartment,
+    updateDepartment,
+    deleteDepartment
 } from '../controllers/recruitment.controller.js';
 import { protect, authorize } from '../middlewares/auth.middleware.js';
 import { uploadResume as uploadResumeMiddleware, uploadVideo } from '../middlewares/multer.middleware.js';
@@ -75,6 +78,9 @@ router.post('/ai/interactive-flow', authorize('MANAGER', 'SUPER_ADMIN'), handleI
 router.get('/ai/daily-analysis', authorize('MANAGER', 'SUPER_ADMIN'), getDailyRecruitmentAnalysis);
 
 router.get('/departments', authorize('MANAGER', 'SUPER_ADMIN'), getDepartments);
+router.post('/departments', authorize('MANAGER', 'SUPER_ADMIN'), createDepartment);
+router.put('/departments/:id', authorize('MANAGER', 'SUPER_ADMIN'), updateDepartment);
+router.delete('/departments/:id', authorize('MANAGER', 'SUPER_ADMIN'), deleteDepartment);
 
 
 router.get('/candidates', authorize('MANAGER', 'SUPER_ADMIN'), getCandidates);

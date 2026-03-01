@@ -98,19 +98,55 @@ export const getPublicJobDetails = async (req, res, next) => {
 
 export const createJob = async (req, res, next) => {
     try {
-        const { title, description, department, location, type, requirements, responsibilities, salaryRange, aiDescription } = req.body;
+        const {
+            title,
+            description,
+            department,
+            departmentId,
+            location,
+            type,
+            requirements,
+            responsibilities,
+            salaryRange,
+            aiDescription,
+            employmentType,
+            city,
+            workMode,
+            seniorityLevel,
+            yearsOfExperience,
+            previousCompanyType,
+            managedTeamBefore,
+            teamSize,
+            salaryMin,
+            salaryMax,
+            workEnvironment,
+            openingReason
+        } = req.body;
 
         const job = await prisma.recruitmentJob.create({
             data: {
                 title,
                 description,
                 department,
+                departmentId,
                 location,
                 type,
                 requirements: requirements && typeof requirements === 'object' ? JSON.stringify(requirements) : requirements,
                 responsibilities: responsibilities && typeof responsibilities === 'object' ? JSON.stringify(responsibilities) : responsibilities,
                 salaryRange: salaryRange && typeof salaryRange === 'object' ? JSON.stringify(salaryRange) : salaryRange,
                 aiDescription,
+                employmentType,
+                city,
+                workMode,
+                seniorityLevel,
+                yearsOfExperience,
+                previousCompanyType,
+                managedTeamBefore,
+                teamSize,
+                salaryMin,
+                salaryMax,
+                workEnvironment,
+                openingReason,
                 companyId: req.user.companyId,
                 updatedAt: new Date()
             },
@@ -1099,6 +1135,109 @@ export const getCandidateResume = async (req, res, next) => {
         }
 
         return res.redirect(candidate.resumeUrl);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getDepartments = async (req, res, next) => {
+    try {
+        const departments = await prisma.department.findMany({
+            where: {
+                companyId: req.user.companyId
+            }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: { departments }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const createDepartment = async (req, res, next) => {
+    try {
+        const { name, description } = req.body;
+
+        if (!name) {
+            const error = new Error('Department name is required');
+            error.statusCode = 400;
+            throw error;
+        }
+
+        const newDepartment = await prisma.department.create({
+            data: {
+                name,
+                description,
+                companyId: req.user.companyId
+            }
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: { department: newDepartment }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateDepartment = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { name, description } = req.body;
+
+        const department = await prisma.department.findFirst({
+            where: {
+                id,
+                companyId: req.user.companyId
+            }
+        });
+
+        if (!department) {
+            const error = new Error('Department not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        const updatedDepartment = await prisma.department.update({
+            where: { id },
+            data: { name, description }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: { department: updatedDepartment }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const deleteDepartment = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const department = await prisma.department.findFirst({
+            where: {
+                id,
+                companyId: req.user.companyId
+            }
+        });
+
+        if (!department) {
+            const error = new Error('Department not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        await prisma.department.delete({
+            where: { id }
+        });
+
+        res.status(204).send();
     } catch (error) {
         next(error);
     }
