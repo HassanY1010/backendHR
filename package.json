@@ -10,7 +10,8 @@
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
         "prisma:studio": "prisma studio",
-        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest"
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest",
+        "migrate:deploy": "prisma migrate deploy"
     },
     "dependencies": {
         "@prisma/client": "^5.7.0",
