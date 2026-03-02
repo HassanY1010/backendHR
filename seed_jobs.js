@@ -21,7 +21,7 @@ async function seedJobs() {
                 location: 'الرياض، المملكة العربية السعودية',
                 type: 'دوام كامل',
                 requirements: JSON.stringify([
-                    'خبرة 3 سنوات على الأقل في تطوير الويب',
+                    'خبرة 4 سنوات على الأقل في تطوير الويب',
                     'إتقان React و Node.js',
                     'معرفة جيدة بقواعد البيانات (PostgreSQL, MongoDB)',
                     'خبرة في Git و CI/CD'
