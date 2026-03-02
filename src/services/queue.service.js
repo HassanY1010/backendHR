@@ -7,8 +7,12 @@ import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 
 // Redis Connection Options
+// Redis Connection Options
 const getRedisConnection = () => {
-    const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
+    const url = process.env.NODE_ENV === 'production' 
+        ? process.env.REDIS_PUBLIC_URL 
+        : process.env.REDIS_URL;
+
     if (url && url !== 'undefined') {
         logger.info('🔗 Redis: Initializing BullMQ with URL');
         return url;
@@ -21,20 +25,14 @@ const getRedisConnection = () => {
     const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
 
     if (isProd && (!host || host === 'localhost' || host === '127.0.0.1')) {
-        logger.error('❌ Redis: Missing or invalid host in production environment', {
-            host,
-            hasPassword: !!password,
-            nodeEnv: process.env.NODE_ENV,
-            railwayEnv: process.env.RAILWAY_ENVIRONMENT
-        });
-        // We return a host that will clearly fail DNS rather than connecting to localhost
-        return { host: 'DUMMY_PRODUCTION_REDIS_FAILURE', port: 6379 };
+        // بدلاً من محاولة الاتصال بالـ localhost وفشلها، نرسل كائن Dummy لتجنب الرسائل المزعجة
+        return { host: 'DUMMY_PRODUCTION_REDIS_FAILURE', port: 6379, password: '' };
     }
 
     return {
         host: host || 'localhost',
         port: parseInt(port || '6379'),
-        password: password,
+        password,
     };
 };
 
