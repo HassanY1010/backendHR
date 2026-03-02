@@ -186,11 +186,12 @@ model Company {
 }
 
 model Department {
-  id        String           @id @default(uuid())
-  name      String
-  companyId String
-  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  jobs      RecruitmentJob[]
+  id          String           @id @default(uuid())
+  name        String
+  description String?          // ✅ أضف هذا
+  companyId   String
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobs        RecruitmentJob[]
 
   @@map("department")
 }
