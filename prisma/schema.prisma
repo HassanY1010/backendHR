@@ -292,7 +292,7 @@ model FinancialTransaction {
 model Interview {
   id                String    @id @default(uuid())
   candidateId       String
-  jobId             String
+  jobId             String?
   type              String
   score             Float?
   notes             String?   @db.Text
