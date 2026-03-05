@@ -832,11 +832,19 @@ export const uploadInterviewVideo = async (req, res, next) => {
             throw error;
         }
 
+        console.log(`[Upload API] Received video file: ${req.file.originalname}, Size: ${req.file.size} bytes`);
+
+        // We skip magic-bytes strict validation for videos here because WebM/MKV
+        // might not be supported properly by the magic-bytes library and we don't 
+        // want to abort the upload.
+
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        const ext = path.extname(req.file.originalname) || '.mp4';
+        const ext = path.extname(req.file.originalname) || '.webm';
         const fileNameToSave = `interviews/interview-${uniqueSuffix}${ext}`;
 
         const videoUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        console.log(`[Upload API] Video uploaded to Supabase successfully: ${videoUrl}`);
 
         res.status(200).json({
             status: 'success',
@@ -848,6 +856,7 @@ export const uploadInterviewVideo = async (req, res, next) => {
             }
         });
     } catch (error) {
+        console.error(`[Upload API Error]`, error);
         next(error);
     }
 };
