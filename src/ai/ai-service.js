@@ -87,13 +87,17 @@ const logAIUsage = async (companyId, service, model, usage, prompt, response) =>
         const cost = calculateCost(model, usage);
         const tokens = usage?.total_tokens || 0;
 
+        // Check if company exists before trying to log, to avoid relation errors
+        const companyExists = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } });
+        if (!companyExists) return;
+
         await prisma.aIUsageLog.create({
             data: {
-                companyId,
+                company: { connect: { id: companyId } },
                 service,
                 model,
                 tokens,
-                cost,
+                cost: isNaN(cost) ? 0 : cost,
                 prompt: typeof prompt === 'string' ? prompt.substring(0, 3000) : JSON.stringify(prompt).substring(0, 3000),
                 response: typeof response === 'string' ? response.substring(0, 3000) : JSON.stringify(response).substring(0, 3000)
             }
