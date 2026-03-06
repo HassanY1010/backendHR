@@ -318,14 +318,14 @@ export const parseCV = async (req, res, next) => {
 
 export const applyToJob = async (req, res, next) => {
     try {
-        const { name, email, phone, resumeUrl, location } = req.body;
+        const { name, fullName, email, phone, resumeUrl, location } = req.body;
         const jobId = req.params.id;
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         const candidate = await prisma.candidate.create({
             data: {
-                name,
+                fullName: fullName || name,
                 email,
                 phone,
                 resumeUrl,
@@ -622,13 +622,13 @@ export const submitInterviewAnswer = async (req, res, next) => {
 
 export const createCandidate = async (req, res, next) => {
     try {
-        const { name, email, phone, resumeUrl, jobId } = req.body;
+        const { name, fullName, email, phone, resumeUrl, jobId } = req.body;
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         const candidate = await prisma.candidate.create({
             data: {
-                fullName: name,
+                fullName: fullName || name,
                 email,
                 phone,
                 resumeUrl,
