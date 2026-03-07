@@ -1098,13 +1098,13 @@ export const uploadCandidateResume = async (req, res, next) => {
 
         // Smart Search Indexing for RAG
         try {
-            const indexContent = `Candidate: ${candidate.name}. Position: ${candidate.recruitmentjob.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Experience: ${aiAnalysis.experience_years || 'N/A'}. Summary: ${aiAnalysis.final_reason}`;
+            const indexContent = `Candidate: ${candidate.fullName}. Position: ${candidate.recruitmentjob.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Experience: ${aiAnalysis.experience?.years || 'N/A'}. Summary: ${aiAnalysis.summary}`;
             await aiService.indexDocument(
                 indexContent,
                 candidate.recruitmentjob.companyId,
                 candidate.id,
                 'CANDIDATE',
-                { name: candidate.name, job: candidate.recruitmentjob.title }
+                { name: candidate.fullName, job: candidate.recruitmentjob.title }
             );
         } catch (idxError) {
             logger.error('Indexing failed for candidate', { candidateId: candidate.id, error: idxError.message });
