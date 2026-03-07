@@ -328,10 +328,36 @@ export const aiService = {
 
     screenCV: async (cvText, jobDesc, companyId) => {
         try {
-            const prompt = `Screen CV against JD in Arabic. JSON { match_percentage, final_reason, missing_skills: [], strengths: [] }. JD: ${jobDesc} CV: ${cvText}`;
+            const prompt = `أنت خبير توظيف تقني. قم بتحليل السيرة الذاتية التالية مقابل الوصف الوظيفي المرفق باللغة العربية.
+            يجب أن يكون الرد بصيغة JSON فقط بالهيكل التالي:
+            {
+                "score": 0-100 (رقم يمثل نسبة المطابقة),
+                "summary": "ملخص مهني قصير للمرشح وتوافقه مع الوظيفة",
+                "final_reason": "سبب القبول أو الرفض أو المراجعة",
+                "skills": ["قائمة المهارات المستخرجة من السيرة الذاتية"],
+                "missing_skills": ["المهارات المطلوبة في الوظيفة وغير موجودة في السيرة الذاتية"],
+                "strengths": ["نقاط القوة"],
+                "experience": { "years": 0, "summary": "ملخص الخبرة" },
+                "education": { "degree": "الدرجة العلمية", "field": "التخصص" },
+                "recommendation": "hire/reject/interview"
+            }
+
+            الوصف الوظيفي: ${jobDesc}
+            السيرة الذاتية: ${cvText.substring(0, 6000)}`;
+
             return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'cv_screening');
         } catch (e) {
-            return { match_percentage: 0, final_reason: "فشل تحليل الذكاء الاصطناعي", missing_skills: [], strengths: [] };
+            logger.error('Screen CV Error', { error: e.message });
+            return {
+                score: 0,
+                summary: "فشل تحليل الذكاء الاصطناعي",
+                final_reason: "خطأ تقني في المعالجة",
+                skills: [],
+                missing_skills: [],
+                strengths: [],
+                experience: { years: 0, summary: "" },
+                recommendation: "interview"
+            };
         }
     },
 
