@@ -470,7 +470,8 @@ export const getInterviewByToken = async (req, res, next) => {
 export const getInterviewQuestionsByToken = async (req, res, next) => {
     try {
         const { token } = req.params;
-        const interview = await prisma.interview.findUnique({
+        // 1. Try to find interview directly by its token field
+        let interview = await prisma.interview.findUnique({
             where: { token },
             include: {
                 candidate: {
@@ -478,6 +479,23 @@ export const getInterviewQuestionsByToken = async (req, res, next) => {
                 }
             }
         });
+
+        // 2. Fallback: The token in the URL might be the candidate's interviewCode
+        if (!interview) {
+            const candidate = await prisma.candidate.findUnique({
+                where: { interviewCode: token },
+                include: { recruitmentjob: true }
+            });
+
+            if (candidate) {
+                // Look for an existing incomplete interview for this candidate
+                interview = await prisma.interview.findFirst({
+                    where: { candidateId: candidate.id, completed: false },
+                    include: { candidate: { include: { recruitmentjob: true } } },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
+        }
 
         if (!interview || !interview.candidate) {
             const error = new Error('المقابلة غير موجودة');
@@ -546,12 +564,30 @@ export const submitInterviewAnswer = async (req, res, next) => {
         const { candidateId, type, videoUrl, notes, token } = req.body;
 
         // 1. Validate Token if provided (New Security Layer)
+        // 1. Validate Token if provided (New Security Layer)
         let interview;
         if (token) {
+            // A. Try to find interview directly by its token field
             interview = await prisma.interview.findUnique({
                 where: { token },
                 include: { candidate: true }
             });
+
+            // B. Fallback: The token might be the candidate's interviewCode
+            if (!interview) {
+                const candidate = await prisma.candidate.findUnique({
+                    where: { interviewCode: token },
+                    include: { recruitmentjob: true }
+                });
+
+                if (candidate) {
+                    interview = await prisma.interview.findFirst({
+                        where: { candidateId: candidate.id, completed: false },
+                        include: { candidate: true },
+                        orderBy: { createdAt: 'desc' }
+                    });
+                }
+            }
 
             if (!interview) {
                 return res.status(404).json({ status: 'error', message: 'رمز المقابلة غير صحيح' });
