@@ -403,7 +403,9 @@ export const getInterviewByCode = async (req, res, next) => {
 export const getInterviewByToken = async (req, res, next) => {
     try {
         const { token } = req.params;
-        const interview = await prisma.interview.findUnique({
+
+        // 1. Try to find interview directly by its token field
+        let interview = await prisma.interview.findUnique({
             where: { token },
             include: {
                 candidate: {
@@ -411,6 +413,40 @@ export const getInterviewByToken = async (req, res, next) => {
                 }
             }
         });
+
+        // 2. Fallback: The token in the URL might be the candidate's interviewCode
+        if (!interview) {
+            const candidate = await prisma.candidate.findUnique({
+                where: { interviewCode: token },
+                include: { recruitmentjob: true }
+            });
+
+            if (candidate) {
+                // Look for an existing incomplete interview for this candidate
+                interview = await prisma.interview.findFirst({
+                    where: { candidateId: candidate.id, completed: false },
+                    include: { candidate: { include: { recruitmentjob: true } } },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                // No interview yet for this candidate — create a fresh one
+                if (!interview) {
+                    const newToken = crypto.randomBytes(16).toString('hex');
+                    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+                    interview = await prisma.interview.create({
+                        data: {
+                            candidateId: candidate.id,
+                            jobId: candidate.jobId,
+                            type: 'VIDEO',
+                            status: 'scheduled',
+                            token: newToken,
+                            expiresAt
+                        },
+                        include: { candidate: { include: { recruitmentjob: true } } }
+                    });
+                }
+            }
+        }
 
         if (!interview) {
             const error = new Error('رابط المقابلة غير صالح');
