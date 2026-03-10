@@ -116,6 +116,9 @@ export const updateCompanyStatus = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
+
+        console.log(`[DEBUG-API] Updating company ${id} status to: ${status}`);
+
         const company = await prisma.company.update({
             where: { id },
             data: {
@@ -124,17 +127,22 @@ export const updateCompanyStatus = async (req, res, next) => {
             }
         });
 
+        console.log(`[DEBUG-API] Successfully updated DB for ${id}. New status: ${company.status}`);
+
         // 🟢 Invalidate user sessions for this company immediately
         const users = await prisma.user.findMany({
             where: { companyId: id },
             select: { id: true }
         });
 
+        console.log(`[DEBUG-API] Invalidating cache for ${users.length} users.`);
+
         const clearCachePromises = users.map(user => memoryCache.delete(`user_auth_${user.id}`));
         await Promise.all(clearCachePromises);
 
         res.status(200).json({ status: 'success', data: company });
     } catch (error) {
+        console.error(`[DEBUG-API] Error in updateCompanyStatus:`, error);
         next(error);
     }
 };
