@@ -47,10 +47,13 @@ export const protect = async (req, res, next) => {
             console.log(`[DEBUG-AUTH] Cache HIT for user ${user.email}. CoStatus in cache: ${user.company?.status}`);
         }
 
-        const isCompanyActive = user.company ? user.company.status === 'active' : true;
+        const currentStatus = user.company?.status?.toLowerCase() || 'active';
+        const isCompanyActive = currentStatus === 'active';
+
+        console.log(`[DEBUG-AUTH] User: ${user.email}, Company Status: ${user.company?.status}, Final Check: ${isCompanyActive}`);
 
         if (!user || user.status !== 'ACTIVE' || !isCompanyActive) {
-            console.error(`[DEBUG-AUTH] Access DENIED. User: ${user?.email}, UserStatus: ${user?.status}, CoStatus: ${user?.company?.status}`);
+            console.warn(`[DEBUG-AUTH] ACCESS DENIED for ${user?.email}. UserStatus: ${user?.status}, CoStatus: ${user?.company?.status}`);
             const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
