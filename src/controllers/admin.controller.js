@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import { memoryCache } from '../utils/cache.js';
 
 export const getAllCompanies = async (req, res, next) => {
     try {
@@ -122,6 +123,16 @@ export const updateCompanyStatus = async (req, res, next) => {
                 updatedAt: new Date()
             }
         });
+
+        // 🟢 Invalidate user sessions for this company immediately
+        const users = await prisma.user.findMany({
+            where: { companyId: id },
+            select: { id: true }
+        });
+
+        const clearCachePromises = users.map(user => memoryCache.delete(`user_auth_${user.id}`));
+        await Promise.all(clearCachePromises);
+
         res.status(200).json({ status: 'success', data: company });
     } catch (error) {
         next(error);
