@@ -117,27 +117,31 @@ export const updateCompanyStatus = async (req, res, next) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        console.log(`[DEBUG-API] Updating company ${id} status to: ${status}`);
+        const normalizedStatus = status.toLowerCase();
+        console.log(`[DEBUG-API] updateCompanyStatus: ID=${id}, Input=${status}, Normalized=${normalizedStatus}`);
 
         const company = await prisma.company.update({
             where: { id },
             data: {
-                status,
+                status: normalizedStatus,
                 updatedAt: new Date()
             }
         });
 
-        console.log(`[DEBUG-API] Successfully updated DB for ${id}. New status: ${company.status}`);
+        console.log(`[DEBUG-API] Successfully updated DB for ${id}. New status in DB: ${company.status}`);
 
         // 🟢 Invalidate user sessions for this company immediately
         const users = await prisma.user.findMany({
             where: { companyId: id },
-            select: { id: true }
+            select: { id: true, email: true }
         });
 
         console.log(`[DEBUG-API] Invalidating cache for ${users.length} users.`);
 
-        const clearCachePromises = users.map(user => memoryCache.delete(`user_auth_${user.id}`));
+        const clearCachePromises = users.map(user => {
+            console.log(`[DEBUG-API] Force clearing cache for ${user.id} (${user.email})`);
+            return memoryCache.delete(`user_auth_${user.id}`);
+        });
         await Promise.all(clearCachePromises);
 
         res.status(200).json({ status: 'success', data: company });
