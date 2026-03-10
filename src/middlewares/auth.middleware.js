@@ -31,29 +31,21 @@ export const protect = async (req, res, next) => {
         let user = await memoryCache.get(cacheKey);
 
         if (!user) {
-            console.log(`[DEBUG-AUTH] Cache MISS for token ID: ${decoded.id}. Fetching from DB...`);
             user = await prisma.user.findUnique({
                 where: { id: decoded.id },
                 include: { company: true },
             });
 
             if (user) {
-                console.log(`[DEBUG-AUTH] User ${user.email} found. Company: ${user.company?.name}, CoStatus: ${user.company?.status}`);
+                // Do not cache full user object if big, but fine for now
                 await memoryCache.set(cacheKey, user, 60);
-            } else {
-                console.warn(`[DEBUG-AUTH] User ID ${decoded.id} NOT found in DB.`);
             }
-        } else {
-            console.log(`[DEBUG-AUTH] Cache HIT for user ${user.email}. CoStatus in cache: ${user.company?.status}`);
         }
 
         const currentStatus = user.company?.status?.toLowerCase() || 'active';
         const isCompanyActive = currentStatus === 'active';
 
-        console.log(`[DEBUG-AUTH] User: ${user.email}, Company Status: ${user.company?.status}, Final Check: ${isCompanyActive}`);
-
         if (!user || user.status !== 'ACTIVE' || !isCompanyActive) {
-            console.warn(`[DEBUG-AUTH] ACCESS DENIED for ${user?.email}. UserStatus: ${user?.status}, CoStatus: ${user?.company?.status}`);
             const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
