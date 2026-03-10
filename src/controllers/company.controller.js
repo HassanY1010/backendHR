@@ -182,14 +182,16 @@ export const forceLogoutCompanyUsers = async (req, res, next) => {
         // 1. Find all users of this company
         const users = await prisma.user.findMany({
             where: { companyId: id },
-            select: { id: true }
+            select: { id: true, email: true }
         });
 
+        console.log(`[DEBUG-API] forceLogoutCompanyUsers called for company ${id}. Found ${users.length} users.`);
+
         // 2. Clear their cache to force fresh auth check (which will check company status)
-        // Note: This doesn't blacklist the JWT, but the middleware now checks the DB/Cache every time.
-        // If we want immediate force logout even without status change, we'd need a blacklist or versioning.
-        // But since the user's intent is "don't let them in unless I activate them", the status check is enough.
-        const clearCachePromises = users.map(user => memoryCache.delete(`user_auth_${user.id}`));
+        const clearCachePromises = users.map(user => {
+            console.log(`[DEBUG-API] Force-clearing cache for: ${user.email}`);
+            return memoryCache.delete(`user_auth_${user.id}`);
+        });
         await Promise.all(clearCachePromises);
 
         // 3. Log the action
@@ -202,7 +204,7 @@ export const forceLogoutCompanyUsers = async (req, res, next) => {
             target: id,
             status: 'SUCCESS',
             ip: req.ip,
-            details: { affectedUserCount: users.length }
+            details: { affectedUserCount: users.length, users: users.map(u => u.email) }
         });
 
         res.status(200).json({
