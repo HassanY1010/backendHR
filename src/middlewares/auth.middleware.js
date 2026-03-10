@@ -31,18 +31,26 @@ export const protect = async (req, res, next) => {
         let user = await memoryCache.get(cacheKey);
 
         if (!user) {
+            console.log(`[DEBUG-AUTH] Cache MISS for token ID: ${decoded.id}. Fetching from DB...`);
             user = await prisma.user.findUnique({
                 where: { id: decoded.id },
                 include: { company: true },
             });
 
             if (user) {
-                // Do not cache full user object if big, but fine for now
+                console.log(`[DEBUG-AUTH] User ${user.email} found. Company: ${user.company?.name}, CoStatus: ${user.company?.status}`);
                 await memoryCache.set(cacheKey, user, 60);
+            } else {
+                console.warn(`[DEBUG-AUTH] User ID ${decoded.id} NOT found in DB.`);
             }
+        } else {
+            console.log(`[DEBUG-AUTH] Cache HIT for user ${user.email}. CoStatus in cache: ${user.company?.status}`);
         }
 
-        if (!user || user.status !== 'ACTIVE' || (user.company && user.company.status !== 'active')) {
+        const isCompanyActive = user.company ? user.company.status === 'active' : true;
+
+        if (!user || user.status !== 'ACTIVE' || !isCompanyActive) {
+            console.error(`[DEBUG-AUTH] Access DENIED. User: ${user?.email}, UserStatus: ${user?.status}, CoStatus: ${user?.company?.status}`);
             const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
@@ -52,6 +60,7 @@ export const protect = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
+        console.error(`[DEBUG-AUTH] Middleware error: ${error.message}`);
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
 
             // Log suspicious token usage if it fails signature but looks like a token
