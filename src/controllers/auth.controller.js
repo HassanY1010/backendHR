@@ -65,7 +65,7 @@ export const login = async (req, res, next) => {
         const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role, companyId: user.companyId },
             process.env.JWT_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         const refreshToken = jwt.sign(
@@ -217,7 +217,7 @@ export const register = async (req, res, next) => {
         const token = jwt.sign(
             { id: result.id, email: result.email, role: result.role, companyId: result.companyId },
             process.env.JWT_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         const refreshToken = jwt.sign(
@@ -379,7 +379,7 @@ export const refresh = async (req, res, next) => {
         const newToken = jwt.sign(
             { id: user.id, email: user.email, role: user.role, companyId: user.companyId },
             process.env.JWT_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '1h' }
         );
 
         res.cookie('token', newToken, COOKIE_OPTIONS);
