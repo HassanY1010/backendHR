@@ -7,33 +7,27 @@ import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 
 // Redis Connection Options
-// Redis Connection Options
 const getRedisConnection = () => {
-    const url = process.env.NODE_ENV === 'production' 
-        ? process.env.REDIS_PUBLIC_URL 
-        : process.env.REDIS_URL;
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+    const url = isProd ? process.env.REDIS_PUBLIC_URL : process.env.REDIS_URL;
 
     if (url && url !== 'undefined') {
         logger.info('🔗 Redis: Initializing BullMQ with URL');
         return url;
     }
 
-    const host = process.env.REDISHOST || process.env.REDIS_HOST;
-    const port = process.env.REDISPORT || process.env.REDIS_PORT;
+    // في حال التطوير أو fallback
+    const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
+    const port = parseInt(process.env.REDISPORT || process.env.REDIS_PORT || '6379');
     const password = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD;
 
-    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
-
-    if (isProd && (!host || host === 'localhost' || host === '127.0.0.1')) {
-        // بدلاً من محاولة الاتصال بالـ localhost وفشلها، نرسل كائن Dummy لتجنب الرسائل المزعجة
-        return { host: 'DUMMY_PRODUCTION_REDIS_FAILURE', port: 6379, password: '' };
+    if (isProd) {
+        // لا نحاول الاتصال بالـ localhost في الإنتاج
+        logger.warn('❌ Redis URL missing in production, skipping Redis initialization');
+        return null; // null سيعني عدم استخدام Redis
     }
 
-    return {
-        host: host || 'localhost',
-        port: parseInt(port || '6379'),
-        password,
-    };
+    return { host, port, password };
 };
 
 const QUEUE_NAME = 'background-jobs';
@@ -50,6 +44,12 @@ export const QueueService = {
         if (QueueService.queue) return;
 
         const connection = getRedisConnection();
+
+        if (!connection) {
+            logger.info('📦 Redis not configured, background jobs will not use Redis in production');
+            return;
+        }
+
         logger.info('🚀 Initializing Job Queue...', {
             host: typeof connection === 'string' ? 'URL' : connection.host
         });
@@ -58,47 +58,42 @@ export const QueueService = {
         QueueService.queue = new Queue(QUEUE_NAME, { connection });
 
         // 2. Create Consumer Worker
-        QueueService.worker = new Worker(QUEUE_NAME, async (job) => {
-            logger.info(`[Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
+        QueueService.worker = new Worker(
+            QUEUE_NAME,
+            async (job) => {
+                logger.info(`[Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
 
-            try {
-                switch (job.name) {
-                    case 'indexDetail':
-                        await SearchService.indexDocument(job.data);
-                        break;
-
-                    case 'logAudit':
-                        await auditService.log(job.data);
-                        break;
-
-                    case 'generateTrainingPlan':
-                        await QueueService.handleTrainingPlan(job.data);
-                        break;
-
-                    default:
-                        logger.warn(`Unknown job type: ${job.name}`, { jobName: job.name });
+                try {
+                    switch (job.name) {
+                        case 'indexDetail':
+                            await SearchService.indexDocument(job.data);
+                            break;
+                        case 'logAudit':
+                            await auditService.log(job.data);
+                            break;
+                        case 'generateTrainingPlan':
+                            await QueueService.handleTrainingPlan(job.data);
+                            break;
+                        default:
+                            logger.warn(`Unknown job type: ${job.name}`, { jobName: job.name });
+                    }
+                    logger.info(`[Job ${job.id}] Completed`, { jobId: job.id });
+                } catch (error) {
+                    logger.error(`[Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
+                    throw error; // Retry mechanism kicks in
                 }
-                logger.info(`[Job ${job.id}] Completed`, { jobId: job.id });
-            } catch (error) {
-                logger.error(`[Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
-                throw error; // Retry mechanism kicks in
-            }
-
-        }, { connection });
+            },
+            { connection }
+        );
 
         QueueService.worker.on('failed', (job, err) => {
             logger.error(`[Job ${job.id}] Failed completely`, { jobId: job.id, error: err.message });
         });
     },
 
-    /**
-     * Add a job to the queue
-     * @param {string} name 
-     * @param {object} data 
-     * @param {object} opts 
-     */
     addJob: async (name, data, opts = {}) => {
         if (!QueueService.queue) QueueService.init();
+        if (!QueueService.queue) return null; // إذا Redis غير متاح
         return await QueueService.queue.add(name, data, {
             removeOnComplete: true,
             removeOnFail: 5000,
@@ -106,23 +101,14 @@ export const QueueService = {
         });
     },
 
-    /**
-     * Specialized Processor: Training Plan Generation
-     */
     handleTrainingPlan: async ({ assignmentId, courseId, employeeId }) => {
-
-        // Fetch fresh data
         const assignment = await prisma.trainingAssignment.findUnique({
             where: { id: assignmentId },
-            include: {
-                course: true,
-                employee: { include: { user: true } }
-            }
+            include: { course: true, employee: { include: { user: true } } }
         });
 
         if (!assignment) return;
 
-        // Perform potentially slow AI ops
         const [trainingPlan, quiz] = await Promise.all([
             aiService.generateTrainingPlan(assignment.course, {
                 name: assignment.employee.user.name,
@@ -131,17 +117,12 @@ export const QueueService = {
             aiService.generateQuiz(assignment.course)
         ]);
 
-        // Update DB
         await prisma.trainingAssignment.update({
             where: { id: assignmentId },
             data: {
                 trainingPlan: JSON.stringify(trainingPlan),
-                quiz: JSON.stringify(quiz),
-                // Mark as ready or notify user here if needed
-                // For now, it just enriches the existing record
+                quiz: JSON.stringify(quiz)
             }
         });
-
-        // Indexing happens here too if needed, or separately
     }
 };

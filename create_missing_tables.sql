@@ -81,3 +81,4 @@ CREATE TABLE IF NOT EXISTS `trainingrequest` (
   INDEX `trainingrequest_employeeId_idx` (`employeeId`),
   INDEX `trainingrequest_courseId_idx` (`courseId`)
 );
+

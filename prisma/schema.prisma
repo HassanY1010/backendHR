@@ -182,17 +182,25 @@ model Company {
   users              User[]
   departments        Department[]
 
+  status             String            @default("active")
   @@map("company")
 }
 
 model Department {
-  id          String           @id @default(uuid())
-  name        String
-  description String?          // ✅ أضف هذا
-  companyId   String
-  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  jobs        RecruitmentJob[]
+  id              String           @id @default(uuid())
+  name            String
+  description     String?
+  companyId       String
+  parentId        String?          // ✅ إضافة حقل القسم الرئيسي
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  jobs            RecruitmentJob[]
+  
+  // ✅ علاقة هرمية (Self-relation)
+  parent          Department?      @relation("SubDepartments", fields: [parentId], references: [id], onDelete: Cascade)
+  subDepartments  Department[]     @relation("SubDepartments")
 
+  @@index([companyId])
+  @@index([parentId])
   @@map("department")
 }
 
@@ -292,7 +300,7 @@ model FinancialTransaction {
 model Interview {
   id                String    @id @default(uuid())
   candidateId       String
-  jobId             String
+  jobId             String?
   type              String
   score             Float?
   notes             String?   @db.Text

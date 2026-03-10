@@ -7,20 +7,21 @@
 
 */
 
--- Fix: Drop aiStatus if exists (to avoid duplicate column error)
-ALTER TABLE `candidate` DROP COLUMN IF EXISTS `aiStatus`;
+-- Column aiStatus does not exist in init, so we don't need to drop it here.
+-- If someone manually added it, they should have fixed it elsewhere.
+-- Removing the failing IF EXISTS check.
 
 -- DropForeignKey
-ALTER TABLE `task` DROP FOREIGN KEY IF EXISTS `Task_employeeId_fkey`;
+ALTER TABLE `Task` DROP FOREIGN KEY `Task_employeeId_fkey`;
 
 -- AlterTable
-ALTER TABLE `candidate` 
+ALTER TABLE `Candidate` 
     ADD COLUMN `aiStatus` VARCHAR(191) NULL,
     ADD COLUMN `interviewCode` VARCHAR(191) NULL,
     MODIFY `status` ENUM('NEW', 'SCREENING', 'PRE_ACCEPTED', 'INTERVIEWING', 'OFFERED', 'REJECTED', 'HIRED') NOT NULL DEFAULT 'NEW';
 
 -- AlterTable
-ALTER TABLE `company` 
+ALTER TABLE `Company` 
     ADD COLUMN `address` VARCHAR(191) NULL,
     ADD COLUMN `employeeLimit` INTEGER NOT NULL DEFAULT 10,
     ADD COLUMN `language` VARCHAR(191) NOT NULL DEFAULT 'ar',
@@ -29,34 +30,34 @@ ALTER TABLE `company`
     ADD COLUMN `website` VARCHAR(191) NULL;
 
 -- Fix: Add companyId as NULL first, then update, then make it required
-ALTER TABLE `employee` 
+ALTER TABLE `Employee` 
     ADD COLUMN `companyId` VARCHAR(191) NULL,
     ADD COLUMN `startDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     ADD COLUMN `status` VARCHAR(191) NOT NULL DEFAULT 'active';
 
 -- Fix: Update existing employees with a default company
-UPDATE `employee` SET `companyId` = (SELECT `id` FROM `company` LIMIT 1) WHERE `companyId` IS NULL;
+UPDATE `Employee` SET `companyId` = (SELECT `id` FROM `Company` LIMIT 1) WHERE `companyId` IS NULL;
 
 -- Fix: Now make companyId required
-ALTER TABLE `employee` MODIFY COLUMN `companyId` VARCHAR(191) NOT NULL;
+ALTER TABLE `Employee` MODIFY COLUMN `companyId` VARCHAR(191) NOT NULL;
 
 -- AlterTable
-ALTER TABLE `employeetraining` 
+ALTER TABLE `EmployeeTraining` 
     ADD COLUMN `certificateUrl` VARCHAR(191) NULL,
     ADD COLUMN `completedAt` DATETIME(3) NULL,
     ADD COLUMN `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
 
 -- AlterTable
-ALTER TABLE `interview` 
+ALTER TABLE `Interview` 
     ADD COLUMN `aiAnalysis` JSON NULL,
     ADD COLUMN `videoUrl` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `recruitmentjob` 
+ALTER TABLE `RecruitmentJob` 
     ADD COLUMN `aiDescription` TEXT NULL;
 
 -- AlterTable
-ALTER TABLE `task` 
+ALTER TABLE `Task` 
     ADD COLUMN `actualTime` DOUBLE NULL,
     ADD COLUMN `aiScore` DOUBLE NULL,
     ADD COLUMN `complexity` VARCHAR(191) NULL,
@@ -68,7 +69,7 @@ ALTER TABLE `task`
     MODIFY `employeeId` VARCHAR(191) NULL;
 
 -- Fix: Add updatedAt as NULL first, then update, then make it required
-ALTER TABLE `training` 
+ALTER TABLE `Training` 
     ADD COLUMN `aiTags` JSON NULL,
     ADD COLUMN `category` VARCHAR(191) NULL,
     ADD COLUMN `cost` DOUBLE NULL,
@@ -78,13 +79,13 @@ ALTER TABLE `training`
     ADD COLUMN `url` VARCHAR(191) NULL;
 
 -- Fix: Update existing trainings with default updatedAt
-UPDATE `training` SET `updatedAt` = `createdAt` WHERE `updatedAt` IS NULL;
+UPDATE `Training` SET `updatedAt` = `createdAt` WHERE `updatedAt` IS NULL;
 
 -- Fix: Now make updatedAt required
-ALTER TABLE `training` MODIFY COLUMN `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+ALTER TABLE `Training` MODIFY COLUMN `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
 
 -- AlterTable
-ALTER TABLE `user` 
+ALTER TABLE `User` 
     ADD COLUMN `avatar` VARCHAR(191) NULL,
     ADD COLUMN `bio` TEXT NULL,
     ADD COLUMN `lastLogin` DATETIME(3) NULL,
@@ -329,8 +330,8 @@ CREATE TABLE IF NOT EXISTS `Notification` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS `Candidate_interviewCode_key` ON `Candidate`(`interviewCode`);
+-- Standard index creation without IF NOT EXISTS
+CREATE UNIQUE INDEX `Candidate_interviewCode_key` ON `Candidate`(`interviewCode`);
 
 -- AddForeignKey
 ALTER TABLE `Subscription` ADD CONSTRAINT `Subscription_companyId_fkey` FOREIGN KEY (`companyId`) REFERENCES `Company`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -318,14 +318,14 @@ export const parseCV = async (req, res, next) => {
 
 export const applyToJob = async (req, res, next) => {
     try {
-        const { name, email, phone, resumeUrl, location } = req.body;
+        const { name, fullName, email, phone, resumeUrl, location } = req.body;
         const jobId = req.params.id;
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         const candidate = await prisma.candidate.create({
             data: {
-                name,
+                fullName: fullName || name,
                 email,
                 phone,
                 resumeUrl,
@@ -403,7 +403,9 @@ export const getInterviewByCode = async (req, res, next) => {
 export const getInterviewByToken = async (req, res, next) => {
     try {
         const { token } = req.params;
-        const interview = await prisma.interview.findUnique({
+
+        // 1. Try to find interview directly by its token field
+        let interview = await prisma.interview.findUnique({
             where: { token },
             include: {
                 candidate: {
@@ -411,6 +413,40 @@ export const getInterviewByToken = async (req, res, next) => {
                 }
             }
         });
+
+        // 2. Fallback: The token in the URL might be the candidate's interviewCode
+        if (!interview) {
+            const candidate = await prisma.candidate.findUnique({
+                where: { interviewCode: token },
+                include: { recruitmentjob: true }
+            });
+
+            if (candidate) {
+                // Look for an existing incomplete interview for this candidate
+                interview = await prisma.interview.findFirst({
+                    where: { candidateId: candidate.id, completed: false },
+                    include: { candidate: { include: { recruitmentjob: true } } },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                // No interview yet for this candidate — create a fresh one
+                if (!interview) {
+                    const newToken = crypto.randomBytes(16).toString('hex');
+                    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+                    interview = await prisma.interview.create({
+                        data: {
+                            candidateId: candidate.id,
+                            jobId: candidate.jobId,
+                            type: 'VIDEO',
+                            status: 'scheduled',
+                            token: newToken,
+                            expiresAt
+                        },
+                        include: { candidate: { include: { recruitmentjob: true } } }
+                    });
+                }
+            }
+        }
 
         if (!interview) {
             const error = new Error('رابط المقابلة غير صالح');
@@ -434,7 +470,8 @@ export const getInterviewByToken = async (req, res, next) => {
 export const getInterviewQuestionsByToken = async (req, res, next) => {
     try {
         const { token } = req.params;
-        const interview = await prisma.interview.findUnique({
+        // 1. Try to find interview directly by its token field
+        let interview = await prisma.interview.findUnique({
             where: { token },
             include: {
                 candidate: {
@@ -442,6 +479,23 @@ export const getInterviewQuestionsByToken = async (req, res, next) => {
                 }
             }
         });
+
+        // 2. Fallback: The token in the URL might be the candidate's interviewCode
+        if (!interview) {
+            const candidate = await prisma.candidate.findUnique({
+                where: { interviewCode: token },
+                include: { recruitmentjob: true }
+            });
+
+            if (candidate) {
+                // Look for an existing incomplete interview for this candidate
+                interview = await prisma.interview.findFirst({
+                    where: { candidateId: candidate.id, completed: false },
+                    include: { candidate: { include: { recruitmentjob: true } } },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
+        }
 
         if (!interview || !interview.candidate) {
             const error = new Error('المقابلة غير موجودة');
@@ -510,12 +564,30 @@ export const submitInterviewAnswer = async (req, res, next) => {
         const { candidateId, type, videoUrl, notes, token } = req.body;
 
         // 1. Validate Token if provided (New Security Layer)
+        // 1. Validate Token if provided (New Security Layer)
         let interview;
         if (token) {
+            // A. Try to find interview directly by its token field
             interview = await prisma.interview.findUnique({
                 where: { token },
                 include: { candidate: true }
             });
+
+            // B. Fallback: The token might be the candidate's interviewCode
+            if (!interview) {
+                const candidate = await prisma.candidate.findUnique({
+                    where: { interviewCode: token },
+                    include: { recruitmentjob: true }
+                });
+
+                if (candidate) {
+                    interview = await prisma.interview.findFirst({
+                        where: { candidateId: candidate.id, completed: false },
+                        include: { candidate: true },
+                        orderBy: { createdAt: 'desc' }
+                    });
+                }
+            }
 
             if (!interview) {
                 return res.status(404).json({ status: 'error', message: 'رمز المقابلة غير صحيح' });
@@ -622,13 +694,13 @@ export const submitInterviewAnswer = async (req, res, next) => {
 
 export const createCandidate = async (req, res, next) => {
     try {
-        const { name, email, phone, resumeUrl, jobId } = req.body;
+        const { name, fullName, email, phone, resumeUrl, jobId } = req.body;
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         const candidate = await prisma.candidate.create({
             data: {
-                fullName: name,
+                fullName: fullName || name,
                 email,
                 phone,
                 resumeUrl,
@@ -832,11 +904,19 @@ export const uploadInterviewVideo = async (req, res, next) => {
             throw error;
         }
 
+        console.log(`[Upload API] Received video file: ${req.file.originalname}, Size: ${req.file.size} bytes`);
+
+        // We skip magic-bytes strict validation for videos here because WebM/MKV
+        // might not be supported properly by the magic-bytes library and we don't 
+        // want to abort the upload.
+
         const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-        const ext = path.extname(req.file.originalname) || '.mp4';
+        const ext = path.extname(req.file.originalname) || '.webm';
         const fileNameToSave = `interviews/interview-${uniqueSuffix}${ext}`;
 
         const videoUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        console.log(`[Upload API] Video uploaded to Supabase successfully: ${videoUrl}`);
 
         res.status(200).json({
             status: 'success',
@@ -848,6 +928,7 @@ export const uploadInterviewVideo = async (req, res, next) => {
             }
         });
     } catch (error) {
+        console.error(`[Upload API Error]`, error);
         next(error);
     }
 };
@@ -1017,13 +1098,13 @@ export const uploadCandidateResume = async (req, res, next) => {
 
         // Smart Search Indexing for RAG
         try {
-            const indexContent = `Candidate: ${candidate.name}. Position: ${candidate.recruitmentjob.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Experience: ${aiAnalysis.experience_years || 'N/A'}. Summary: ${aiAnalysis.final_reason}`;
+            const indexContent = `Candidate: ${candidate.fullName}. Position: ${candidate.recruitmentjob.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Experience: ${aiAnalysis.experience?.years || 'N/A'}. Summary: ${aiAnalysis.summary}`;
             await aiService.indexDocument(
                 indexContent,
                 candidate.recruitmentjob.companyId,
                 candidate.id,
                 'CANDIDATE',
-                { name: candidate.name, job: candidate.recruitmentjob.title }
+                { name: candidate.fullName, job: candidate.recruitmentjob.title }
             );
         } catch (idxError) {
             logger.error('Indexing failed for candidate', { candidateId: candidate.id, error: idxError.message });
@@ -1138,6 +1219,13 @@ export const getDepartments = async (req, res, next) => {
         const departments = await prisma.department.findMany({
             where: {
                 companyId: req.user.companyId
+            },
+            include: {
+                parent: {
+                    select: {
+                        name: true
+                    }
+                }
             }
         });
 
@@ -1152,7 +1240,7 @@ export const getDepartments = async (req, res, next) => {
 
 export const createDepartment = async (req, res, next) => {
     try {
-        const { name, description } = req.body;
+        const { name, description, parentId } = req.body;
 
         if (!name) {
             const error = new Error('Department name is required');
@@ -1164,6 +1252,7 @@ export const createDepartment = async (req, res, next) => {
             data: {
                 name,
                 description,
+                parentId: parentId || null,
                 companyId: req.user.companyId
             }
         });
@@ -1180,7 +1269,7 @@ export const createDepartment = async (req, res, next) => {
 export const updateDepartment = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, description } = req.body;
+        const { name, description, parentId } = req.body;
 
         const department = await prisma.department.findFirst({
             where: {
@@ -1197,7 +1286,11 @@ export const updateDepartment = async (req, res, next) => {
 
         const updatedDepartment = await prisma.department.update({
             where: { id },
-            data: { name, description }
+            data: {
+                name,
+                description,
+                parentId: parentId || null
+            }
         });
 
         res.status(200).json({

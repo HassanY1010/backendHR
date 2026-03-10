@@ -1,8 +1,8 @@
 -- DropForeignKey
-ALTER TABLE `notification` DROP FOREIGN KEY `Notification_employeeId_fkey`;
+ALTER TABLE `Notification` DROP FOREIGN KEY `Notification_employeeId_fkey`;
 
 -- AlterTable
-ALTER TABLE `notification` ADD COLUMN `userId` VARCHAR(191) NULL,
+ALTER TABLE `Notification` ADD COLUMN `userId` VARCHAR(191) NULL,
     MODIFY `employeeId` VARCHAR(191) NULL;
 
 -- AddForeignKey

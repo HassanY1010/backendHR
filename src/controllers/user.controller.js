@@ -88,3 +88,32 @@ export const updateMe = async (req, res, next) => {
         next(error);
     }
 };
+
+export const getUsersByCompany = async (req, res, next) => {
+    try {
+        const { companyId } = req.params;
+
+        const users = await prisma.user.findMany({
+            where: {
+                companyId,
+                deletedAt: null
+            },
+            include: {
+                employee: true
+            },
+            orderBy: {
+                role: 'asc' // Managers likely first if ADMIN/MANAGER vs EMPLOYEE
+            }
+        });
+
+        // Remove passwords
+        const safeUsers = users.map(u => {
+            const { passwordHash, ...safeUser } = u;
+            return safeUser;
+        });
+
+        res.status(200).json({ status: 'success', data: { users: safeUsers } });
+    } catch (error) {
+        next(error);
+    }
+};

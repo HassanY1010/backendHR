@@ -1,5 +1,7 @@
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
+import { memoryCache } from '../utils/cache.js';
+import { auditService } from '../services/audit.service.js';
 
 export const getAllCompanies = async (req, res, next) => {
     try {
@@ -88,7 +90,7 @@ export const updateCompany = async (req, res, next) => {
         // status -> subscriptionStatus (maybe?)
 
         // Let's explicitly cherry-pick valid fields to be safe.
-        const validFields = ['name', 'subscriptionStatus', 'subscriptionExpiry', 'address', 'employeeLimit', 'language', 'logo', 'settings', 'website'];
+        const validFields = ['name', 'subscriptionStatus', 'subscriptionExpiry', 'address', 'employeeLimit', 'language', 'logo', 'settings', 'website', 'status'];
         const cleanData = {};
 
         // Map incoming data to schema fields
@@ -168,6 +170,46 @@ export const deleteCompany = async (req, res, next) => {
             where: { id: req.params.id }
         });
         res.status(204).json({ status: 'success', data: null });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const forceLogoutCompanyUsers = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Find all users of this company
+        const users = await prisma.user.findMany({
+            where: { companyId: id },
+            select: { id: true }
+        });
+
+        // 2. Clear their cache to force fresh auth check (which will check company status)
+        // Note: This doesn't blacklist the JWT, but the middleware now checks the DB/Cache every time.
+        // If we want immediate force logout even without status change, we'd need a blacklist or versioning.
+        // But since the user's intent is "don't let them in unless I activate them", the status check is enough.
+        const clearCachePromises = users.map(user => memoryCache.delete(`user_auth_${user.id}`));
+        await Promise.all(clearCachePromises);
+
+        // 3. Log the action
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'COMPANY_FORCE_LOGOUT',
+            actionType: 'ADMIN',
+            severity: 'MEDIUM',
+            target: id,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { affectedUserCount: users.length }
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: `Successfully invalidated sessions for ${users.length} users.`,
+            data: { affectedUserCount: users.length }
+        });
     } catch (error) {
         next(error);
     }

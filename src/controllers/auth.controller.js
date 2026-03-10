@@ -21,6 +21,12 @@ export const login = async (req, res, next) => {
             include: { company: true },
         });
 
+        if (user && user.company && user.company.status !== 'active') {
+            const error = new Error('تم تعليق حساب شركتك. يرجى التواصل مع الإدارة.');
+            error.statusCode = 403;
+            throw error;
+        }
+
         if (!user) {
             // Log failed attempt (user unknown) - ASYNC
             QueueService.addJob('logAudit', {

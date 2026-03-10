@@ -87,13 +87,17 @@ const logAIUsage = async (companyId, service, model, usage, prompt, response) =>
         const cost = calculateCost(model, usage);
         const tokens = usage?.total_tokens || 0;
 
+        // Check if company exists before trying to log, to avoid relation errors
+        const companyExists = await prisma.company.findUnique({ where: { id: companyId }, select: { id: true } });
+        if (!companyExists) return;
+
         await prisma.aIUsageLog.create({
             data: {
-                companyId,
+                company: { connect: { id: companyId } },
                 service,
                 model,
                 tokens,
-                cost,
+                cost: isNaN(cost) ? 0 : cost,
                 prompt: typeof prompt === 'string' ? prompt.substring(0, 3000) : JSON.stringify(prompt).substring(0, 3000),
                 response: typeof response === 'string' ? response.substring(0, 3000) : JSON.stringify(response).substring(0, 3000)
             }
@@ -284,19 +288,17 @@ export const aiService = {
 
     interactiveJobRecruiter: async (messages, companyId) => {
         try {
-            const systemPrompt = `You are a professional ATS Recruiter expert. Your goal is to help a hiring manager create a perfect Job Description in Arabic.
-            - Ask one clear question at a time to gather missing information (Title, Seniority, Skills, Salary, Work Mode, etc.).
-            - Be professional, helpful, and concise.
-            - If you have enough information, generate the complete JD.
-            - ALWAYS return a JSON object: 
-              { 
-                "nextQuestion": "string (or null if complete)", 
-                "isComplete": boolean, 
-                "jobData": { 
-                   "title", "employmentType", "workMode", "seniorityLevel", "yearsOfExperience", 
-                   "city", "salaryMin", "salaryMax", "description", "requirements": [], "responsibilities": [] 
-                } (optional, only when isComplete is true)
-              }`;
+            const systemPrompt = `أنت مساعد توظيف ذكي محترف. مهمتك مساعدة المدير في إنشاء وصف وظيفي احترافي باللغة العربية من خلال حوار تفاعلي.
+
+**تعليمات صارمة يجب اتباعها:**
+1. **قبل طرح أي سؤال، قم بمراجعة سجل المحادثة بالكامل** واستخرج المعلومات التي قدمها المستخدم بالفعل.
+2. **لا تكرر أي سؤال تم الإجابة عليه مسبقاً** حتى لو لم تكن الإجابة واضحة تماماً - اقبل ما قاله المستخدم وانتقل للتالي.
+3. اطرح سؤالاً واحداً فقط في كل مرة.
+4. المعلومات المطلوبة بالترتيب: المسمى الوظيفي → مستوى الأقدمية → نوع العمل (دوام كامل/جزئي/عقد) → طريقة العمل (مكتب/هايبرد/عن بعد) → المدينة → الراتب (الحد الأدنى والأعلى) → سنوات الخبرة → المهارات المطلوبة.
+5. إذا كان لديك معلومات كافية (على الأقل: المسمى، الأقدمية، نوع العمل، المدينة، الراتب)، فقم بإنشاء الوصف الوظيفي الكامل.
+6. دائماً أعد JSON بالشكل التالي: { "nextQuestion": "...", "isComplete": false } أو { "nextQuestion": null, "isComplete": true, "jobData": {...} }.
+
+**ترتيب الحقول في jobData:** title, employmentType (FULL_TIME/PART_TIME/CONTRACT), workMode (ONSITE/HYBRID/REMOTE), seniorityLevel (JUNIOR/MID/SENIOR/LEAD/MANAGER), yearsOfExperience, city, salaryMin (رقم), salaryMax (رقم), description (فقرة احترافية كاملة), requirements (مصفوفة نقاط متطلبات)، responsibilities (مصفوفة مهام وظيفية).`;
 
             const response = await callOpenAI(
                 [
@@ -326,10 +328,36 @@ export const aiService = {
 
     screenCV: async (cvText, jobDesc, companyId) => {
         try {
-            const prompt = `Screen CV against JD in Arabic. JSON { match_percentage, final_reason, missing_skills: [], strengths: [] }. JD: ${jobDesc} CV: ${cvText}`;
+            const prompt = `أنت خبير توظيف تقني. قم بتحليل السيرة الذاتية التالية مقابل الوصف الوظيفي المرفق باللغة العربية.
+            يجب أن يكون الرد بصيغة JSON فقط بالهيكل التالي:
+            {
+                "score": 0-100 (رقم يمثل نسبة المطابقة),
+                "summary": "ملخص مهني قصير للمرشح وتوافقه مع الوظيفة",
+                "final_reason": "سبب القبول أو الرفض أو المراجعة",
+                "skills": ["قائمة المهارات المستخرجة من السيرة الذاتية"],
+                "missing_skills": ["المهارات المطلوبة في الوظيفة وغير موجودة في السيرة الذاتية"],
+                "strengths": ["نقاط القوة"],
+                "experience": { "years": 0, "summary": "ملخص الخبرة" },
+                "education": { "degree": "الدرجة العلمية", "field": "التخصص" },
+                "recommendation": "hire/reject/interview"
+            }
+
+            الوصف الوظيفي: ${jobDesc}
+            السيرة الذاتية: ${cvText.substring(0, 6000)}`;
+
             return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'cv_screening');
         } catch (e) {
-            return { match_percentage: 0, final_reason: "فشل تحليل الذكاء الاصطناعي", missing_skills: [], strengths: [] };
+            logger.error('Screen CV Error', { error: e.message });
+            return {
+                score: 0,
+                summary: "فشل تحليل الذكاء الاصطناعي",
+                final_reason: "خطأ تقني في المعالجة",
+                skills: [],
+                missing_skills: [],
+                strengths: [],
+                experience: { years: 0, summary: "" },
+                recommendation: "interview"
+            };
         }
     },
 

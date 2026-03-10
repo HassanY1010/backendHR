@@ -20,7 +20,7 @@ export const getAllCompanies = async (req, res, next) => {
             domain: c.website || '',
             industry: 'Technology', // Fallback or map from settings/tags
             size: c.employeeLimit > 50 ? 'Medium' : 'Small',
-            status: c.subscriptionStatus === 'ACTIVE' ? 'active' : 'inactive',
+            status: c.status || (c.subscriptionStatus === 'ACTIVE' ? 'active' : 'inactive'),
             subscription: {
                 plan: c.subscriptions[0]?.plan || 'trial',
                 status: c.subscriptions[0]?.status || 'active',
@@ -118,7 +118,7 @@ export const updateCompanyStatus = async (req, res, next) => {
         const company = await prisma.company.update({
             where: { id },
             data: {
-                subscriptionStatus: status,
+                status,
                 updatedAt: new Date()
             }
         });

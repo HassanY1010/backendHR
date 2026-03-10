@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+// We prioritize the SERVICE_ROLE_KEY to bypass Row-Level Security (RLS) on server-side uploads.
+// If the SERVICE_ROLE_KEY is not available, we fall back to the ANON_KEY, which might fail if 
+// the Supabase bucket is not configured for public/anonymous uploads.
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 // Ensure we don't throw immediately on import if env vars are missing, 
 // so the app can start but we throw later if we actually try to upload without them configured.

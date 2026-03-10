@@ -1,9 +1,9 @@
 -- AlterTable
-ALTER TABLE `candidate` ADD COLUMN `location` VARCHAR(191) NULL,
+ALTER TABLE `Candidate` ADD COLUMN `location` VARCHAR(191) NULL,
     ADD COLUMN `termsAcceptedAt` DATETIME(3) NULL;
 
 -- AlterTable
-ALTER TABLE `interview` ADD COLUMN `candidateFeedback` TEXT NULL,
+ALTER TABLE `Interview` ADD COLUMN `candidateFeedback` TEXT NULL,
     ADD COLUMN `candidateRating` INTEGER NULL;
 
 -- CreateTable

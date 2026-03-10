@@ -7,30 +7,30 @@
 
 */
 -- DropForeignKey
-ALTER TABLE `employeetraining` DROP FOREIGN KEY `EmployeeTraining_employeeId_fkey`;
+ALTER TABLE `EmployeeTraining` DROP FOREIGN KEY `EmployeeTraining_employeeId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `employeetraining` DROP FOREIGN KEY `EmployeeTraining_trainingId_fkey`;
+ALTER TABLE `EmployeeTraining` DROP FOREIGN KEY `EmployeeTraining_trainingId_fkey`;
 
 -- DropForeignKey
-ALTER TABLE `trainingrequest` DROP FOREIGN KEY `TrainingRequest_trainingId_fkey`;
+ALTER TABLE `TrainingRequest` DROP FOREIGN KEY `TrainingRequest_trainingId_fkey`;
 
 -- AlterTable
-ALTER TABLE `task` ADD COLUMN `estimatedTimeUnit` VARCHAR(191) NULL DEFAULT 'HOURS';
+ALTER TABLE `Task` ADD COLUMN `estimatedTimeUnit` VARCHAR(191) NULL DEFAULT 'HOURS';
 
 -- AlterTable
-ALTER TABLE `trainingrequest` DROP COLUMN `trainingId`,
+ALTER TABLE `TrainingRequest` DROP COLUMN `trainingId`,
     ADD COLUMN `courseId` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `user` ADD COLUMN `location` VARCHAR(191) NULL,
+ALTER TABLE `User` ADD COLUMN `location` VARCHAR(191) NULL,
     ADD COLUMN `nameEn` VARCHAR(191) NULL;
 
 -- DropTable
-DROP TABLE `employeetraining`;
+DROP TABLE `EmployeeTraining`;
 
 -- DropTable
-DROP TABLE `training`;
+DROP TABLE `Training`;
 
 -- CreateTable
 CREATE TABLE `competitor` (
@@ -102,60 +102,60 @@ CREATE TABLE `training_assignment` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateIndex
-CREATE INDEX `AIUsageLog_service_idx` ON `aiusagelog`(`service`);
+CREATE INDEX `AIUsageLog_service_idx` ON `AIUsageLog`(`service`);
 
 -- CreateIndex
-CREATE INDEX `AuditLog_actionType_idx` ON `auditlog`(`actionType`);
+CREATE INDEX `AuditLog_actionType_idx` ON `AuditLog`(`actionType`);
 
 -- CreateIndex
-CREATE INDEX `Employee_department_idx` ON `employee`(`department`);
+CREATE INDEX `Employee_department_idx` ON `Employee`(`department`);
 
 -- CreateIndex
-CREATE INDEX `Employee_userId_idx` ON `employee`(`userId`);
+CREATE INDEX `Employee_userId_idx` ON `Employee`(`userId`);
 
 -- CreateIndex
-CREATE INDEX `Notification_isRead_idx` ON `notification`(`isRead`);
+CREATE INDEX `Notification_isRead_idx` ON `Notification`(`isRead`);
 
 -- CreateIndex
-CREATE INDEX `Project_status_idx` ON `project`(`status`);
+CREATE INDEX `Project_status_idx` ON `Project`(`status`);
 
 -- CreateIndex
-CREATE INDEX `Task_status_idx` ON `task`(`status`);
+CREATE INDEX `Task_status_idx` ON `Task`(`status`);
 
 -- CreateIndex
-CREATE INDEX `TrainingRequest_courseId_fkey` ON `trainingrequest`(`courseId`);
+CREATE INDEX `TrainingRequest_courseId_fkey` ON `TrainingRequest`(`courseId`);
 
 -- CreateIndex
-CREATE INDEX `User_email_idx` ON `user`(`email`);
+CREATE INDEX `User_email_idx` ON `User`(`email`);
 
 -- CreateIndex
-CREATE INDEX `User_role_idx` ON `user`(`role`);
+CREATE INDEX `User_role_idx` ON `User`(`role`);
 
 -- AddForeignKey
-ALTER TABLE `training_assignment` ADD CONSTRAINT `training_assignment_employeeId_fkey` FOREIGN KEY (`employeeId`) REFERENCES `employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `training_assignment` ADD CONSTRAINT `training_assignment_employeeId_fkey` FOREIGN KEY (`employeeId`) REFERENCES `Employee`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `training_assignment` ADD CONSTRAINT `training_assignment_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `training_course`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `trainingrequest` ADD CONSTRAINT `TrainingRequest_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `training_course`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `TrainingRequest` ADD CONSTRAINT `TrainingRequest_courseId_fkey` FOREIGN KEY (`courseId`) REFERENCES `training_course`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- RedefineIndex
-CREATE INDEX `AIUsageLog_companyId_idx` ON `aiusagelog`(`companyId`);
--- DROP INDEX `AIUsageLog_companyId_fkey` ON `aiusagelog`;
+CREATE INDEX `AIUsageLog_companyId_idx` ON `AIUsageLog`(`companyId`);
+-- DROP INDEX `AIUsageLog_companyId_fkey` ON `AIUsageLog`;
 
 -- RedefineIndex
-CREATE INDEX `AuditLog_companyId_idx` ON `auditlog`(`companyId`);
--- DROP INDEX `AuditLog_companyId_fkey` ON `auditlog`;
+CREATE INDEX `AuditLog_companyId_idx` ON `AuditLog`(`companyId`);
+-- DROP INDEX `AuditLog_companyId_fkey` ON `AuditLog`;
 
 -- RedefineIndex
-CREATE INDEX `AuditLog_userId_idx` ON `auditlog`(`userId`);
--- DROP INDEX `AuditLog_userId_fkey` ON `auditlog`;
+CREATE INDEX `AuditLog_userId_idx` ON `AuditLog`(`userId`);
+-- DROP INDEX `AuditLog_userId_fkey` ON `AuditLog`;
 
 -- RedefineIndex
-CREATE INDEX `Employee_companyId_idx` ON `employee`(`companyId`);
--- DROP INDEX `Employee_companyId_fkey` ON `employee`;
+CREATE INDEX `Employee_companyId_idx` ON `Employee`(`companyId`);
+-- DROP INDEX `Employee_companyId_fkey` ON `Employee`;
 
 -- RedefineIndex
-CREATE INDEX `Notification_employeeId_idx` ON `notification`(`employeeId`);
--- DROP INDEX `Notification_employeeId_fkey` ON `notification`;
+CREATE INDEX `Notification_employeeId_idx` ON `Notification`(`employeeId`);
+-- DROP INDEX `Notification_employeeId_fkey` ON `Notification`;

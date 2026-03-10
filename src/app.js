@@ -79,8 +79,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-app.use(express.json({ limit: '10mb' })); // Increased limit for heavy AI analysis tasks
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '100mb' })); // Increased limit for heavy AI analysis tasks and Video Uploads
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Use shared rate limiters
 app.use('/api/', globalLimiter);

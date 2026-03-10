@@ -42,8 +42,8 @@ export const protect = async (req, res, next) => {
             }
         }
 
-        if (!user || user.status !== 'ACTIVE') {
-            const error = new Error('Your account is no longer active or exists.');
+        if (!user || user.status !== 'ACTIVE' || (user.company && user.company.status !== 'active')) {
+            const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
         }
