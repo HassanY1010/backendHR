@@ -6,7 +6,47 @@ import { SearchService } from './search.service.js';
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 
+// ============================================================================
+// In-Memory Queue Fallback (when Redis is unavailable)
+// ============================================================================
+
+class InMemoryQueue {
+    constructor() {
+        this.jobs = [];
+        this.processing = false;
+    }
+
+    add(name, data, opts = {}) {
+        const job = { id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`, name, data, opts };
+        this.jobs.push(job);
+        logger.info(`📥 [InMemoryQueue] Job queued: ${name}`, { jobId: job.id });
+        this._processNext();
+        return job;
+    }
+
+    async _processNext() {
+        if (this.processing || this.jobs.length === 0) return;
+        this.processing = true;
+
+        while (this.jobs.length > 0) {
+            const job = this.jobs.shift();
+            try {
+                logger.info(`⚙️ [InMemoryQueue] Processing ${job.name}...`, { jobId: job.id });
+                await processJob(job);
+                logger.info(`✅ [InMemoryQueue] ${job.name} completed`, { jobId: job.id });
+            } catch (err) {
+                logger.error(`❌ [InMemoryQueue] ${job.name} failed`, { jobId: job.id, error: err.message });
+            }
+        }
+
+        this.processing = false;
+    }
+}
+
+// ============================================================================
 // Redis Connection Options
+// ============================================================================
+
 const getRedisConnection = () => {
     const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
     const url = isProd ? process.env.REDIS_PUBLIC_URL : process.env.REDIS_URL;
@@ -16,15 +56,13 @@ const getRedisConnection = () => {
         return url;
     }
 
-    // في حال التطوير أو fallback
     const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
     const port = parseInt(process.env.REDISPORT || process.env.REDIS_PORT || '6379');
     const password = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD;
 
     if (isProd) {
-        // لا نحاول الاتصال بالـ localhost في الإنتاج
-        logger.warn('❌ Redis URL missing in production, skipping Redis initialization');
-        return null; // null سيعني عدم استخدام Redis
+        logger.warn('⚠️ Redis URL missing in production — falling back to in-memory queue (jobs run inline, not persisted)');
+        return null;
     }
 
     return { host, port, password };
@@ -33,8 +71,28 @@ const getRedisConnection = () => {
 const QUEUE_NAME = 'background-jobs';
 
 /**
+ * Process a job by name
+ */
+async function processJob(job) {
+    switch (job.name) {
+        case 'indexDetail':
+            await SearchService.indexDocument(job.data);
+            break;
+        case 'logAudit':
+            await auditService.log(job.data);
+            break;
+        case 'generateTrainingPlan':
+            await QueueService.handleTrainingPlan(job.data);
+            break;
+        default:
+            logger.warn(`Unknown job type: ${job.name}`, { jobName: job.name });
+    }
+}
+
+/**
  * Queue Service
  * Handles all background asynchronous processing
+ * Falls back to in-memory queue when Redis is unavailable
  */
 export const QueueService = {
     queue: null,
@@ -46,54 +104,39 @@ export const QueueService = {
         const connection = getRedisConnection();
 
         if (!connection) {
-            logger.info('📦 Redis not configured, background jobs will not use Redis in production');
+            logger.info('📦 Redis not configured — using in-memory queue fallback');
+            QueueService.queue = new InMemoryQueue();
             return;
         }
 
-        logger.info('🚀 Initializing Job Queue...', {
+        logger.info('🚀 Initializing BullMQ Job Queue...', {
             host: typeof connection === 'string' ? 'URL' : connection.host
         });
 
-        // 1. Create Producer Queue
         QueueService.queue = new Queue(QUEUE_NAME, { connection });
 
-        // 2. Create Consumer Worker
         QueueService.worker = new Worker(
             QUEUE_NAME,
             async (job) => {
-                logger.info(`[Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
-
+                logger.info(`[BullMQ Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
                 try {
-                    switch (job.name) {
-                        case 'indexDetail':
-                            await SearchService.indexDocument(job.data);
-                            break;
-                        case 'logAudit':
-                            await auditService.log(job.data);
-                            break;
-                        case 'generateTrainingPlan':
-                            await QueueService.handleTrainingPlan(job.data);
-                            break;
-                        default:
-                            logger.warn(`Unknown job type: ${job.name}`, { jobName: job.name });
-                    }
-                    logger.info(`[Job ${job.id}] Completed`, { jobId: job.id });
+                    await processJob(job);
+                    logger.info(`[BullMQ Job ${job.id}] Completed`, { jobId: job.id });
                 } catch (error) {
-                    logger.error(`[Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
-                    throw error; // Retry mechanism kicks in
+                    logger.error(`[BullMQ Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
+                    throw error;
                 }
             },
             { connection }
         );
 
         QueueService.worker.on('failed', (job, err) => {
-            logger.error(`[Job ${job.id}] Failed completely`, { jobId: job.id, error: err.message });
+            logger.error(`[BullMQ Job ${job.id}] Failed completely`, { jobId: job.id, error: err.message });
         });
     },
 
     addJob: async (name, data, opts = {}) => {
         if (!QueueService.queue) QueueService.init();
-        if (!QueueService.queue) return null; // إذا Redis غير متاح
         return await QueueService.queue.add(name, data, {
             removeOnComplete: true,
             removeOnFail: 5000,

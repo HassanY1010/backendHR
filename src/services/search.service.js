@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import { aiService } from '../ai/ai-service.js';
 import { extractTextFromPDF } from '../utils/pdfExtractor.js';
+import logger from '../utils/logger.js';
 import mammoth from 'mammoth';
 
 export const SearchService = {
