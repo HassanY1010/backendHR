@@ -7,18 +7,30 @@ import 'dotenv/config';
 const cache = new Map();
 let redis = null;
 
-// استخدم فقط REDIS_PUBLIC_URL في الإنتاج، وإلا fallback للذاكرة
+const getRedisOptions = (url) => {
+    try {
+        const parsed = new URL(url);
+        return {
+            host: parsed.hostname,
+            port: parseInt(parsed.port) || 6379,
+            password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+            ...(parsed.protocol === 'rediss:' && { tls: {} }),
+            maxRetriesPerRequest: 1,
+            retryStrategy: () => null,
+            lazyConnect: true,
+        };
+    } catch {
+        return url;
+    }
+};
+
 const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
 
 if (url) {
     try {
-        logger.info('🔗 Cache: Initializing Redis from URL');
-        redis = new Redis(url, {
-            maxRetriesPerRequest: 1,
-            retryStrategy: () => null // Don't keep retrying if Redis is down
-        });
-
-        // التقاط أي خطأ وحفظه فقط في log دون رفعه للكونسول بشكل مزعج
+        logger.info('🔗 Cache: Initializing Redis');
+        const opts = getRedisOptions(url);
+        redis = new Redis(opts);
         redis.on('error', (err) => logger.warn('Redis Cache Error (ignored)', { error: err.message }));
     } catch (e) {
         logger.warn('Failed to connect to Redis, falling back to memory cache', { error: e.message });

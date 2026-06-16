@@ -47,12 +47,34 @@ class InMemoryQueue {
 // Redis Connection Options
 // ============================================================================
 
+const parseRedisUrl = (url) => {
+    try {
+        const parsed = new URL(url);
+        const isTLS = parsed.protocol === 'rediss:';
+        return {
+            host: parsed.hostname,
+            port: parseInt(parsed.port) || 6379,
+            password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
+            ...(isTLS && { tls: {} }),
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+        };
+    } catch {
+        return null;
+    }
+};
+
 const getRedisConnection = () => {
     const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
 
     if (url && url !== 'undefined') {
-        logger.info('🔗 Redis: Initializing BullMQ with URL');
-        return url;
+        const parsed = parseRedisUrl(url);
+        if (parsed) {
+            logger.info('🔗 Redis: Initializing BullMQ', { host: parsed.host, tls: !!parsed.tls });
+            return parsed;
+        }
+        logger.warn('⚠️ Redis URL invalid — using in-memory queue fallback');
+        return null;
     }
 
     const isCloud = !!process.env.RAILWAY_ENVIRONMENT || !!process.env.RENDER_EXTERNAL_URL || process.env.NODE_ENV === 'production';
