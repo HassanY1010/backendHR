@@ -55,16 +55,17 @@ const getRedisConnection = () => {
         return url;
     }
 
+    const isCloud = !!process.env.RAILWAY_ENVIRONMENT || !!process.env.RENDER_EXTERNAL_URL || process.env.NODE_ENV === 'production';
+    if (isCloud) {
+        logger.warn('⚠️ Redis URL missing in cloud environment — using in-memory queue fallback');
+        return null;
+    }
+
     const host = process.env.REDISHOST || process.env.REDIS_HOST || 'localhost';
     const port = parseInt(process.env.REDISPORT || process.env.REDIS_PORT || '6379');
     const password = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD;
 
-    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
-    if (isProd) {
-        logger.warn('⚠️ Redis URL missing in production — falling back to in-memory queue (jobs run inline, not persisted)');
-        return null;
-    }
-
+    logger.info('🔗 Redis: Attempting local connection for development', { host, port });
     return { host, port, password };
 };
 
