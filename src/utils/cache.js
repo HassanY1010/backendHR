@@ -8,7 +8,7 @@ const cache = new Map();
 let redis = null;
 
 // استخدم فقط REDIS_PUBLIC_URL في الإنتاج، وإلا fallback للذاكرة
-const url = process.env.NODE_ENV === 'production' ? process.env.REDIS_PUBLIC_URL : process.env.REDIS_URL;
+const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
 
 if (url) {
     try {
@@ -24,8 +24,9 @@ if (url) {
         logger.warn('Failed to connect to Redis, falling back to memory cache', { error: e.message });
     }
 } else {
-    if (process.env.NODE_ENV === 'production') {
-        logger.error('❌ Cache: No REDIS_PUBLIC_URL found in production, using memory fallback');
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+    if (isProd) {
+        logger.error('❌ Cache: No REDIS_PUBLIC_URL or REDIS_URL found in production, using memory fallback');
     } else {
         logger.info('📦 Cache: Using local memory fallback (Dev)');
     }

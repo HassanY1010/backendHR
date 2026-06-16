@@ -48,8 +48,7 @@ class InMemoryQueue {
 // ============================================================================
 
 const getRedisConnection = () => {
-    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
-    const url = isProd ? process.env.REDIS_PUBLIC_URL : process.env.REDIS_URL;
+    const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
 
     if (url && url !== 'undefined') {
         logger.info('🔗 Redis: Initializing BullMQ with URL');
@@ -60,6 +59,7 @@ const getRedisConnection = () => {
     const port = parseInt(process.env.REDISPORT || process.env.REDIS_PORT || '6379');
     const password = process.env.REDISPASSWORD || process.env.REDIS_PASSWORD;
 
+    const isProd = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
     if (isProd) {
         logger.warn('⚠️ Redis URL missing in production — falling back to in-memory queue (jobs run inline, not persisted)');
         return null;
