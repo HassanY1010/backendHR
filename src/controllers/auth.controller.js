@@ -303,13 +303,15 @@ export const forgotPassword = async (req, res, next) => {
             }
             contactRole = 'MANAGER';
         } else if (user.role === 'MANAGER' || user.role === 'ADMIN') {
-            const superAdmin = await prisma.user.findFirst({
+            const superAdmins = await prisma.user.findMany({
                 where: {
                     role: 'SUPER_ADMIN',
                     status: 'ACTIVE'
-                }
+                },
+                orderBy: { createdAt: 'desc' },
+                select: { email: true }
             });
-            contactEmail = superAdmin ? superAdmin.email : null;
+            contactEmail = superAdmins.length > 0 ? superAdmins.map(a => a.email).join('، ') : null;
             contactRole = 'SUPER_ADMIN';
         }
 
