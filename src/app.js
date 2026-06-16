@@ -89,6 +89,12 @@ app.use(cookieParser());
 app.use(express.json({ limit: '100mb' })); // Increased limit for heavy AI analysis tasks and Video Uploads
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
+// Client-side log ingestion (not rate-limited — frontend sends logs on every action)
+app.post('/api/logs', (req, res) => {
+    logger.info('📝 [Client Log]', { body: req.body });
+    res.status(200).json({ status: 'ok' });
+});
+
 // Use shared rate limiters
 app.use('/api/', globalLimiter);
 
@@ -139,12 +145,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscription-codes', subscriptionCodeRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/search', searchRoutes);
-
-// Client-side log ingestion (from frontend logger)
-app.post('/api/logs', (req, res) => {
-    logger.info('📝 [Client Log]', { body: req.body });
-    res.status(200).json({ status: 'ok' });
-});
 
 // Health check
 app.get('/health', (req, res) => {

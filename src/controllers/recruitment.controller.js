@@ -282,7 +282,6 @@ export const parseCV = async (req, res, next) => {
         }
 
         let resumeText = '';
-        const ext = req.file.originalname.split('.').pop().toLowerCase();
 
         try {
             if (validCheck.mime === 'application/pdf') {
@@ -291,22 +290,31 @@ export const parseCV = async (req, res, next) => {
                 const mammoth = await import('mammoth');
                 const result = await mammoth.extractRawText({ buffer: validCheck.buffer });
                 resumeText = result.value;
-            } else {
-                // Text fallback logic only if allowed
-                throw new Error("Unsupported file type for parsing");
             }
         } catch (parseError) {
             logger.error('Error parsing resume', { error: parseError.message });
-            // Don't set resumeText to 'Text extraction failed.' to avoid AI trying to parse this string
         }
 
-        const aiData = resumeText ? await aiService.extractCVData(resumeText, req.user?.companyId || 'PUBLIC') : {};
+        let aiData = {};
+        if (resumeText) {
+            try {
+                aiData = await aiService.extractCVData(resumeText, req.user?.companyId || 'PUBLIC');
+            } catch (aiError) {
+                logger.error('AI CV extraction failed', { error: aiError.message });
+            }
+        }
 
         res.status(200).json({
             status: 'success',
             data: {
-                extracted: aiData,
-                resumeText: resumeText.substring(0, 500) + '...'
+                extracted: {
+                    name: aiData?.name || '',
+                    email: aiData?.email || '',
+                    phone: aiData?.phone || '',
+                    location: aiData?.location || '',
+                    skills: aiData?.skills || [],
+                    experience_years: aiData?.experience_years || 0
+                }
             }
         });
 

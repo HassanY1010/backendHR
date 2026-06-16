@@ -106,6 +106,12 @@ export const virusScanMiddleware = async (req, res, next) => {
         return next();
     }
 
+    // Skip if file is in memory (no path) — memory storage
+    if (!req.file.path) {
+        logger.info('Virus scan skipped — file in memory storage');
+        return next();
+    }
+
     try {
         const { isInfected, viruses } = await scanFile(req.file.path);
 

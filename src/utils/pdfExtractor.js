@@ -1,14 +1,19 @@
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const _require = createRequire(import.meta.url);
 
-const standardFontDataUrl = path.join(
-    __dirname,
-    "../../../../node_modules/pdfjs-dist/standard_fonts/"
-) + "/";
+let standardFontDataUrl;
+try {
+    const pdfjsPath = path.dirname(_require.resolve('pdfjs-dist/package.json'));
+    standardFontDataUrl = path.join(pdfjsPath, 'standard_fonts') + '/';
+} catch (e) {
+    standardFontDataUrl = path.join(__dirname, '../../node_modules/pdfjs-dist/standard_fonts/') + '/';
+}
 
 /**
  * Extracts text from a PDF buffer using pdfjs-dist (Legacy build for Node.js).
@@ -16,15 +21,14 @@ const standardFontDataUrl = path.join(
  * @returns {Promise<string>} - The extracted text.
  */
 export const extractTextFromPDF = async (buffer) => {
-    // Convert Node Buffer to Uint8Array
     const uint8Array = new Uint8Array(buffer);
 
-    // Load the document
     const loadingTask = pdfjsLib.getDocument({
         data: uint8Array,
         standardFontDataUrl,
-        // Disable worker for Node.js environment usually usually avoids needing worker files
         disableFontFace: true,
+        useSystemFonts: false,
+        enableXfa: true,
     });
 
     const pdf = await loadingTask.promise;
@@ -32,21 +36,16 @@ export const extractTextFromPDF = async (buffer) => {
     let fullText = "";
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const content = await page.getTextContent();
-
-        // Basic extraction: join items with space
-        // Optional: Sort by Y position for better line reading if needed
-        // const pageText = content.items
-        //   .sort((a, b) => b.transform[5] - a.transform[5]) 
-        //   .map(item => item.str)
-        //   .join(" ");
-
-        const pageText = content.items
-            .map(item => item.str)
-            .join(" ");
-
-        fullText += pageText + "\n";
+        try {
+            const page = await pdf.getPage(pageNum);
+            const content = await page.getTextContent();
+            const pageText = content.items
+                .map(item => item.str)
+                .join(" ");
+            fullText += pageText + "\n";
+        } catch (pageError) {
+            continue;
+        }
     }
 
     return fullText;

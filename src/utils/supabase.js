@@ -1,45 +1,62 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import logger from './logger.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const supabaseUrl = process.env.SUPABASE_URL;
-
-// We prioritize the SERVICE_ROLE_KEY to bypass Row-Level Security (RLS) on server-side uploads.
-// If the SERVICE_ROLE_KEY is not available, we fall back to the ANON_KEY, which might fail if 
-// the Supabase bucket is not configured for public/anonymous uploads.
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
-// Ensure we don't throw immediately on import if env vars are missing, 
-// so the app can start but we throw later if we actually try to upload without them configured.
-export const supabase = supabaseUrl && supabaseKey
+const supabase = supabaseUrl && supabaseKey
     ? createClient(supabaseUrl, supabaseKey)
     : null;
 
+const uploadsDir = path.join(__dirname, '../../uploads');
+
 /**
- * Uploads a file buffer to Supabase Storage
+ * Uploads a file buffer to Supabase Storage, with local filesystem fallback.
  * @param {Buffer} fileBuffer - The buffer of the file to upload
  * @param {string} fileName - The name/path of the file in the bucket (e.g., 'resumes/123-file.pdf')
  * @param {string} mimetype - The mime type of the file
  * @returns {Promise<string>} - The public URL of the uploaded file
  */
 export const uploadFileToSupabase = async (fileBuffer, fileName, mimetype) => {
-    if (!supabase) {
-        throw new Error('Supabase client is not initialized. Check your environment variables.');
+    if (supabase) {
+        try {
+            const { data, error } = await supabase.storage
+                .from('uploads')
+                .upload(fileName, fileBuffer, {
+                    contentType: mimetype,
+                    upsert: true,
+                });
+
+            if (error) throw new Error(error.message);
+
+            const { data: publicUrlData } = supabase.storage
+                .from('uploads')
+                .getPublicUrl(fileName);
+
+            return publicUrlData.publicUrl;
+        } catch (error) {
+            logger.error('Supabase upload failed, falling back to local storage', { error: error.message });
+        }
     }
 
-    const { data, error } = await supabase.storage
-        .from('uploads')
-        .upload(fileName, fileBuffer, {
-            contentType: mimetype,
-            upsert: true,
-        });
+    // Fallback: save to local filesystem
+    const localPath = path.join(uploadsDir, fileName);
+    const localDir = path.dirname(localPath);
 
-    if (error) {
-        throw new Error(`Supabase upload error: ${error.message}`);
+    if (!fs.existsSync(localDir)) {
+        fs.mkdirSync(localDir, { recursive: true });
     }
 
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-        .from('uploads')
-        .getPublicUrl(fileName);
+    fs.writeFileSync(localPath, fileBuffer);
 
-    return publicUrlData.publicUrl;
+    const localUrl = `/uploads/${fileName}`;
+    logger.info('File saved locally', { path: localUrl });
+
+    return localUrl;
 };

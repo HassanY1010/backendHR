@@ -3,7 +3,7 @@ import rateLimit from 'express-rate-limit';
 // Global limit for standard API calls
 export const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 600,
     message: { status: 'error', message: 'Too many requests, please try again later' }
 });
 
