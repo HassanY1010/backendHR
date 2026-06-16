@@ -8,6 +8,26 @@ export const getAllCompanies = async (req, res, next) => {
         const companies = await prisma.company.findMany({
             where: {},
             include: {
+                users: {
+                    where: { role: 'MANAGER', deletedAt: null },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true,
+                        role: true,
+                        status: true,
+                        lastLogin: true,
+                        avatar: true,
+                        location: true,
+                        createdAt: true
+                    },
+                    take: 1
+                },
+                subscriptions: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                },
                 _count: {
                     select: { users: true }
                 }
@@ -45,7 +65,33 @@ export const createCompany = async (req, res, next) => {
 
 export const getCompanyById = async (req, res, next) => {
     try {
-        const company = await prisma.company.findUnique({ where: { id: req.params.id } });
+        const company = await prisma.company.findUnique({
+            where: { id: req.params.id },
+            include: {
+                users: {
+                    where: { role: 'MANAGER', deletedAt: null },
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true,
+                        role: true,
+                        status: true,
+                        lastLogin: true,
+                        avatar: true,
+                        location: true,
+                        createdAt: true
+                    }
+                },
+                subscriptions: {
+                    orderBy: { createdAt: 'desc' },
+                    take: 1
+                },
+                _count: {
+                    select: { users: true }
+                }
+            }
+        });
         if (!company) {
             const error = new Error('Company not found');
             error.statusCode = 404;

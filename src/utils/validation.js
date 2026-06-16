@@ -31,6 +31,8 @@ export const authSchemas = {
             password: z.string().min(8, 'Password must be at least 8 characters'),
             companyName: z.string().optional(),
             subscriptionCode: z.string().optional(),
+            phone: z.string().optional(),
+            address: z.string().optional(),
         })
     }),
     createTask: z.object({

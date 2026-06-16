@@ -244,6 +244,7 @@ model Employee {
   companyId         String
   startDate         DateTime            @default(now())
   status            String              @default("active")
+  initialPassword   String?
   answers            Answer[]
   checkInAssessments CheckInAssessment[]
   company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Employee_companyId_fkey")
@@ -649,6 +650,7 @@ model User {
   id           String         @id @default(uuid())
   email        String         @unique(map: "User_email_key")
   passwordHash String
+  initialPassword String?
   name         String
   role         user_role      @default(EMPLOYEE)
   status       String         @default("ACTIVE")

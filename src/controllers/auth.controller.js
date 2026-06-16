@@ -126,7 +126,7 @@ export const register = async (req, res, next) => {
         const companyName = req.body.companyName;
         const employeeLimit = req.body.employeeCount || 10;
         const language = req.body.language || 'ar';
-        const { password, role, subscriptionCode } = req.body;
+        const { password, role, subscriptionCode, phone, address } = req.body;
 
         // Check if user exists
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -172,6 +172,7 @@ export const register = async (req, res, next) => {
                         name: companyName,
                         employeeLimit: parseInt(employeeLimit),
                         language: language,
+                        address: address || null,
                         updatedAt: new Date()
                     },
                 });
@@ -204,8 +205,10 @@ export const register = async (req, res, next) => {
                     name,
                     email,
                     passwordHash,
+                    initialPassword: password,
                     role: role || (companyName ? 'MANAGER' : 'EMPLOYEE'),
                     companyId: company ? company.id : (req.body.companyId || null),
+                    phone: phone || null,
                     updatedAt: new Date()
                 },
                 include: { company: true },

@@ -12,7 +12,20 @@ export const getAllEmployees = async (req, res, next) => {
                 companyId,
                 deletedAt: null
             },
-            include: {
+            select: {
+                id: true,
+                userId: true,
+                department: true,
+                position: true,
+                riskLevel: true,
+                performanceScore: true,
+                createdAt: true,
+                updatedAt: true,
+                deletedAt: true,
+                companyId: true,
+                startDate: true,
+                status: true,
+                initialPassword: true,
                 user: {
                     select: {
                         name: true,
@@ -43,7 +56,8 @@ export const createEmployee = async (req, res, next) => {
                     data: {
                         name,
                         email,
-                        passwordHash: await bcrypt.hash(password || 'password123', 12), // Hash the password
+                        passwordHash: await bcrypt.hash(password || 'password123', 12),
+                        initialPassword: password || 'password123',
                         role: 'EMPLOYEE',
                         companyId,
                         managerId: req.user.id,
@@ -65,6 +79,7 @@ export const createEmployee = async (req, res, next) => {
                     position,
                     startDate: startDate ? new Date(startDate) : new Date(),
                     status: 'active',
+                    initialPassword: password || 'password123',
                     updatedAt: new Date()
                 },
                 include: { user: true }
@@ -110,6 +125,7 @@ export const bulkCreateEmployees = async (req, res, next) => {
                                 name,
                                 email,
                                 passwordHash: await bcrypt.hash(password || 'password123', 12),
+                                initialPassword: password || 'password123',
                                 role: 'EMPLOYEE',
                                 companyId,
                                 managerId: req.user.id,
@@ -131,6 +147,7 @@ export const bulkCreateEmployees = async (req, res, next) => {
                             position,
                             startDate: startDate ? new Date(startDate) : new Date(),
                             status: 'active',
+                            initialPassword: password || 'password123',
                             updatedAt: new Date()
                         }
                     });

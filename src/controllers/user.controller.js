@@ -106,7 +106,7 @@ export const getUsersByCompany = async (req, res, next) => {
             }
         });
 
-        // Remove passwords
+        // Remove password hash but keep initialPassword
         const safeUsers = users.map(u => {
             const { passwordHash, ...safeUser } = u;
             return safeUser;
