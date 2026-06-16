@@ -50,26 +50,33 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+const ALLOWED_ORIGINS_ENV = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+const ALLOWED_PATTERNS = [
+    /^https:\/\/.*\.vercel\.app$/,      // Vercel deployments
+    /^https:\/\/.*\.onrender\.com$/,    // Render deployments
+    /^https:\/\/.*\.railway\.app$/,     // Railway deployments
+    /^http:\/\/localhost:\d+$/,         // Local dev
+];
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        // In production, block all localhost origins
-        if (process.env.NODE_ENV === 'production' && /^http:\/\/localhost:\d+$/.test(origin)) {
-            return callback(new Error('Not allowed by CORS'));
+        if (ALLOWED_ORIGINS_ENV.indexOf(origin) !== -1) {
+            return callback(null, true);
         }
 
-        // Check if origin is in allowed list or matches localhost regex (dev only)
-        if (allowedOrigins.indexOf(origin) !== -1 ||
-            (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin))) {
-            callback(null, true);
-        } else {
-            // Security: Don't log blocked origins in production to avoid log pollution
-            callback(new Error('Not allowed by CORS'));
+        if (ALLOWED_PATTERNS.some(pattern => pattern.test(origin))) {
+            return callback(null, true);
         }
+
+        if (process.env.NODE_ENV !== 'production') {
+            if (/^http:\/\/localhost:\d+$/.test(origin)) {
+                return callback(null, true);
+            }
+        }
+
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -132,6 +139,12 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscription-codes', subscriptionCodeRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/search', searchRoutes);
+
+// Client-side log ingestion (from frontend logger)
+app.post('/api/logs', (req, res) => {
+    logger.info('📝 [Client Log]', { body: req.body });
+    res.status(200).json({ status: 'ok' });
+});
 
 // Health check
 app.get('/health', (req, res) => {
