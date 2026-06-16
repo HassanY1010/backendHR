@@ -133,29 +133,54 @@ export const QueueService = {
         }
 
         logger.info('🚀 Initializing BullMQ Job Queue...', {
-            host: typeof connection === 'string' ? 'URL' : connection.host
+            host: connection.host
         });
 
-        QueueService.queue = new Queue(QUEUE_NAME, { connection });
+        try {
+            QueueService.queue = new Queue(QUEUE_NAME, { connection });
 
-        QueueService.worker = new Worker(
-            QUEUE_NAME,
-            async (job) => {
-                logger.info(`[BullMQ Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
-                try {
-                    await processJob(job);
-                    logger.info(`[BullMQ Job ${job.id}] Completed`, { jobId: job.id });
-                } catch (error) {
-                    logger.error(`[BullMQ Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
-                    throw error;
-                }
-            },
-            { connection }
-        );
+            QueueService.worker = new Worker(
+                QUEUE_NAME,
+                async (job) => {
+                    logger.info(`[BullMQ Job ${job.id}] Processing ${job.name}...`, { jobId: job.id, jobName: job.name });
+                    try {
+                        await processJob(job);
+                        logger.info(`[BullMQ Job ${job.id}] Completed`, { jobId: job.id });
+                    } catch (error) {
+                        logger.error(`[BullMQ Job ${job.id}] Failed`, { jobId: job.id, error: error.message });
+                        throw error;
+                    }
+                },
+                { connection }
+            );
 
-        QueueService.worker.on('failed', (job, err) => {
-            logger.error(`[BullMQ Job ${job.id}] Failed completely`, { jobId: job.id, error: err.message });
-        });
+            QueueService.worker.on('failed', (job, err) => {
+                logger.error(`[BullMQ Job ${job.id}] Failed completely`, { jobId: job.id, error: err.message });
+            });
+
+            QueueService.queue.on('error', (err) => {
+                if (err.message?.includes('No ready connection')) return;
+                logger.error('❌ BullMQ Queue error — falling back to in-memory queue', { error: err.message });
+                QueueService._fallback();
+            });
+
+            QueueService.worker.on('error', (err) => {
+                if (err.message?.includes('No ready connection')) return;
+                logger.error('❌ BullMQ Worker error — falling back to in-memory queue', { error: err.message });
+                QueueService._fallback();
+            });
+        } catch (err) {
+            logger.error('❌ BullMQ initialization failed — falling back to in-memory queue', { error: err.message });
+            QueueService._fallback();
+        }
+    },
+
+    _fallback: () => {
+        try { QueueService.worker?.close(); } catch {}
+        try { QueueService.queue?.close(); } catch {}
+        QueueService.worker = null;
+        QueueService.queue = new InMemoryQueue();
+        logger.info('📦 Switched to in-memory queue after BullMQ failure');
     },
 
     addJob: async (name, data, opts = {}) => {
