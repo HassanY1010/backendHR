@@ -447,6 +447,8 @@ export const getInterviewByToken = async (req, res, next) => {
                             jobId: candidate.jobId,
                             type: 'VIDEO',
                             status: 'scheduled',
+                            scheduledAt: new Date(),
+                            interviewerName: 'تلقائي',
                             token: newToken,
                             expiresAt
                         },
@@ -644,57 +646,68 @@ export const submitInterviewAnswer = async (req, res, next) => {
             });
         }
 
-        // 3. AI Evaluation
+        // 3. AI Evaluation (run asynchronously to avoid timeout on Render free tier)
         const candidate = await prisma.candidate.findUnique({
             where: { id: interview.candidateId },
             include: { recruitmentjob: true }
         });
 
-        const questions = ['General Questions'];
-        const answers = notes || 'No notes provided';
-
-        const evaluationResult = await aiService.evaluateInterview(
-            questions,
-            answers,
-            candidate.recruitmentjob.companyId,
-            interview.candidateId
-        );
-
-        // Fixed: Use real AI result or fallback to "Pending Review" - NO RANDOM NUMBERS
-        const aiAnalysis = {
-            communication: evaluationResult.score || 0,
-            technical: 0,
-            overall: evaluationResult.score || 0,
-            strengths: evaluationResult.strengths || [],
-            weaknesses: evaluationResult.weaknesses || [],
-            decision: evaluationResult.decision || 'review',
-            recommendation: evaluationResult.decision || 'review'
-        };
-
-        const score = evaluationResult.score || 0;
-        const summary = evaluationResult.summary || 'تم إكمال المقابلة بنجاح وهي بانتظار المراجعة.';
-
-        await prisma.interview.update({
-            where: { id: interview.id },
+        // Return success immediately so the candidate doesn't wait for AI analysis
+        res.status(200).json({
+            status: 'success',
             data: {
-                aiAnalysis: JSON.stringify(aiAnalysis),
-                aiScore: score,
-                aiSummary: summary,
-                completedAt: new Date(),
-                status: 'completed'
+                interview: { ...interview, status: 'completed' },
+                message: 'تم حفظ المقابلة، جاري تحليل النتائج...'
             }
         });
 
-        await prisma.candidate.update({
-            where: { id: candidateId },
-            data: {
-                status: 'INTERVIEW_COMPLETED',
-                aiScore: score,
-                aiSummary: summary
-            }
-        });
+        // Run AI evaluation in background
+        try {
+            const questions = ['General Questions'];
+            const answers = notes || 'No notes provided';
 
-        res.status(200).json({ status: 'success', data: { interview: { ...interview, aiScore: score, aiSummary: summary, status: 'completed' } } });
+            const evaluationResult = await aiService.evaluateInterview(
+                questions,
+                answers,
+                candidate.recruitmentjob.companyId,
+                interview.candidateId
+            );
+
+            const aiAnalysis = {
+                communication: evaluationResult.score || 0,
+                technical: 0,
+                overall: evaluationResult.score || 0,
+                strengths: evaluationResult.strengths || [],
+                weaknesses: evaluationResult.weaknesses || [],
+                decision: evaluationResult.decision || 'review',
+                recommendation: evaluationResult.decision || 'review'
+            };
+
+            const score = evaluationResult.score || 0;
+            const summary = evaluationResult.summary || 'تم إكمال المقابلة بنجاح وهي بانتظار المراجعة.';
+
+            await prisma.interview.update({
+                where: { id: interview.id },
+                data: {
+                    aiAnalysis: JSON.stringify(aiAnalysis),
+                    aiScore: score,
+                    aiSummary: summary,
+                    completedAt: new Date(),
+                    status: 'completed'
+                }
+            });
+
+            await prisma.candidate.update({
+                where: { id: interview.candidateId },
+                data: {
+                    status: 'INTERVIEW_COMPLETED',
+                    aiScore: score,
+                    aiSummary: summary
+                }
+            });
+        } catch (aiError) {
+            logger.error('Background AI evaluation failed', { interviewId: interview.id, error: aiError.message });
+        }
     } catch (error) {
         next(error);
     }
@@ -896,7 +909,12 @@ export const uploadResume = async (req, res, next) => {
         const ext = path.extname(req.file.originalname) || '.pdf';
         const fileNameToSave = `resumes/resume-${uniqueSuffix}${ext}`;
 
-        const url = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+        let url = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        if (url.startsWith('/')) {
+            const origin = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+            url = `${origin}${url}`;
+        }
 
         res.status(200).json({ status: 'success', data: { url } });
     } catch (error) {
@@ -922,7 +940,13 @@ export const uploadInterviewVideo = async (req, res, next) => {
         const ext = path.extname(req.file.originalname) || '.webm';
         const fileNameToSave = `interviews/interview-${uniqueSuffix}${ext}`;
 
-        const videoUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+        let videoUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        // Resolve local relative URLs to absolute so frontend (Vercel) can play them
+        if (videoUrl.startsWith('/')) {
+            const origin = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+            videoUrl = `${origin}${videoUrl}`;
+        }
 
         console.log(`[Upload API] Video uploaded to Supabase successfully: ${videoUrl}`);
 
@@ -1067,7 +1091,13 @@ export const uploadCandidateResume = async (req, res, next) => {
         const ext = path.extname(req.file.originalname) || '.pdf';
         const fileNameToSave = `resumes/resume-${uniqueSuffix}${ext}`;
 
-        const resumeUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+        let resumeUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        // Resolve local relative URLs to absolute so frontend (Vercel) can access them
+        if (resumeUrl.startsWith('/')) {
+            const origin = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+            resumeUrl = `${origin}${resumeUrl}`;
+        }
 
         let resumeText = '';
         const cleanExt = ext.replace('.', '').toLowerCase();
@@ -1212,7 +1242,12 @@ export const getCandidateResume = async (req, res, next) => {
             throw error;
         }
 
-        return res.redirect(candidate.resumeUrl);
+        let url = candidate.resumeUrl;
+        if (url.startsWith('/')) {
+            const origin = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+            url = `${origin}${url}`;
+        }
+        return res.redirect(url);
     } catch (error) {
         next(error);
     }
