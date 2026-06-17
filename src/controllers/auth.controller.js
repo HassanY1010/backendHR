@@ -110,6 +110,7 @@ export const login = async (req, res, next) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                avatar: user.avatar,
                 company: user.company,
                 dashboardUrl: dashboardUrls[user.role] || ''
             }
@@ -256,6 +257,7 @@ export const register = async (req, res, next) => {
                 name: result.name,
                 email: result.email,
                 role: result.role,
+                avatar: result.avatar,
                 company: result.company,
                 dashboardUrl: dashboardUrls[result.role] || ''
             },
