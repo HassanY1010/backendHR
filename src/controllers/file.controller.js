@@ -22,7 +22,13 @@ export const uploadFile = async (req, res, next) => {
         const ext = path.extname(decodedFilename);
         const fileNameToSave = `attachments/attachment-${uniqueSuffix}${ext}`;
 
-        const fileUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+        let fileUrl = await uploadFileToSupabase(req.file.buffer, fileNameToSave, req.file.mimetype);
+
+        // If fallback to local storage, resolve to absolute URL so frontend (Vercel) can reach it
+        if (fileUrl.startsWith('/')) {
+            const origin = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+            fileUrl = `${origin}${fileUrl}`;
+        }
 
         res.status(200).json({
             status: 'success',

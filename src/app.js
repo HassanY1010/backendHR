@@ -29,6 +29,7 @@ import fileRoutes from './routes/file.routes.js';
 import searchRoutes from './routes/search.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { checkKillSwitch } from './middlewares/governance.middleware.js';
+import logger from './utils/logger.js';
 
 
 const app = express();
@@ -91,7 +92,11 @@ app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Client-side log ingestion (not rate-limited — frontend sends logs on every action)
 app.post('/api/logs', (req, res) => {
-    logger.info('📝 [Client Log]', { body: req.body });
+    try {
+        logger.info('📝 [Client Log]', { body: req.body });
+    } catch (err) {
+        // silently ignore logger failures
+    }
     res.status(200).json({ status: 'ok' });
 });
 

@@ -26,6 +26,17 @@ const uploadsDir = path.join(__dirname, '../../uploads');
 export const uploadFileToSupabase = async (fileBuffer, fileName, mimetype) => {
     if (supabase) {
         try {
+            // Ensure the bucket exists (create if not)
+            const { data: buckets } = await supabase.storage.listBuckets();
+            const bucketExists = buckets?.some(b => b.name === 'uploads');
+            if (!bucketExists) {
+                logger.info('uploads bucket not found, creating it');
+                const { error: createError } = await supabase.storage.createBucket('uploads', {
+                    public: true,
+                });
+                if (createError) throw new Error(`Failed to create bucket: ${createError.message}`);
+            }
+
             const { data, error } = await supabase.storage
                 .from('uploads')
                 .upload(fileName, fileBuffer, {
@@ -41,7 +52,7 @@ export const uploadFileToSupabase = async (fileBuffer, fileName, mimetype) => {
 
             return publicUrlData.publicUrl;
         } catch (error) {
-            logger.error('Supabase upload failed, falling back to local storage', { error: error.message });
+            logger.error('Supabase upload failed, falling back to local storage', { error: error.message, fileName });
         }
     }
 
@@ -55,6 +66,7 @@ export const uploadFileToSupabase = async (fileBuffer, fileName, mimetype) => {
 
     fs.writeFileSync(localPath, fileBuffer);
 
+    // Return relative path — controller will resolve to absolute URL
     const localUrl = `/uploads/${fileName}`;
     logger.info('File saved locally', { path: localUrl });
 
