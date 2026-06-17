@@ -1,6 +1,6 @@
 import path from 'path';
 import logger from '../utils/logger.js';
-import { uploadFileToSupabase } from '../utils/supabase.js';
+import { uploadFileToSupabase, checkSupabaseHealth } from '../utils/supabase.js';
 
 export const uploadFile = async (req, res, next) => {
     try {
@@ -48,4 +48,22 @@ export const uploadFile = async (req, res, next) => {
 export const deleteFile = async (req, res, next) => {
     // Basic implementation for now
     res.status(200).json({ status: 'success', message: 'File deletion logic would go here' });
+};
+
+export const checkStorageHealth = async (req, res, next) => {
+    try {
+        const result = await checkSupabaseHealth();
+        res.status(result.ok ? 200 : 503).json({
+            status: result.ok ? 'success' : 'error',
+            storage: result,
+            env: {
+                SUPABASE_URL: process.env.SUPABASE_URL ? '✅ set' : '❌ MISSING',
+                SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ set' : '❌ MISSING',
+                SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? '✅ set' : '❌ MISSING',
+                SUPABASE_BUCKET: process.env.SUPABASE_BUCKET || '(default: uploads)',
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 };
