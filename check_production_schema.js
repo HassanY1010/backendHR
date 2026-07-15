@@ -40,7 +40,7 @@ async function getMigrationTablesAndColumns() {
 
 async function tableExists(table) {
   const result = await prisma.$queryRawUnsafe(
-    `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?`,
+    `SELECT COUNT(*)::int as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`,
     table
   );
   return result[0].count > 0;
@@ -48,7 +48,7 @@ async function tableExists(table) {
 
 async function columnExists(table, column) {
   const result = await prisma.$queryRawUnsafe(
-    `SELECT COUNT(*) as count FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+    `SELECT COUNT(*)::int as count FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
     table, column
   );
   return result[0].count > 0;

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -48,8 +48,8 @@ model Answer {
   employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "Answer_employeeId_fkey")
   dailyquestion DailyQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade, map: "Answer_questionId_fkey")
 
-  @@index([employeeId], map: "Answer_employeeId_fkey")
-  @@index([questionId], map: "Answer_questionId_fkey")
+  @@index([employeeId], map: "Answer_employeeId_idx")
+  @@index([questionId], map: "Answer_questionId_idx")
   @@index([employeeId, createdAt], map: "Answer_employeeId_createdAt_idx")
   @@map("answer")
 }
@@ -84,8 +84,8 @@ model Candidate {
   resumeUrl         String?
   coverLetter       String?          @db.Text
   experience        Int?
-  education         String?          @db.LongText
-  skills            String?          @db.LongText
+  education         String?          @db.Text
+  skills            String?          @db.Text
   aiScore           Float?
   aiSummary         String?          @db.Text
   status            candidate_status @default(NEW)
@@ -94,14 +94,14 @@ model Candidate {
   deletedAt         DateTime?
   aiStatus          String?
   interviewCode     String?          @unique(map: "Candidate_interviewCode_key")
-  aiAnalysisDetails String?          @db.LongText
+  aiAnalysisDetails String?          @db.Text
   resumePath        String?
   location          String?
   termsAcceptedAt   DateTime?
   recruitmentjob    RecruitmentJob   @relation(fields: [jobId], references: [id], onDelete: Cascade, map: "Candidate_jobId_fkey")
   interviews         Interview[]
 
-  @@index([jobId], map: "Candidate_jobId_fkey")
+  @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
   @@index([status, deletedAt])
   @@map("candidate")
@@ -121,7 +121,8 @@ model CheckInAssessment {
   employee       Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "CheckInAssessment_employeeId_fkey")
   checkinentries   CheckInEntry[]
 
-  @@index([employeeId], map: "CheckInAssessment_employeeId_fkey")
+  @@index([employeeId], map: "CheckInAssessment_employeeId_idx")
+  @@index([employeeId, deletedAt])
   @@map("checkinassessment")
 }
 
@@ -140,7 +141,7 @@ model CheckInEntry {
   createdAt         DateTime          @default(now())
   checkinassessment CheckInAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade, map: "CheckInEntry_assessmentId_fkey")
 
-  @@index([assessmentId], map: "CheckInEntry_assessmentId_fkey")
+  @@index([assessmentId], map: "CheckInEntry_assessmentId_idx")
   @@map("checkinentry")
 }
 
@@ -169,7 +170,7 @@ model Company {
   employeeLimit      Int               @default(10)
   language           String            @default("ar")
   logo               String?
-  settings           String?           @db.LongText
+  settings           String?           @db.Text
   website            String?
   aiUsageLogs        AIUsageLog[]
   auditLogs          AuditLog[]
@@ -209,8 +210,8 @@ model Competitor {
   name        String
   marketShare Float
   growthRate  Float?
-  strengths   String?  @db.LongText
-  weaknesses  String?  @db.LongText
+  strengths   String?  @db.Text
+  weaknesses  String?  @db.Text
   color       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -227,7 +228,7 @@ model DailyQuestion {
   answers    Answer[]
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "DailyQuestion_companyId_fkey")
 
-  @@index([companyId], map: "DailyQuestion_companyId_fkey")
+  @@index([companyId], map: "DailyQuestion_companyId_idx")
   @@map("dailyquestion")
 }
 
@@ -308,7 +309,7 @@ model Interview {
   completed         Boolean   @default(false)
   scheduledAt       DateTime?
   createdAt         DateTime  @default(now())
-  aiAnalysis        String?   @db.LongText
+  aiAnalysis        String?   @db.Text
   videoUrl          String?
   duration          Int?
   interviewerName   String?
@@ -319,11 +320,11 @@ model Interview {
   expiresAt         DateTime?
   completedAt       DateTime?
   aiScore           Float?
-  aiSummary         String?   @db.LongText
-  transcript        String?   @db.LongText
+  aiSummary         String?   @db.Text
+  transcript        String?   @db.Text
   candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
 
-  @@index([candidateId], map: "Interview_candidateId_fkey")
+  @@index([candidateId], map: "Interview_candidateId_idx")
   @@map("interview")
 }
 
@@ -360,7 +361,7 @@ model Notification {
   type       String    @default("info")
   priority   String    @default("medium")
   isRead     Boolean   @default(false)
-  metadata   String?   @db.LongText
+  metadata   String?   @db.Text
   createdAt  DateTime  @default(now())
   updatedAt  DateTime
   userId     String?
@@ -369,7 +370,7 @@ model Notification {
 
   @@index([employeeId], map: "Notification_employeeId_idx")
   @@index([isRead], map: "Notification_isRead_idx")
-  @@index([userId], map: "Notification_userId_fkey")
+  @@index([userId], map: "Notification_userId_idx")
   @@map("notification")
 }
 
@@ -395,7 +396,7 @@ model ProductMetric {
   change    Float?
   trend     String?
   timestamp DateTime               @default(now())
-  metadata  String?                @db.LongText
+  metadata  String?                @db.Text
 
   @@map("productmetric")
 }
@@ -432,9 +433,9 @@ model Project {
   employee         Employee? @relation(fields: [managerId], references: [id], onDelete: SetNull, map: "Project_managerId_fkey")
   tasks             Task[]
 
-  @@index([companyId], map: "Project_companyId_fkey")
+  @@index([companyId], map: "Project_companyId_idx")
   @@index([companyId, deletedAt])
-  @@index([managerId], map: "Project_managerId_fkey")
+  @@index([managerId], map: "Project_managerId_idx")
   @@index([status], map: "Project_status_idx")
   @@map("project")
 }
@@ -460,9 +461,9 @@ model RecruitmentJob {
   workEnvironment  recruitmentjob_work_environment?
   openingReason    recruitmentjob_opening_reason @default(NEW_ROLE)
   description      String                @db.Text
-  requirements     String?               @db.LongText
-  responsibilities String?               @db.LongText
-  salaryRange      String?               @db.LongText
+  requirements     String?               @db.Text
+  responsibilities String?               @db.Text
+  salaryRange      String?               @db.Text
   status           recruitmentjob_status @default(OPEN)
   aiGenerated      Boolean               @default(false)
   createdBy        String?
@@ -474,7 +475,7 @@ model RecruitmentJob {
   company          Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "RecruitmentJob_companyId_fkey")
   departmentRel    Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
-  @@index([companyId], map: "RecruitmentJob_companyId_fkey")
+  @@index([companyId], map: "RecruitmentJob_companyId_idx")
   @@index([companyId, status], map: "RecruitmentJob_companyId_status_idx")
   @@index([companyId, deletedAt])
   @@map("recruitmentjob")
@@ -508,7 +509,7 @@ model Subscription {
   updatedAt DateTime
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Subscription_companyId_fkey")
 
-  @@index([companyId], map: "Subscription_companyId_fkey")
+  @@index([companyId], map: "Subscription_companyId_idx")
   @@map("subscription")
 }
 
@@ -547,17 +548,17 @@ model Task {
   actualTime    Float?
   aiScore       Float?
   complexity    String?
-  dependencies  String?   @db.LongText
+  dependencies  String?   @db.Text
   estimatedTime Float?
   estimatedTimeUnit String?   @default("HOURS")
   progress      Int       @default(0)
   projectId     String?
-  attachments   String?   @db.LongText
+  attachments   String?   @db.Text
   employee      Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull, map: "Task_employeeId_fkey")
   project       Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "Task_projectId_fkey")
 
-  @@index([employeeId], map: "Task_employeeId_fkey")
-  @@index([projectId], map: "Task_projectId_fkey")
+  @@index([employeeId], map: "Task_employeeId_idx")
+  @@index([projectId], map: "Task_projectId_idx")
   @@index([projectId, deletedAt])
   @@index([employeeId, deletedAt])
   @@index([status], map: "Task_status_idx")
@@ -574,7 +575,7 @@ model TrainingCourse {
   language         String?            @default("ar")
   level            String?            @default("beginner")
   duration         Int                // In Minutes/Hours
-  skills           String?            @db.LongText // JSON tags
+  skills           String?            @db.Text // JSON tags
   isFree           Boolean            @default(true)
   status           String             @default("active")
   createdAt        DateTime           @default(now())
@@ -607,9 +608,9 @@ model TrainingAssignment {
   impactAnalysis String?                 @db.Text
   
   // Detailed Spec Fields
-  trainingPlan   String?                 @db.LongText // JSON: { duration_days, daily_tasks: [] }
-  quiz           String?                 @db.LongText // JSON: [{ question, options, answer }]
-  quizAnswers    String?                 @db.LongText // JSON: Answers provided by employee
+  trainingPlan   String?                 @db.Text // JSON: { duration_days, daily_tasks: [] }
+  quiz           String?                 @db.Text // JSON: [{ question, options, answer }]
+  quizAnswers    String?                 @db.Text // JSON: Answers provided by employee
   quizScore      Float?                  // Score of the quiz
   
   certificateUrl String?
@@ -641,8 +642,8 @@ model TrainingRequest {
   employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade, map: "TrainingRequest_employeeId_fkey")
   course     TrainingCourse? @relation(fields: [courseId], references: [id], map: "TrainingRequest_courseId_fkey")
 
-  @@index([employeeId], map: "TrainingRequest_employeeId_fkey")
-  @@index([courseId], map: "TrainingRequest_courseId_fkey")
+  @@index([employeeId], map: "TrainingRequest_employeeId_idx")
+  @@index([courseId], map: "TrainingRequest_courseId_idx")
   @@map("trainingrequest")
 }
 
@@ -662,7 +663,7 @@ model User {
   bio          String?        @db.Text
   lastLogin    DateTime?
   phone        String?
-  settings     String?        @db.LongText
+  settings     String?        @db.Text
   managerId    String?
   location     String?
   nameEn       String?
@@ -673,10 +674,10 @@ model User {
   manager       User?          @relation("userTouser", fields: [managerId], references: [id], map: "User_managerId_fkey")
   managedUsers  User[]         @relation("userTouser")
 
-  @@index([companyId], map: "User_companyId_fkey")
+  @@index([companyId], map: "User_companyId_idx")
   @@index([companyId, deletedAt])
   @@index([email], map: "User_email_idx")
-  @@index([managerId], map: "User_managerId_fkey")
+  @@index([managerId], map: "User_managerId_idx")
   @@index([role], map: "User_role_idx")
   @@map("user")
 }
@@ -686,9 +687,9 @@ model SearchIndex {
   companyId    String
   documentId   String   // ID of the original record (Candidate, Task, etc.)
   documentType String   // Type: 'CANDIDATE_CV', 'TASK_ATTACHMENT', 'JOB', 'COURSE', etc.
-  content      String   @db.LongText
-  metadata     String?  @db.LongText // JSON: Original name, specific permissions
-  vector       String?  @db.LongText // Store embedding as stringified JSON array
+  content      String   @db.Text
+  metadata     String?  @db.Text // JSON: Original name, specific permissions
+  vector       String?  @db.Text // Store embedding as stringified JSON array
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -4,7 +4,11 @@ const prisma = new PrismaClient();
 
 async function main() {
     try {
-        const columns = await prisma.$queryRaw`SHOW COLUMNS FROM user`;
+        const columns = await prisma.$queryRaw`
+            SELECT column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_name = 'user'
+        `;
         console.log('Columns in User table:', JSON.stringify(columns, null, 2));
 
         console.log('Attempting prisma.user.findFirst()...');
