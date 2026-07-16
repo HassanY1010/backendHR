@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -31,12 +32,13 @@ async function main() {
   // 2. Create Admin User
   const adminEmail = 'admin@admin.com';
   const adminPassword = 'admin123';
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
 
   const adminUser = await prisma.user.create({
     data: {
       email: adminEmail,
       name: 'Admin User',
-      passwordHash: adminPassword,
+      passwordHash: hashedPassword,
       role: 'SUPER_ADMIN',
       companyId: company.id,
       status: 'ACTIVE',
