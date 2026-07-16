@@ -250,8 +250,9 @@ export const register = async (req, res, next) => {
             details: { name, email, company: companyName }
         });
 
-        res.status(214).json({
+        res.status(201).json({
             status: 'success',
+            token,
             user: {
                 id: result.id,
                 name: result.name,
