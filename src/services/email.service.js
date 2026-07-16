@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resendKey = process.env.RESEND_API_KEY;
+const resend = resendKey ? new Resend(resendKey) : null;
 
 export const emailService = {
     /**
@@ -11,6 +12,10 @@ export const emailService = {
      */
     sendInterviewInvitation: async (candidate, job, interviewLink) => {
         try {
+            if (!resend) {
+                console.warn('⚠️ Resend is not configured (missing RESEND_API_KEY). Simulating email send. Link:', interviewLink);
+                return { id: 'simulated-email-id', simulated: true };
+            }
             const { data, error } = await resend.emails.send({
                 from: 'AI HR Platform <onboarding@resend.dev>',
                 to: [candidate.email],
