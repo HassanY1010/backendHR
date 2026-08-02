@@ -1015,6 +1015,34 @@ export const scheduleInterview = async (req, res, next) => {
             }
         });
 
+        // Auto transition linked JobRequest to INTERVIEW_PROCESS
+        if (candidate.jobId) {
+            const jobReq = await prisma.jobRequest.findFirst({
+                where: {
+                    jobTitle: candidate.recruitmentjob?.title,
+                    companyId: candidate.recruitmentjob?.companyId,
+                    deletedAt: null
+                }
+            });
+
+            if (jobReq && ['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
+                await prisma.jobRequest.update({
+                    where: { id: jobReq.id },
+                    data: { status: 'INTERVIEW_PROCESS' }
+                });
+
+                await prisma.jobRequestHistory.create({
+                    data: {
+                        jobRequestId: jobReq.id,
+                        action: 'بدء المقابلات',
+                        oldStatus: jobReq.status,
+                        newStatus: 'INTERVIEW_PROCESS',
+                        comment: `تمت جدولة مقابلة جديدة للمرشح ${candidate.fullName}`
+                    }
+                });
+            }
+        }
+
         // Send Email
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const interviewLink = `${frontendUrl}/interview/${token}`;
