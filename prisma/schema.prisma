@@ -182,6 +182,7 @@ model Company {
   subscriptionCode   SubscriptionCode?
   users              User[]
   departments        Department[]
+  jobRequests        JobRequest[]
 
   status             String            @default("active")
   @@map("company")
@@ -195,6 +196,7 @@ model Department {
   parentId        String?          // ✅ إضافة حقل القسم الرئيسي
   company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   jobs            RecruitmentJob[]
+  jobRequests     JobRequest[]
   
   // ✅ علاقة هرمية (Self-relation)
   parent          Department?      @relation("SubDepartments", fields: [parentId], references: [id], onDelete: Cascade)
@@ -674,6 +676,11 @@ model User {
   manager       User?          @relation("userTouser", fields: [managerId], references: [id], map: "User_managerId_fkey")
   managedUsers  User[]         @relation("userTouser")
 
+  createdJobRequests JobRequest[]        @relation("JobRequestCreatedBy")
+  hiringJobRequests  JobRequest[]        @relation("JobRequestHiringManager")
+  jobRequestHistory  JobRequestHistory[]
+  approvalRequests   ApprovalRequest[]
+
   @@index([companyId], map: "User_companyId_idx")
   @@index([companyId, deletedAt])
   @@index([email], map: "User_email_idx")
@@ -738,6 +745,159 @@ enum user_role {
   SUPER_ADMIN
   MANAGER
   EMPLOYEE
+  HR_MANAGER
+  RECRUITER
+  FINANCE_MANAGER
+  CEO_EXECUTIVE
+}
+
+enum job_request_status {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  PENDING_APPROVAL
+  APPROVED
+  RECRUITMENT_STARTED
+  INTERVIEW_PROCESS
+  OFFER_STAGE
+  HIRED
+  CLOSED
+  REJECTED
+  CANCELLED
+  ON_HOLD
+}
+
+enum job_request_priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum job_request_employment_type {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  REMOTE
+  HYBRID
+}
+
+enum job_request_hiring_reason {
+  NEW_POSITION
+  REPLACEMENT
+  EXPANSION
+}
+
+enum approval_type {
+  HR_REVIEW
+  FINANCE_APPROVAL
+  EXECUTIVE_APPROVAL
+}
+
+enum approval_status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model JobRequest {
+  id               String                      @id @default(uuid())
+  requestId        String                      @unique
+  companyId        String
+  createdBy        String
+  jobTitle         String
+  departmentId     String
+  hiringManagerId  String?
+  location         String
+  employmentType   job_request_employment_type @default(FULL_TIME)
+  vacancies        Int                         @default(1)
+  
+  // Job Details
+  jobSummary       String?                     @db.Text
+  requiredExperience String?                   @db.Text
+  educationLevel   String?
+  certifications   String?                     @db.Text
+  languages        String?
+  responsibilities String?                     @db.Text
+  
+  // Financial Information
+  salaryMin        Float?
+  salaryMax        Float?
+  budgetCode       String?
+  costCenter       String?
+  
+  // Hiring Info
+  hiringReason     job_request_hiring_reason   @default(NEW_POSITION)
+  requiredDate     DateTime?
+  priority         job_request_priority        @default(MEDIUM)
+  status           job_request_status          @default(DRAFT)
+  
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+  deletedAt        DateTime?
+
+  // Relations
+  company          Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdByUser    User                        @relation("JobRequestCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
+  hiringManager    User?                       @relation("JobRequestHiringManager", fields: [hiringManagerId], references: [id], onDelete: SetNull)
+  department       Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  skills           JobRequestSkill[]
+  history          JobRequestHistory[]
+  approvals        ApprovalRequest[]
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([createdBy])
+  @@index([status])
+  @@index([priority])
+  @@map("jobrequest")
+}
+
+model JobRequestSkill {
+  id           String     @id @default(uuid())
+  jobRequestId String
+  skillName    String
+  jobRequest   JobRequest @relation(fields: [jobRequestId], references: [id], onDelete: Cascade)
+
+  @@index([jobRequestId])
+  @@map("jobrequestskill")
+}
+
+model JobRequestHistory {
+  id           String             @id @default(uuid())
+  jobRequestId String
+  action       String
+  oldStatus    job_request_status?
+  newStatus    job_request_status?
+  performedBy  String
+  comment      String?            @db.Text
+  createdAt    DateTime           @default(now())
+
+  jobRequest   JobRequest         @relation(fields: [jobRequestId], references: [id], onDelete: Cascade)
+  performer    User               @relation(fields: [performedBy], references: [id], onDelete: Cascade)
+
+  @@index([jobRequestId])
+  @@index([performedBy])
+  @@map("jobrequesthistory")
+}
+
+model ApprovalRequest {
+  id           String          @id @default(uuid())
+  jobRequestId String
+  approverId   String?
+  approvalType approval_type
+  stepOrder    Int             @default(1)
+  status       approval_status @default(PENDING)
+  comment      String?         @db.Text
+  approvedAt   DateTime?
+  createdAt    DateTime        @default(now())
+
+  jobRequest   JobRequest      @relation(fields: [jobRequestId], references: [id], onDelete: Cascade)
+  approver     User?           @relation(fields: [approverId], references: [id], onDelete: SetNull)
+
+  @@index([jobRequestId])
+  @@index([approverId])
+  @@map("approvalrequest")
 }
 
 enum recruitmentjob_status {

@@ -27,6 +27,7 @@ import notificationRoutes from './routes/notification.routes.js';
 import subscriptionCodeRoutes from './routes/subscription-code.routes.js';
 import fileRoutes from './routes/file.routes.js';
 import searchRoutes from './routes/search.routes.js';
+import jobRequestRoutes from './routes/jobRequestRoutes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { checkKillSwitch } from './middlewares/governance.middleware.js';
 import logger from './utils/logger.js';
@@ -150,6 +151,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscription-codes', subscriptionCodeRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/job-requests', jobRequestRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
