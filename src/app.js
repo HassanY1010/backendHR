@@ -35,6 +35,9 @@ import logger from './utils/logger.js';
 
 const app = express();
 
+// Trust proxy settings for deployment platforms like Render/Vercel behind reverse proxies
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet({
     contentSecurityPolicy: {
