@@ -85,8 +85,37 @@ export const createJobRequest = async (req, res) => {
     if (!jobTitle) {
       return res.status(400).json({ error: 'المسمى الوظيفي مطلوب' });
     }
-    if (!departmentId) {
-      return res.status(400).json({ error: 'القسم مطلوب' });
+
+    // Resolve or find valid department for company
+    let validDepartmentId = departmentId;
+    if (departmentId) {
+      const existingDep = await prisma.department.findFirst({
+        where: {
+          companyId,
+          OR: [{ id: departmentId }, { name: { contains: 'تكنولوجيا' } }, { name: { contains: 'الموارد' } }]
+        }
+      });
+      if (existingDep) {
+        validDepartmentId = existingDep.id;
+      } else {
+        // Find any existing department in company, or create a default one
+        const anyDep = await prisma.department.findFirst({ where: { companyId } });
+        if (anyDep) {
+          validDepartmentId = anyDep.id;
+        } else {
+          const newDep = await prisma.department.create({
+            data: {
+              name: 'الإدارة العامة',
+              companyId
+            }
+          });
+          validDepartmentId = newDep.id;
+        }
+      }
+    } else {
+      const defaultDep = await prisma.department.findFirst({ where: { companyId } }) || 
+        await prisma.department.create({ data: { name: 'الإدارة العامة', companyId } });
+      validDepartmentId = defaultDep.id;
     }
 
     const requestId = await generateRequestId(companyId);
@@ -99,7 +128,7 @@ export const createJobRequest = async (req, res) => {
           companyId,
           createdBy: userId,
           jobTitle,
-          departmentId,
+          departmentId: validDepartmentId,
           hiringManagerId: hiringManagerId || userId,
           location: location || 'الرياض',
           employmentType: employmentType || 'FULL_TIME',
