@@ -733,6 +733,34 @@ export const createCandidate = async (req, res, next) => {
             include: { recruitmentjob: true }
         });
 
+        // 🔄 Auto sync JobRequest status when a candidate applies/created
+        if (candidate.recruitmentjob) {
+            const jobReq = await prisma.jobRequest.findFirst({
+                where: {
+                    jobTitle: candidate.recruitmentjob.title,
+                    companyId: candidate.recruitmentjob.companyId,
+                    deletedAt: null
+                }
+            });
+
+            if (jobReq && ['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
+                await prisma.jobRequest.update({
+                    where: { id: jobReq.id },
+                    data: { status: 'INTERVIEW_PROCESS' }
+                });
+
+                await prisma.jobRequestHistory.create({
+                    data: {
+                        jobRequestId: jobReq.id,
+                        action: 'بدء استقبال المرشحين والمقابلات تلقائياً',
+                        oldStatus: jobReq.status,
+                        newStatus: 'INTERVIEW_PROCESS',
+                        comment: `تحديث تلقائي عند تقديم المرشح (${candidate.fullName}) على الوظيفة`
+                    }
+                });
+            }
+        }
+
         res.status(201).json({ status: 'success', data: { candidate } });
     } catch (error) {
         next(error);
@@ -767,8 +795,59 @@ export const updateCandidate = async (req, res, next) => {
             data: {
                 ...data,
                 updatedAt: new Date()
-            }
+            },
+            include: { recruitmentjob: true }
         });
+
+        // 🔄 Automatic sync to JobRequest based on candidate progression
+        if (candidate.recruitmentjob) {
+            const jobReq = await prisma.jobRequest.findFirst({
+                where: {
+                    jobTitle: candidate.recruitmentjob.title,
+                    companyId: candidate.recruitmentjob.companyId,
+                    deletedAt: null
+                }
+            });
+
+            if (jobReq) {
+                let newStatus = null;
+                let actionText = '';
+
+                // Map Candidate Pipeline Status to JobRequest Lifecycle Status
+                if (['INTERVIEWING', 'INTERVIEW_SENT', 'INTERVIEW_COMPLETED', 'SCREENING'].includes(candidate.status)) {
+                    if (['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
+                        newStatus = 'INTERVIEW_PROCESS';
+                        actionText = 'بدء مرحلة المقابلات تلقائياً';
+                    }
+                } else if (['OFFERED', 'PRE_ACCEPTED'].includes(candidate.status)) {
+                    if (['APPROVED', 'RECRUITMENT_STARTED', 'INTERVIEW_PROCESS'].includes(jobReq.status)) {
+                        newStatus = 'OFFER_STAGE';
+                        actionText = 'الانتقال إلى مرحلة تقديم العرض تلقائياً';
+                    }
+                } else if (candidate.status === 'HIRED') {
+                    newStatus = 'HIRED';
+                    actionText = 'تم تعيين المرشح ونقل الطلب تلقائياً';
+                }
+
+                if (newStatus && newStatus !== jobReq.status) {
+                    await prisma.jobRequest.update({
+                        where: { id: jobReq.id },
+                        data: { status: newStatus }
+                    });
+
+                    await prisma.jobRequestHistory.create({
+                        data: {
+                            jobRequestId: jobReq.id,
+                            action: actionText,
+                            oldStatus: jobReq.status,
+                            newStatus: newStatus,
+                            comment: `تحديث تلقائي للنظام عند تقدم المرشح (${candidate.fullName}) إلى حالة ${candidate.status}`
+                        }
+                    });
+                }
+            }
+        }
+
         res.status(200).json({ status: 'success', data: { candidate } });
     } catch (error) {
         next(error);
