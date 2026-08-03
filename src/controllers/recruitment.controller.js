@@ -37,7 +37,8 @@ export const getAllJobs = async (req, res, next) => {
     try {
         const jobs = await prisma.recruitmentJob.findMany({
             where: {
-                companyId: req.user.companyId
+                companyId: req.user.companyId,
+                deletedAt: null
             },
             include: { _count: { select: { candidates: true } } },
         });
@@ -59,7 +60,10 @@ export const getAllJobs = async (req, res, next) => {
 export const getPublicJobs = async (req, res, next) => {
     try {
         const jobs = await prisma.recruitmentJob.findMany({
-            where: { status: 'OPEN' },
+            where: { 
+                status: 'OPEN',
+                deletedAt: null
+            },
             select: {
                 id: true,
                 title: true,
@@ -79,8 +83,11 @@ export const getPublicJobs = async (req, res, next) => {
 
 export const getPublicJobDetails = async (req, res, next) => {
     try {
-        const job = await prisma.recruitmentJob.findUnique({
-            where: { id: req.params.id },
+        const job = await prisma.recruitmentJob.findFirst({
+            where: { 
+                id: req.params.id,
+                deletedAt: null 
+            },
             include: { company: { select: { name: true } } }
         });
 
