@@ -105,15 +105,116 @@ export const interactiveJDChat = async (req, res) => {
             return res.status(400).json({ error: 'يجب إرسال سجل المحادثة' });
         }
 
-        const result = await aiService.interactiveJobRecruiter(messages, companyId);
+        // ── Extract collected info from conversation history ──────────────────
+        const userMessages = messages.filter(m => m.role === 'user').map(m => m.content);
+        const conversationText = messages.map(m => `${m.role === 'user' ? 'المستخدم' : 'المساعد'}: ${m.content}`).join('\n');
 
-        return res.json({ success: true, data: result });
+        // ── Build a smart system prompt that handles the full conversation ─────
+        const systemPrompt = `أنت مساعد متخصص في إنشاء الأوصاف الوظيفية الاحترافية.
+مهمتك هي جمع المعلومات التالية من المستخدم بشكل تفاعلي ثم توليد الوصف الوظيفي:
+
+1. المسمى الوظيفي
+2. القسم / الإدارة
+3. سنوات الخبرة المطلوبة
+4. الموقع الجغرافي
+5. المهارات الأساسية المطلوبة
+
+قواعد مهمة:
+- اطرح سؤالاً واحداً فقط في كل رد، وكن محدداً ومختصراً
+- إذا قدّم المستخدم معلومة غير كافية (مثل "لا شيء" أو "غير محدد")، استخدم قيمة افتراضية منطقية ولا تسأل مرة أخرى
+- بعد جمع المسمى الوظيفي والقسم والخبرة فقط، يمكنك البدء بالتوليد مباشرة
+- إذا قال المستخدم "اكتب أنت" أو "أضف أنت" أو أي عبارة تدل على أنه يريد منك الاكتمال، قم بتوليد الوصف فوراً باستخدام ما جمعته
+- عندما تكون جاهزاً لتوليد الوصف، أعد JSON بالشكل التالي فقط، لا تضف أي نص قبله أو بعده:
+GENERATE_JD:{"jobTitle":"...","department":"...","experience":"...","location":"...","skills":["..."]}
+
+المحادثة حتى الآن:
+${conversationText}`;
+
+        // ── Send to OpenAI ────────────────────────────────────────────────────
+        const aiMessages = [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: messages[messages.length - 1].content }
+        ];
+
+        const rawResponse = await aiService.generateJobDescription(
+            { prompt: systemPrompt, isChat: true, chatMessages: aiMessages },
+            companyId
+        );
+
+        // Handle case where aiService returns structured object vs string
+        let responseText = '';
+        if (typeof rawResponse === 'string') {
+            responseText = rawResponse;
+        } else if (rawResponse?.summary || rawResponse?.jobTitle) {
+            // Already a full JD — return it directly
+            return res.json({ success: true, data: { jobDescription: rawResponse, isComplete: true } });
+        } else {
+            responseText = JSON.stringify(rawResponse);
+        }
+
+        // ── Check if AI decided to generate the JD ────────────────────────────
+        if (responseText.includes('GENERATE_JD:')) {
+            const match = responseText.match(/GENERATE_JD:(\{.*\})/s);
+            if (match) {
+                const params = JSON.parse(match[1]);
+                const jdPrompt = `أنت خبير موارد بشرية محترف. قم بإنشاء وصف وظيفي احترافي وشامل باللغة العربية بناءً على المعلومات التالية:
+
+المسمى الوظيفي: ${params.jobTitle}
+القسم / الإدارة: ${params.department || 'غير محدد'}
+سنوات الخبرة: ${params.experience || 'غير محدد'}
+الموقع: ${params.location || 'الرياض'}
+المهارات: ${Array.isArray(params.skills) ? params.skills.join('، ') : (params.skills || 'حسب المتطلبات')}
+
+أرجع JSON بالهيكل التالي بالضبط:
+{
+  "jobTitle": "المسمى الوظيفي",
+  "summary": "ملخص وظيفي احترافي فقرة كاملة",
+  "responsibilities": ["مسؤولية 1", "مسؤولية 2", "مسؤولية 3", "مسؤولية 4", "مسؤولية 5"],
+  "requirements": ["متطلب 1", "متطلب 2", "متطلب 3"],
+  "requiredSkills": ["مهارة 1", "مهارة 2", "مهارة 3"],
+  "preferredSkills": ["مهارة مفضلة 1", "مهارة مفضلة 2"],
+  "interviewQuestions": [
+    { "question": "سؤال 1", "category": "تقني" },
+    { "question": "سؤال 2", "category": "سلوكي" },
+    { "question": "سؤال 3", "category": "استراتيجي" },
+    { "question": "سؤال 4", "category": "تقني" },
+    { "question": "سؤال 5", "category": "قيادي" }
+  ],
+  "salaryInsight": "تحليل مختصر لتنافسية الراتب في السوق",
+  "employmentType": "FULL_TIME",
+  "workMode": "ONSITE",
+  "seniorityLevel": "MID",
+  "confidence_score": 0.92
+}`;
+
+                const jdResult = await aiService.generateJobDescription(
+                    { prompt: jdPrompt, ...params },
+                    companyId
+                );
+                return res.json({ success: true, data: { jobDescription: jdResult, isComplete: true } });
+            }
+        }
+
+        // ── Not yet ready — return next question ──────────────────────────────
+        // Clean up the response text
+        const nextQuestion = responseText
+            .replace(/^(المساعد:|Assistant:)\s*/i, '')
+            .trim();
+
+        return res.json({
+            success: true,
+            data: {
+                nextQuestion: nextQuestion || 'هل يمكنك إخباري بالمسمى الوظيفي الذي تريد إنشاء وصفه؟',
+                isComplete: false
+            }
+        });
 
     } catch (error) {
         logger.error('Interactive JD Chat Error', { error: error.message });
-        res.status(500).json({ error: 'خطأ في المحادثة التفاعلية. تأكد من الاتصال بـ OpenAI.' });
+        res.status(500).json({ error: 'خطأ في المحادثة التفاعلية.' });
     }
 };
+
 
 /**
  * GET /api/ai-jd/templates
