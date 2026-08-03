@@ -430,6 +430,19 @@ export const deleteJobRequest = async (req, res) => {
       data: { deletedAt: new Date() }
     });
 
+    // 🗑️ Also soft-delete the linked active recruitment job so it vanishes from the jobs portal (/jobs)
+    await prisma.recruitmentJob.updateMany({
+      where: {
+        companyId,
+        title: existing.jobTitle,
+        deletedAt: null
+      },
+      data: {
+        deletedAt: new Date(),
+        status: 'CLOSED'
+      }
+    });
+
     await recordAuditLog({
       userId,
       companyId,
@@ -440,7 +453,7 @@ export const deleteJobRequest = async (req, res) => {
       details: { requestId: existing.requestId }
     });
 
-    return res.json({ message: 'تم حذف طلب التوظيف بنجاح' });
+    return res.json({ message: 'تم حذف طلب التوظيف وإلغاء إعلان الوظيفة في بوابة التوظيف بنجاح' });
   } catch (err) {
     console.error('Error deleting job request:', err);
     return res.status(500).json({ error: 'حدث خطأ أثناء حذف طلب التوظيف' });
