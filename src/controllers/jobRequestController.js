@@ -406,6 +406,7 @@ export const getJobRequestById = async (req, res) => {
     console.error('Error fetching job request details:', err);
     return res.status(500).json({ error: 'حدث خطأ أثناء جلب تفاصيل طلب التوظيف' });
   }
+};
 
 /**
  * Soft Delete Job Request
