@@ -406,6 +406,44 @@ export const getJobRequestById = async (req, res) => {
     console.error('Error fetching job request details:', err);
     return res.status(500).json({ error: 'حدث خطأ أثناء جلب تفاصيل طلب التوظيف' });
   }
+
+/**
+ * Soft Delete Job Request
+ * DELETE /api/job-requests/:id
+ */
+export const deleteJobRequest = async (req, res) => {
+  try {
+    const { companyId, id: userId } = req.user;
+    const { id } = req.params;
+
+    const existing = await prisma.jobRequest.findFirst({
+      where: { id, companyId, deletedAt: null }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
+    }
+
+    await prisma.jobRequest.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
+
+    await recordAuditLog({
+      userId,
+      companyId,
+      action: 'DELETE_JOB_REQUEST',
+      oldStatus: existing.status,
+      newStatus: 'DELETED',
+      target: id,
+      details: { requestId: existing.requestId }
+    });
+
+    return res.json({ message: 'تم حذف طلب التوظيف بنجاح' });
+  } catch (err) {
+    console.error('Error deleting job request:', err);
+    return res.status(500).json({ error: 'حدث خطأ أثناء حذف طلب التوظيف' });
+  }
 };
 
 /**

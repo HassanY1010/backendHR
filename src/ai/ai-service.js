@@ -8,6 +8,8 @@ dotenv.config();
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    timeout: 30000, // 30 seconds strict timeout to prevent hanging Render processes
+    maxRetries: 2,
 });
 
 // ============================================================================

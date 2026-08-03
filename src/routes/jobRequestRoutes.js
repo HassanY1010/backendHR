@@ -14,9 +14,10 @@ router.get('/stats', jobRequestController.getJobRequestStats);
 router.get('/', jobRequestController.getJobRequests);
 router.post('/', jobRequestController.createJobRequest);
 
-// Single Details & Update
+// Single Details, Update & Delete
 router.get('/:id', jobRequestController.getJobRequestById);
 router.put('/:id', jobRequestController.updateJobRequest);
+router.delete('/:id', jobRequestController.deleteJobRequest);
 
 // Workflow Actions
 router.post('/:id/submit', jobRequestController.submitJobRequest);

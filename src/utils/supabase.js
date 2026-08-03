@@ -12,6 +12,9 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
 const bucketName = process.env.SUPABASE_BUCKET || 'uploads';
 
 if (!supabaseUrl || !supabaseKey) {
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('🔴 CRITICAL: Supabase credentials (SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY) are REQUIRED in Production!');
+    }
     logger.warn('⚠️  Supabase credentials are NOT configured. File uploads will fall back to local storage (ephemeral on Render!).');
     logger.warn('   Please set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment variables.');
 } else {

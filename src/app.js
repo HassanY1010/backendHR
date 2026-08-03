@@ -91,8 +91,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
-app.use(express.json({ limit: '100mb' })); // Increased limit for heavy AI analysis tasks and Video Uploads
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Client-side log ingestion (not rate-limited — frontend sends logs on every action)
 app.post('/api/logs', (req, res) => {
