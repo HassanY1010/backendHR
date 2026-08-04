@@ -94,7 +94,7 @@ export const generateJobDescription = async (req, res) => {
 
 /**
  * POST /api/ai-jd/chat
- * Interactive multi-turn dynamic AI conversation for JD creation
+ * Interactive multi-turn HR requirement gathering conversation for JD creation
  */
 export const interactiveJDChat = async (req, res) => {
     try {
@@ -106,9 +106,14 @@ export const interactiveJDChat = async (req, res) => {
         }
 
         const userMsgs = messages.filter(m => m.role === 'user').map(m => m.content.trim());
-        const turnCount = userMsgs.length; // 1 = greeting, 2 = job title provided, 3+ = details or complete
+        const turnCount = userMsgs.length; 
+        const lastUserMsg = userMsgs[userMsgs.length - 1] || '';
 
-        // Turn 1: Greeting
+        // Check for immediate completion request
+        const isFinishRequested = 
+            /أنشئ|انشئ|توليد|ولد|جاهز|أضف أنت|اضف انت|اكتب أنت|اكتب انت|يكفي|لا شيء|لا شي|اعتمد|كمل/i.test(lastUserMsg);
+
+        // Turn 1: Initial Question -> Ask for Job Title
         if (turnCount <= 1) {
             return res.json({
                 success: true,
@@ -119,63 +124,49 @@ export const interactiveJDChat = async (req, res) => {
             });
         }
 
-        // Turn 2+: Extract job title from second user message
-        const rawJobTitleMsg = userMsgs[1] || userMsgs[userMsgs.length - 1] || 'مطور مواقع إلكترونية';
+        // Extract job title from second user turn
+        const rawJobTitleMsg = userMsgs[1] || lastUserMsg;
         const jobTitle = rawJobTitleMsg.replace(/مرحباً|أريد|إنشاء|وصف|وظيفي|جديد|أحتاج/gi, '').trim() || rawJobTitleMsg;
-        const lastUserMsg = userMsgs[userMsgs.length - 1];
 
-        // Check if user requests generation or gave enough info (turn >= 3 or finished words)
-        const isFinishedSignal = 
-            turnCount >= 3 ||
-            /لا شيء|لا شي|اكتب أنت|اضف انت|كمل أنت|يكفي|جاهز|توليد|أنشئ|انشئ|اعتمد|ممتاز/i.test(lastUserMsg);
-
-        if (isFinishedSignal) {
-            const extractedSkills = userMsgs.slice(2).join('، ');
-            const fullJD = await aiService.generateJobDescription({
-                jobTitle,
-                department: 'تكنولوجيا المعلومات',
-                experience: '2-4 سنوات',
-                location: 'الرياض',
-                skills: extractedSkills ? [extractedSkills] : ['HTML5', 'CSS3', 'JavaScript', 'تطوير المواقع']
-            }, companyId);
-
+        // Turn 2: Ask for Skills & Core Technologies for this specific role
+        if (turnCount === 2 && !isFinishRequested) {
             return res.json({
                 success: true,
                 data: {
-                    isComplete: true,
-                    jobDescription: fullJD
+                    isComplete: false,
+                    nextQuestion: `ممتاز! بالنسبة لوظيفة (${jobTitle})، ما هي المهارات أو التقنيات والبرامج الأساسية التي ترغب أن يتقنها المرشح في عمله؟`
                 }
             });
         }
 
-        // Turn 2 response: Ask dynamic AI question tailored specifically to jobTitle
-        try {
-            const dynamicPrompt = `أنت خبير توظيف وموارد بشرية. قام المستخدم بطلب إنشاء وصف وظيفي لـ: "${jobTitle}".
-اطرح سؤالاً ذكياً ومرحاً ومخصصاً جداً باللغة العربية يتعلق بالمهارات التقنية أو الوظيفية المطلوبة لدور "${jobTitle}".
-أرجع JSON فقط بالهيكل التالي: { "nextQuestion": "السؤال المخصص لـ ${jobTitle}" }`;
-
-            const aiRes = await aiService.generateJobDescription(dynamicPrompt, companyId);
-            const question = (typeof aiRes === 'object' && aiRes.nextQuestion) ? aiRes.nextQuestion : null;
-
-            if (question) {
-                return res.json({
-                    success: true,
-                    data: {
-                        isComplete: false,
-                        nextQuestion: question
-                    }
-                });
-            }
-        } catch (e) {
-            // Fallback to dynamic template question
+        // Turn 3: Ask for Experience years & Employment mode
+        if (turnCount === 3 && !isFinishRequested) {
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: false,
+                    nextQuestion: `رائع جداً! وكم سنة خبرة تفضل أن يمتلكها المرشح، وما هو طريقة العمل المطلوبة (دوام كامل / عن بُعد / هجين)؟`
+                }
+            });
         }
 
-        // Reliable fallback dynamic question
+        // Turn 4+ or Finish Requested -> Generate Full Structured Job Description!
+        const skillsInput = userMsgs[2] || '';
+        const expAndModeInput = userMsgs[3] || '';
+
+        const fullJD = await aiService.generateJobDescription({
+            jobTitle,
+            department: 'تكنولوجيا المعلومات',
+            experience: expAndModeInput.includes('سن') ? expAndModeInput : '2-4 سنوات',
+            location: 'الرياض',
+            skills: skillsInput ? [skillsInput] : ['إتقان المهام الأساسية', 'العمل الجماعي', 'حل المشكلات']
+        }, companyId);
+
         return res.json({
             success: true,
             data: {
-                isComplete: false,
-                nextQuestion: `رائع جداً! بالنسبة لوظيفة (${jobTitle})، ما هي المهارات أو التقنيات الأساسية التي ترغب أن يتقنها المرشح؟`
+                isComplete: true,
+                jobDescription: fullJD
             }
         });
 
