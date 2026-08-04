@@ -224,7 +224,7 @@ export const getJDTemplates = async (req, res) => {
     const templates = [
         {
             id: 'software-engineer',
-            icon: '💻',
+            icon: '⚡',
             category: 'تكنولوجيا',
             title: 'مهندس برمجيات',
             description: 'Full Stack / Backend / Frontend Developer',
@@ -243,7 +243,7 @@ export const getJDTemplates = async (req, res) => {
         },
         {
             id: 'hr-specialist',
-            icon: '🧑‍💼',
+            icon: '👥',
             category: 'موارد بشرية',
             title: 'أخصائي موارد بشرية',
             description: 'HR Generalist / Recruitment Specialist',
@@ -300,7 +300,7 @@ export const getJDTemplates = async (req, res) => {
         },
         {
             id: 'sales-manager',
-            icon: '💰',
+            icon: '💼',
             category: 'مبيعات',
             title: 'مدير مبيعات',
             description: 'Sales Manager / Business Development',
