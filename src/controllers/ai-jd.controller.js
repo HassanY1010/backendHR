@@ -94,7 +94,7 @@ export const generateJobDescription = async (req, res) => {
 
 /**
  * POST /api/ai-jd/chat
- * Interactive multi-turn conversation for JD creation
+ * Interactive multi-turn dynamic AI conversation for JD creation
  */
 export const interactiveJDChat = async (req, res) => {
     try {
@@ -109,47 +109,53 @@ export const interactiveJDChat = async (req, res) => {
         const lastUserMsg = userMsgs[userMsgs.length - 1] || '';
         const conversationText = messages.map(m => `${m.role === 'user' ? 'المستخدم' : 'المساعد'}: ${m.content}`).join('\n');
 
-        // Check for immediate completion signals (or 2+ turns)
-        const isForceComplete = 
-            userMsgs.length >= 2 ||
-            /لا شيء|لا شي|اكتب أنت|قم أنت|كمل أنت|يكفي|جاهز|توليد|أنشئ/i.test(lastUserMsg);
+        // Check if the user explicitly wants to generate now
+        const isUserRequestingGeneration = 
+            /أنشئ|انشئ|توليد|ولد|جاهز|أضف أنت|اضف انت|اكتب أنت|اكتب انت|يكفي|لا شيء|لا شي|اعتمد/i.test(lastUserMsg);
 
-        // Smart extraction prompt
-        const prompt = `أنت مساعد توظيف وموارد بشرية ذكي ومحترف.
-قم بتحليل المحادثة التالية بين المستخدم والمساعد:
+        // Smart dynamic prompt that generates contextual HR questions
+        const systemPrompt = `أنت مستشار توظيف محترف وذكاء اصطناعي خبير في كتابة الأوصاف الوظيفية.
+دورك هو إجراء محادثة تفاعلية ذكية وحية مع مدير التوظيف لإعداد وصف وظيفي متكامل.
 
+المحادثة الحالية:
 ${conversationText}
 
-التعليمات:
-1. استخرج المعلومات التي ذكرها المستخدم (المسمى الوظيفي، القسم، سنوات الخبرة، المهارات، الموقع).
-2. إذا تم تحديد المسمى الوظيفي ومرت إجابتان أو قال المستخدم "لا شيء" أو ما شابه ذلك، اجعل "isComplete": true.
-3. إذا كانت "isComplete": false، حدد "nextQuestion": "سؤال محدد ومختصر لجمع معلومة واحدة إضافية".
+التعليمات الصارمة:
+1. اقرأ إجابة المستخدم الأخيرة بتمعن شديد واستخرج منها تفاصيل الوظيفة (المسمى الوظيفي، المهارات، الخبرة، أو طريقة العمل).
+2. إذا طلب المستخدم إنشاء الوصف فوراً، أو قال "لا شيء" / "اكتب أنت" / "جاهز"، اجعل "isComplete": true.
+3. إذا كانت "isComplete": false، قم بتوليد **سؤال ذكي وديناميكي متناغم تماماً مع المسمى الوظيفي والإجابة السابقة** (مثال: إذا قال "مطور مواقع"، اسأله عن تقنيات Frontend أو Backend أو نوع المشاريع التي سيعمل عليها بشكل محدد ومشوق).
+4. لا تكرر أي سؤال تم طرحه مسبقاً، واطرح سؤالاً واحداً فقط في كل مرة باللغة العربية البسيطة والاحترافية.
 
-أرجع JSON فقط بالهيكل التالي:
+أرجع الرد دائماً كـ JSON فقط بالهيكل التكتيكي التالي:
 {
-  "isComplete": true/false,
-  "nextQuestion": "السؤال التالي أو null",
+  "isComplete": false,
+  "nextQuestion": "السؤال التفاعلي المبتكر المصمم بناءً على رد المستخدم الأخير",
   "extractedData": {
-    "jobTitle": "المسمى المستخرج أو مبرمج مواقع",
-    "department": "القسم أو تكنولوجيا المعلومات",
-    "experience": "الخبرة أو 3 سنوات",
-    "location": "المدينة أو الرياض",
-    "skills": ["مهارة 1", "مهارة 2"]
+    "jobTitle": "المسمى الوظيفي المستخرج",
+    "department": "القسم إن وُجد",
+    "experience": "الخبرة إن وُجدت",
+    "location": "الموقع إن وُجد",
+    "skills": ["قائمة المهارات المستخرجة"]
   }
+}
+أو إذا جرى استكمال البيانات أو طلب التوليد:
+{
+  "isComplete": true,
+  "extractedData": { ... }
 }`;
 
-        const aiRes = await aiService.generateJobDescription(prompt, companyId);
+        const aiRes = await aiService.generateJobDescription(systemPrompt, companyId);
 
         let parsed = aiRes;
         if (typeof aiRes === 'string') {
             try { parsed = JSON.parse(aiRes); } catch (e) { parsed = {}; }
         }
 
-        const isComplete = parsed?.isComplete || isForceComplete || (parsed?.extractedData?.jobTitle && userMsgs.length >= 2);
+        const isComplete = parsed?.isComplete || isUserRequestingGeneration;
 
-        if (isComplete || (parsed?.extractedData?.jobTitle && !parsed?.nextQuestion)) {
+        if (isComplete) {
             const extracted = parsed?.extractedData || {};
-            const jobTitle = extracted.jobTitle || lastUserMsg.replace(/مرحباً|أريد|إنشاء/g, '').trim() || 'مبرمج مواقع';
+            const jobTitle = extracted.jobTitle || userMsgs.find(m => m.length > 3) || 'مطور مواقع إلكترونية';
             const dept = extracted.department || 'تكنولوجيا المعلومات';
 
             const fullJD = await aiService.generateJobDescription({
@@ -157,7 +163,7 @@ ${conversationText}
                 department: dept,
                 experience: extracted.experience || '2-4 سنوات',
                 location: extracted.location || 'الرياض',
-                skills: extracted.skills || ['HTML5', 'CSS3', 'JavaScript', 'تطوير المواقع']
+                skills: extracted.skills || ['HTML5', 'CSS3', 'JavaScript', 'React', 'Node.js']
             }, companyId);
 
             return res.json({
@@ -169,14 +175,14 @@ ${conversationText}
             });
         }
 
-        // Return next question to continue chat
-        const nextQ = parsed?.nextQuestion || 'ما هي أبرز المهارات أو التقنيات المطلوبة لهذه الوظيفة؟';
+        // Extract dynamic AI question
+        const dynamicQuestion = parsed?.nextQuestion || `ممتاز! بالنسبة لوظيفة (${parsed?.extractedData?.jobTitle || 'هذا الدور'})، ما هي أهم التقنيات أو الأدوات التي ترغب أن يتقنها المرشح؟`;
 
         return res.json({
             success: true,
             data: {
                 isComplete: false,
-                nextQuestion: nextQ
+                nextQuestion: dynamicQuestion
             }
         });
 
