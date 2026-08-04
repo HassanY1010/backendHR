@@ -63,26 +63,36 @@ export const generateJobDescription = async (req, res) => {
   "confidence_score": 0.95
 }`;
 
-        const result = await aiService.generateJobDescription({ prompt, jobTitle, experience, location, skills, department }, companyId);
+        const rawResult = await aiService.generateJobDescription({ prompt, jobTitle, experience, location, skills, department, employmentType, workMode, seniorityLevel }, companyId);
 
-        // Try to parse as structured if it's a simple string response
-        if (result && typeof result === 'object' && result.job_summary) {
-            // Old format — remap
-            return res.json({
-                success: true,
-                data: {
-                    jobTitle: jobTitle,
-                    summary: result.job_summary || result.full_details || '',
-                    responsibilities: [],
-                    requirements: [],
-                    requiredSkills: Array.isArray(skills) ? skills : [],
-                    preferredSkills: [],
-                    interviewQuestions: [],
-                    salaryInsight: '',
-                    confidence_score: 0.85
-                }
-            });
+        let parsedResult = rawResult;
+        if (typeof rawResult === 'string') {
+            try { parsedResult = JSON.parse(rawResult); } catch (e) { parsedResult = {}; }
         }
+
+        // Strict overriding to ensure template/preset selection is 100% accurate
+        const finalJobTitle = jobTitle;
+        const finalDepartment = department || 'قسم التخصص';
+        const finalSkills = Array.isArray(skills) && skills.length > 0 ? skills : (parsedResult?.requiredSkills || []);
+        const finalLocation = location || 'الرياض';
+        const finalExp = experience || '2-4 سنوات';
+
+        const customSummary = parsedResult?.summary && parsedResult.summary.includes(finalJobTitle)
+            ? parsedResult.summary
+            : `نبحث عن ${finalJobTitle} ذو خبرة (${finalExp}) للانضمام إلى ${finalDepartment} في (${finalLocation}). سيكون المرشح المثالي مسؤولاً عن تصميم وتطوير وإدارة كافة التخصصات والمهام المطلوبة لتحقيق أهداف الفريق بكفاءة عالية.`;
+
+        const result = {
+            ...parsedResult,
+            jobTitle: finalJobTitle,
+            summary: customSummary,
+            requiredSkills: finalSkills,
+            employmentType: employmentType || parsedResult?.employmentType || 'FULL_TIME',
+            workMode: workMode || parsedResult?.workMode || 'HYBRID',
+            seniorityLevel: seniorityLevel || parsedResult?.seniorityLevel || 'MID',
+            salaryInsight: (salaryMin && salaryMax)
+                ? `نطاق الراتب المخصص لهذه الوظيفة بين ${salaryMin} و ${salaryMax} ريال.`
+                : (parsedResult?.salaryInsight || 'نطاق الراتب تنافسي ومناسب لمستوى السوق.')
+        };
 
         return res.json({ success: true, data: result });
 
