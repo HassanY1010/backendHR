@@ -86,35 +86,35 @@ export const createJobRequest = async (req, res) => {
       return res.status(400).json({ error: 'المسمى الوظيفي مطلوب' });
     }
 
+    const targetDepName = req.body.departmentName || req.body.department || null;
+
     // Resolve or find valid department for company
-    let validDepartmentId = departmentId;
-    if (departmentId) {
-      const existingDep = await prisma.department.findFirst({
-        where: {
-          companyId,
-          OR: [{ id: departmentId }, { name: { contains: 'تكنولوجيا' } }, { name: { contains: 'الموارد' } }]
-        }
+    let validDepartmentId = null;
+
+    if (departmentId && departmentId !== 'dep-tech') {
+      const existingDepById = await prisma.department.findFirst({
+        where: { companyId, id: departmentId }
       });
-      if (existingDep) {
-        validDepartmentId = existingDep.id;
+      if (existingDepById) validDepartmentId = existingDepById.id;
+    }
+
+    if (!validDepartmentId && targetDepName) {
+      const existingDepByName = await prisma.department.findFirst({
+        where: { companyId, name: { equals: targetDepName, mode: 'insensitive' } }
+      });
+      if (existingDepByName) {
+        validDepartmentId = existingDepByName.id;
       } else {
-        // Find any existing department in company, or create a default one
-        const anyDep = await prisma.department.findFirst({ where: { companyId } });
-        if (anyDep) {
-          validDepartmentId = anyDep.id;
-        } else {
-          const newDep = await prisma.department.create({
-            data: {
-              name: 'الإدارة العامة',
-              companyId
-            }
-          });
-          validDepartmentId = newDep.id;
-        }
+        const createdDep = await prisma.department.create({
+          data: { name: targetDepName, companyId }
+        });
+        validDepartmentId = createdDep.id;
       }
-    } else {
+    }
+
+    if (!validDepartmentId) {
       const defaultDep = await prisma.department.findFirst({ where: { companyId } }) || 
-        await prisma.department.create({ data: { name: 'الإدارة العامة', companyId } });
+        await prisma.department.create({ data: { name: 'تكنولوجيا المعلومات', companyId } });
       validDepartmentId = defaultDep.id;
     }
 

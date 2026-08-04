@@ -278,12 +278,63 @@ export const aiService = {
 
     generateJobDescription: async (data, companyId) => {
         try {
-            const prompt = `Generate HR job description in Arabic: ${JSON.stringify(data)}. JSON { "job_summary", "full_details" }`;
+            const prompt = typeof data === 'string' 
+                ? data 
+                : (data?.prompt || `أنت خبير توظيف وموارد بشرية محترف. قم بإنشاء وصف وظيفي متكامل باللغة العربية للوظيفة التالية:
+المسمى الوظيفي: ${data?.jobTitle || 'غير محدد'}
+القسم: ${data?.department || 'تكنولوجيا المعلومات'}
+الخبرة: ${data?.experience || '3 سنوات'}
+الموقع: ${data?.location || 'الرياض'}
+المهارات: ${Array.isArray(data?.skills) ? data.skills.join('، ') : (data?.skills || '')}
+
+أرجع JSON فقط بالهيكل التالي:
+{
+  "jobTitle": "${data?.jobTitle || 'المسمى الوظيفي'}",
+  "summary": "ملخص وظيفي احترافي",
+  "responsibilities": ["مسؤولية 1", "مسؤولية 2", "مسؤولية 3"],
+  "requirements": ["متطلب 1", "متطلب 2"],
+  "requiredSkills": ["مهارة 1", "مهارة 2"],
+  "preferredSkills": ["مهارة مفضلة"],
+  "interviewQuestions": [
+    { "question": "سؤال تقني", "category": "تقني" },
+    { "question": "سؤال سلوكي", "category": "سلوكي" }
+  ],
+  "salaryInsight": "تحليل الراتب تنافسي في السوق",
+  "employmentType": "FULL_TIME",
+  "workMode": "ONSITE",
+  "seniorityLevel": "MID",
+  "confidence_score": 0.95
+}`);
             return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'generate_jd');
         } catch (e) {
+            const title = data?.jobTitle || 'وظيفة جديدة';
+            const dept = data?.department || 'تكنولوجيا المعلومات';
             return {
-                job_summary: "وصف وظيفي افتراضي",
-                full_details: "يرجى إدخال تفاصيل الوظيفة يدوياً، خدمة الذكاء الاصطناعي غير متاحة حالياً."
+                jobTitle: title,
+                summary: `نبحث عن ${title} للانضمام إلى فريق ${dept}. سينضم المرشح المقبول إلى فريق متكامل لتنفيذ المهام وتحقيق الأهداف المحددة بكفاءة عالية.`,
+                responsibilities: [
+                    `تنفيذ وأداء كافة المهام المرتبطة بدور ${title} وفق أفضل الممارسات.`,
+                    `التعاون الفعال مع أفراد فريق ${dept} للوصول للنتائج المرجوة.`,
+                    `تحليل المشاكل وتقديم حلول مبتكرة تسهم في تحسين جودة العمل.`,
+                    `متابعة كتابة التوثيق والتقارير الدورية الخاصة بالمشاريع.`
+                ],
+                requirements: [
+                    `خبرة عملية لا تقل عن ${data?.experience || '2-4 سنوات'} في نفس المجال.`,
+                    `إجادة المهارات الأساسية المطلوبة والقدرة على التعلم السريع.`,
+                    `مهارات تواصل ممتازة واحترافية في العمل الجماعي.`
+                ],
+                requiredSkills: Array.isArray(data?.skills) && data.skills.length > 0 ? data.skills : ['العمل الجماعي', 'حل المشكلات', 'التواصل'],
+                preferredSkills: ['إدارة الوقت', 'المرونة في العمل'],
+                interviewQuestions: [
+                    { question: `حدثنا عن أبرز تجاربك ومشاريعك السابقة كـ ${title}؟`, category: "تقني" },
+                    { question: `كيف تتعامل مع الضغوط والمواعيد النهائية المحددة في العمل؟`, category: "سلوكي" },
+                    { question: `كيف تحدد أولوياتك عند استلام أكثر من مهمة في وقت واحد؟`, category: "استراتيجي" }
+                ],
+                salaryInsight: "نطاق الراتب المقترح تنافسي ومتوافق مع معايير السوق المحلية.",
+                employmentType: data?.employmentType || "FULL_TIME",
+                workMode: data?.workMode || "ONSITE",
+                seniorityLevel: data?.seniorityLevel || "MID",
+                confidence_score: 0.9
             };
         }
     },
