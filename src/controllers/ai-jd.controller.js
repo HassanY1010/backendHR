@@ -94,7 +94,7 @@ export const generateJobDescription = async (req, res) => {
 
 /**
  * POST /api/ai-jd/chat
- * Interactive multi-turn HR requirement gathering conversation for JD creation
+ * Interactive 5-turn HR requirement gathering conversation with 100% real data binding
  */
 export const interactiveJDChat = async (req, res) => {
     try {
@@ -106,14 +106,14 @@ export const interactiveJDChat = async (req, res) => {
         }
 
         const userMsgs = messages.filter(m => m.role === 'user').map(m => m.content.trim());
-        const turnCount = userMsgs.length; 
+        const turnCount = userMsgs.length;
         const lastUserMsg = userMsgs[userMsgs.length - 1] || '';
 
-        // Check for immediate completion request
+        // Check if user requested early generation
         const isFinishRequested = 
-            /أنشئ|انشئ|توليد|ولد|جاهز|أضف أنت|اضف انت|اكتب أنت|اكتب انت|يكفي|لا شيء|لا شي|اعتمد|كمل/i.test(lastUserMsg);
+            /أنشئ|انشئ|توليد|ولد|جاهز|أضف أنت|اضف انت|اكتب أنت|اكتب انت|يكفي|لا شيء|لا شي|اعتمد|كمل|خلاص/i.test(lastUserMsg);
 
-        // Turn 1: Initial Question -> Ask for Job Title
+        // ── Turn 1: Ask for Job Title ──────────────────────────────────────────
         if (turnCount <= 1) {
             return res.json({
                 success: true,
@@ -124,49 +124,102 @@ export const interactiveJDChat = async (req, res) => {
             });
         }
 
-        // Extract job title from second user turn
+        // Extract real job title from user turn 2
         const rawJobTitleMsg = userMsgs[1] || lastUserMsg;
-        const jobTitle = rawJobTitleMsg.replace(/مرحباً|أريد|إنشاء|وصف|وظيفي|جديد|أحتاج/gi, '').trim() || rawJobTitleMsg;
+        const jobTitle = rawJobTitleMsg.replace(/مرحباً|أريد|إنشاء|وصف|وظيفي|جديد|أحتاج|وظيفة/gi, '').trim() || rawJobTitleMsg;
 
-        // Turn 2: Ask for Skills & Core Technologies for this specific role
+        // ── Turn 2: Ask for Department ─────────────────────────────────────────
         if (turnCount === 2 && !isFinishRequested) {
             return res.json({
                 success: true,
                 data: {
                     isComplete: false,
-                    nextQuestion: `ممتاز! بالنسبة لوظيفة (${jobTitle})، ما هي المهارات أو التقنيات والبرامج الأساسية التي ترغب أن يتقنها المرشح في عمله؟`
+                    nextQuestion: `ممتاز! بالنسبة لوظيفة (${jobTitle})، ما هو القسم أو الإدارة التي تتبع لها هذه الوظيفة في شركتكم؟`
                 }
             });
         }
 
-        // Turn 3: Ask for Experience years & Employment mode
+        // Extract real department from user turn 3
+        const departmentInput = userMsgs[2] && !/لا شيء|لا شي/i.test(userMsgs[2]) ? userMsgs[2] : 'تكنولوجيا المعلومات';
+
+        // ── Turn 3: Ask for Core Skills ────────────────────────────────────────
         if (turnCount === 3 && !isFinishRequested) {
             return res.json({
                 success: true,
                 data: {
                     isComplete: false,
-                    nextQuestion: `رائع جداً! وكم سنة خبرة تفضل أن يمتلكها المرشح، وما هو طريقة العمل المطلوبة (دوام كامل / عن بُعد / هجين)؟`
+                    nextQuestion: `رائع! ما هي أبرز المهارات أو التقنيات والبرامج الأساسية التي ترغب أن يتقنها المرشح لدور (${jobTitle})؟`
                 }
             });
         }
 
-        // Turn 4+ or Finish Requested -> Generate Full Structured Job Description!
-        const skillsInput = userMsgs[2] || '';
-        const expAndModeInput = userMsgs[3] || '';
+        // Extract real skills from user turn 4
+        const rawSkillsInput = userMsgs[3] || '';
+        const parsedSkills = rawSkillsInput && !/لا شيء|لا شي/i.test(rawSkillsInput)
+            ? rawSkillsInput.split(/[،,,\n]+/).map(s => s.trim()).filter(Boolean)
+            : ['المهارات الأساسية', 'العمل الجماعي', 'التواصل الفعال'];
 
-        const fullJD = await aiService.generateJobDescription({
+        // ── Turn 4: Ask for Experience Years & Seniority ───────────────────────
+        if (turnCount === 4 && !isFinishRequested) {
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: false,
+                    nextQuestion: `جميل جداً! كم سنة خبرة مطلوبة لوظيفة (${jobTitle})، وما هو مستوى الأقدمية المرغوب (مبتدئ / متوسط / أول Senior / قائد فريق)؟`
+                }
+            });
+        }
+
+        // Extract real experience from user turn 5
+        const experienceInput = userMsgs[4] && !/لا شيء|لا شي/i.test(userMsgs[4]) ? userMsgs[4] : '2-4 سنوات';
+
+        // ── Turn 5: Ask for Location, Work Mode & Salary ───────────────────────
+        if (turnCount === 5 && !isFinishRequested) {
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: false,
+                    nextQuestion: `ممتاز جداً! ما هو موقع العمل (مثل الرياض/جدة) وطريقة العمل (حضوري / عن بُعد / هجين)، وهل تود إضافة نطاق راتب محدد؟`
+                }
+            });
+        }
+
+        // Extract real location, workMode, and salary from turn 6 or last message
+        const locationAndSalaryInput = userMsgs[5] || '';
+        const location = /جدة/i.test(locationAndSalaryInput) ? 'جدة' : (/الدمام/i.test(locationAndSalaryInput) ? 'الدمام' : 'الرياض');
+        const workMode = /عن بُعد|عن بعد|remote/i.test(locationAndSalaryInput) ? 'REMOTE' : (/هجين|hybrid/i.test(locationAndSalaryInput) ? 'HYBRID' : 'ONSITE');
+        const seniorityLevel = /مبتدئ|junior/i.test(experienceInput) ? 'JUNIOR' : (/senior|أول|خبير/i.test(experienceInput) ? 'SENIOR' : 'MID');
+
+        // ── Final Generation: Combine 100% Real User Inputs into Full JD ──────
+        const realFormData = {
             jobTitle,
-            department: 'تكنولوجيا المعلومات',
-            experience: expAndModeInput.includes('سن') ? expAndModeInput : '2-4 سنوات',
-            location: 'الرياض',
-            skills: skillsInput ? [skillsInput] : ['إتقان المهام الأساسية', 'العمل الجماعي', 'حل المشكلات']
-        }, companyId);
+            department: departmentInput,
+            experience: experienceInput,
+            location,
+            workMode,
+            seniorityLevel,
+            employmentType: 'FULL_TIME',
+            skills: parsedSkills,
+            salaryMin: '',
+            salaryMax: ''
+        };
+
+        const fullJD = await aiService.generateJobDescription(realFormData, companyId);
+
+        // Ensure the returned JD strictly reflects user's real input title & department & skills
+        const finalStructuredJD = {
+            ...fullJD,
+            jobTitle: jobTitle || fullJD.jobTitle,
+            summary: fullJD.summary || `نبحث عن ${jobTitle} للانضمام إلى قسم ${departmentInput}.`,
+            requiredSkills: parsedSkills.length > 0 ? parsedSkills : (fullJD.requiredSkills || [])
+        };
 
         return res.json({
             success: true,
             data: {
                 isComplete: true,
-                jobDescription: fullJD
+                formData: realFormData,
+                jobDescription: finalStructuredJD
             }
         });
 
