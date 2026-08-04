@@ -105,65 +105,38 @@ export const interactiveJDChat = async (req, res) => {
             return res.status(400).json({ error: 'يجب إرسال سجل المحادثة' });
         }
 
-        const userMsgs = messages.filter(m => m.role === 'user').map(m => m.content);
-        const lastUserMsg = userMsgs[userMsgs.length - 1] || '';
-        const conversationText = messages.map(m => `${m.role === 'user' ? 'المستخدم' : 'المساعد'}: ${m.content}`).join('\n');
+        const userMsgs = messages.filter(m => m.role === 'user').map(m => m.content.trim());
+        const turnCount = userMsgs.length; // 1 = greeting, 2 = job title provided, 3+ = details or complete
 
-        // Check if the user explicitly wants to generate now
-        const isUserRequestingGeneration = 
-            /أنشئ|انشئ|توليد|ولد|جاهز|أضف أنت|اضف انت|اكتب أنت|اكتب انت|يكفي|لا شيء|لا شي|اعتمد/i.test(lastUserMsg);
-
-        // Smart dynamic prompt that generates contextual HR questions
-        const systemPrompt = `أنت مستشار توظيف محترف وذكاء اصطناعي خبير في كتابة الأوصاف الوظيفية.
-دورك هو إجراء محادثة تفاعلية ذكية وحية مع مدير التوظيف لإعداد وصف وظيفي متكامل.
-
-المحادثة الحالية:
-${conversationText}
-
-التعليمات الصارمة:
-1. اقرأ إجابة المستخدم الأخيرة بتمعن شديد واستخرج منها تفاصيل الوظيفة (المسمى الوظيفي، المهارات، الخبرة، أو طريقة العمل).
-2. إذا طلب المستخدم إنشاء الوصف فوراً، أو قال "لا شيء" / "اكتب أنت" / "جاهز"، اجعل "isComplete": true.
-3. إذا كانت "isComplete": false، قم بتوليد **سؤال ذكي وديناميكي متناغم تماماً مع المسمى الوظيفي والإجابة السابقة** (مثال: إذا قال "مطور مواقع"، اسأله عن تقنيات Frontend أو Backend أو نوع المشاريع التي سيعمل عليها بشكل محدد ومشوق).
-4. لا تكرر أي سؤال تم طرحه مسبقاً، واطرح سؤالاً واحداً فقط في كل مرة باللغة العربية البسيطة والاحترافية.
-
-أرجع الرد دائماً كـ JSON فقط بالهيكل التكتيكي التالي:
-{
-  "isComplete": false,
-  "nextQuestion": "السؤال التفاعلي المبتكر المصمم بناءً على رد المستخدم الأخير",
-  "extractedData": {
-    "jobTitle": "المسمى الوظيفي المستخرج",
-    "department": "القسم إن وُجد",
-    "experience": "الخبرة إن وُجدت",
-    "location": "الموقع إن وُجد",
-    "skills": ["قائمة المهارات المستخرجة"]
-  }
-}
-أو إذا جرى استكمال البيانات أو طلب التوليد:
-{
-  "isComplete": true,
-  "extractedData": { ... }
-}`;
-
-        const aiRes = await aiService.generateJobDescription(systemPrompt, companyId);
-
-        let parsed = aiRes;
-        if (typeof aiRes === 'string') {
-            try { parsed = JSON.parse(aiRes); } catch (e) { parsed = {}; }
+        // Turn 1: Greeting
+        if (turnCount <= 1) {
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: false,
+                    nextQuestion: 'مرحباً بك! ما هو المسمى الوظيفي الذي ترغب في إعداد وصف وظيفي له اليوم؟'
+                }
+            });
         }
 
-        const isComplete = parsed?.isComplete || isUserRequestingGeneration;
+        // Turn 2+: Extract job title from second user message
+        const rawJobTitleMsg = userMsgs[1] || userMsgs[userMsgs.length - 1] || 'مطور مواقع إلكترونية';
+        const jobTitle = rawJobTitleMsg.replace(/مرحباً|أريد|إنشاء|وصف|وظيفي|جديد|أحتاج/gi, '').trim() || rawJobTitleMsg;
+        const lastUserMsg = userMsgs[userMsgs.length - 1];
 
-        if (isComplete) {
-            const extracted = parsed?.extractedData || {};
-            const jobTitle = extracted.jobTitle || userMsgs.find(m => m.length > 3) || 'مطور مواقع إلكترونية';
-            const dept = extracted.department || 'تكنولوجيا المعلومات';
+        // Check if user requests generation or gave enough info (turn >= 3 or finished words)
+        const isFinishedSignal = 
+            turnCount >= 3 ||
+            /لا شيء|لا شي|اكتب أنت|اضف انت|كمل أنت|يكفي|جاهز|توليد|أنشئ|انشئ|اعتمد|ممتاز/i.test(lastUserMsg);
 
+        if (isFinishedSignal) {
+            const extractedSkills = userMsgs.slice(2).join('، ');
             const fullJD = await aiService.generateJobDescription({
                 jobTitle,
-                department: dept,
-                experience: extracted.experience || '2-4 سنوات',
-                location: extracted.location || 'الرياض',
-                skills: extracted.skills || ['HTML5', 'CSS3', 'JavaScript', 'React', 'Node.js']
+                department: 'تكنولوجيا المعلومات',
+                experience: '2-4 سنوات',
+                location: 'الرياض',
+                skills: extractedSkills ? [extractedSkills] : ['HTML5', 'CSS3', 'JavaScript', 'تطوير المواقع']
             }, companyId);
 
             return res.json({
@@ -175,14 +148,34 @@ ${conversationText}
             });
         }
 
-        // Extract dynamic AI question
-        const dynamicQuestion = parsed?.nextQuestion || `ممتاز! بالنسبة لوظيفة (${parsed?.extractedData?.jobTitle || 'هذا الدور'})، ما هي أهم التقنيات أو الأدوات التي ترغب أن يتقنها المرشح؟`;
+        // Turn 2 response: Ask dynamic AI question tailored specifically to jobTitle
+        try {
+            const dynamicPrompt = `أنت خبير توظيف وموارد بشرية. قام المستخدم بطلب إنشاء وصف وظيفي لـ: "${jobTitle}".
+اطرح سؤالاً ذكياً ومرحاً ومخصصاً جداً باللغة العربية يتعلق بالمهارات التقنية أو الوظيفية المطلوبة لدور "${jobTitle}".
+أرجع JSON فقط بالهيكل التالي: { "nextQuestion": "السؤال المخصص لـ ${jobTitle}" }`;
 
+            const aiRes = await aiService.generateJobDescription(dynamicPrompt, companyId);
+            const question = (typeof aiRes === 'object' && aiRes.nextQuestion) ? aiRes.nextQuestion : null;
+
+            if (question) {
+                return res.json({
+                    success: true,
+                    data: {
+                        isComplete: false,
+                        nextQuestion: question
+                    }
+                });
+            }
+        } catch (e) {
+            // Fallback to dynamic template question
+        }
+
+        // Reliable fallback dynamic question
         return res.json({
             success: true,
             data: {
                 isComplete: false,
-                nextQuestion: dynamicQuestion
+                nextQuestion: `رائع جداً! بالنسبة لوظيفة (${jobTitle})، ما هي المهارات أو التقنيات الأساسية التي ترغب أن يتقنها المرشح؟`
             }
         });
 
