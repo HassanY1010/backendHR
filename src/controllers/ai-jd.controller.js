@@ -105,107 +105,78 @@ export const interactiveJDChat = async (req, res) => {
             return res.status(400).json({ error: 'يجب إرسال سجل المحادثة' });
         }
 
-        // ── Extract collected info from conversation history ──────────────────
-        const userMessages = messages.filter(m => m.role === 'user').map(m => m.content);
+        const userMsgs = messages.filter(m => m.role === 'user').map(m => m.content);
+        const lastUserMsg = userMsgs[userMsgs.length - 1] || '';
         const conversationText = messages.map(m => `${m.role === 'user' ? 'المستخدم' : 'المساعد'}: ${m.content}`).join('\n');
 
-        // ── Build a smart system prompt that handles the full conversation ─────
-        const systemPrompt = `أنت مساعد متخصص في إنشاء الأوصاف الوظيفية الاحترافية.
-مهمتك هي جمع المعلومات التالية من المستخدم بشكل تفاعلي ثم توليد الوصف الوظيفي:
+        // Check for immediate completion signals (or 2+ turns)
+        const isForceComplete = 
+            userMsgs.length >= 2 ||
+            /لا شيء|لا شي|اكتب أنت|قم أنت|كمل أنت|يكفي|جاهز|توليد|أنشئ/i.test(lastUserMsg);
 
-1. المسمى الوظيفي
-2. القسم / الإدارة
-3. سنوات الخبرة المطلوبة
-4. الموقع الجغرافي
-5. المهارات الأساسية المطلوبة
+        // Smart extraction prompt
+        const prompt = `أنت مساعد توظيف وموارد بشرية ذكي ومحترف.
+قم بتحليل المحادثة التالية بين المستخدم والمساعد:
 
-قواعد مهمة:
-- اطرح سؤالاً واحداً فقط في كل رد، وكن محدداً ومختصراً
-- إذا قدّم المستخدم معلومة غير كافية (مثل "لا شيء" أو "غير محدد")، استخدم قيمة افتراضية منطقية ولا تسأل مرة أخرى
-- بعد جمع المسمى الوظيفي والقسم والخبرة فقط، يمكنك البدء بالتوليد مباشرة
-- إذا قال المستخدم "اكتب أنت" أو "أضف أنت" أو أي عبارة تدل على أنه يريد منك الاكتمال، قم بتوليد الوصف فوراً باستخدام ما جمعته
-- عندما تكون جاهزاً لتوليد الوصف، أعد JSON بالشكل التالي فقط، لا تضف أي نص قبله أو بعده:
-GENERATE_JD:{"jobTitle":"...","department":"...","experience":"...","location":"...","skills":["..."]}
+${conversationText}
 
-المحادثة حتى الآن:
-${conversationText}`;
+التعليمات:
+1. استخرج المعلومات التي ذكرها المستخدم (المسمى الوظيفي، القسم، سنوات الخبرة، المهارات، الموقع).
+2. إذا تم تحديد المسمى الوظيفي ومرت إجابتان أو قال المستخدم "لا شيء" أو ما شابه ذلك، اجعل "isComplete": true.
+3. إذا كانت "isComplete": false، حدد "nextQuestion": "سؤال محدد ومختصر لجمع معلومة واحدة إضافية".
 
-        // ── Send to OpenAI ────────────────────────────────────────────────────
-        const aiMessages = [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: messages[messages.length - 1].content }
-        ];
-
-        const rawResponse = await aiService.generateJobDescription(
-            { prompt: systemPrompt, isChat: true, chatMessages: aiMessages },
-            companyId
-        );
-
-        // Handle case where aiService returns structured object vs string
-        let responseText = '';
-        if (typeof rawResponse === 'string') {
-            responseText = rawResponse;
-        } else if (rawResponse?.summary || rawResponse?.jobTitle) {
-            // Already a full JD — return it directly
-            return res.json({ success: true, data: { jobDescription: rawResponse, isComplete: true } });
-        } else {
-            responseText = JSON.stringify(rawResponse);
-        }
-
-        // ── Check if AI decided to generate the JD ────────────────────────────
-        if (responseText.includes('GENERATE_JD:')) {
-            const match = responseText.match(/GENERATE_JD:(\{.*\})/s);
-            if (match) {
-                const params = JSON.parse(match[1]);
-                const jdPrompt = `أنت خبير موارد بشرية محترف. قم بإنشاء وصف وظيفي احترافي وشامل باللغة العربية بناءً على المعلومات التالية:
-
-المسمى الوظيفي: ${params.jobTitle}
-القسم / الإدارة: ${params.department || 'غير محدد'}
-سنوات الخبرة: ${params.experience || 'غير محدد'}
-الموقع: ${params.location || 'الرياض'}
-المهارات: ${Array.isArray(params.skills) ? params.skills.join('، ') : (params.skills || 'حسب المتطلبات')}
-
-أرجع JSON بالهيكل التالي بالضبط:
+أرجع JSON فقط بالهيكل التالي:
 {
-  "jobTitle": "المسمى الوظيفي",
-  "summary": "ملخص وظيفي احترافي فقرة كاملة",
-  "responsibilities": ["مسؤولية 1", "مسؤولية 2", "مسؤولية 3", "مسؤولية 4", "مسؤولية 5"],
-  "requirements": ["متطلب 1", "متطلب 2", "متطلب 3"],
-  "requiredSkills": ["مهارة 1", "مهارة 2", "مهارة 3"],
-  "preferredSkills": ["مهارة مفضلة 1", "مهارة مفضلة 2"],
-  "interviewQuestions": [
-    { "question": "سؤال 1", "category": "تقني" },
-    { "question": "سؤال 2", "category": "سلوكي" },
-    { "question": "سؤال 3", "category": "استراتيجي" },
-    { "question": "سؤال 4", "category": "تقني" },
-    { "question": "سؤال 5", "category": "قيادي" }
-  ],
-  "salaryInsight": "تحليل مختصر لتنافسية الراتب في السوق",
-  "employmentType": "FULL_TIME",
-  "workMode": "ONSITE",
-  "seniorityLevel": "MID",
-  "confidence_score": 0.92
+  "isComplete": true/false,
+  "nextQuestion": "السؤال التالي أو null",
+  "extractedData": {
+    "jobTitle": "المسمى المستخرج أو مبرمج مواقع",
+    "department": "القسم أو تكنولوجيا المعلومات",
+    "experience": "الخبرة أو 3 سنوات",
+    "location": "المدينة أو الرياض",
+    "skills": ["مهارة 1", "مهارة 2"]
+  }
 }`;
 
-                const jdResult = await aiService.generateJobDescription(
-                    { prompt: jdPrompt, ...params },
-                    companyId
-                );
-                return res.json({ success: true, data: { jobDescription: jdResult, isComplete: true } });
-            }
+        const aiRes = await aiService.generateJobDescription(prompt, companyId);
+
+        let parsed = aiRes;
+        if (typeof aiRes === 'string') {
+            try { parsed = JSON.parse(aiRes); } catch (e) { parsed = {}; }
         }
 
-        // ── Not yet ready — return next question ──────────────────────────────
-        // Clean up the response text
-        const nextQuestion = responseText
-            .replace(/^(المساعد:|Assistant:)\s*/i, '')
-            .trim();
+        const isComplete = parsed?.isComplete || isForceComplete || (parsed?.extractedData?.jobTitle && userMsgs.length >= 2);
+
+        if (isComplete || (parsed?.extractedData?.jobTitle && !parsed?.nextQuestion)) {
+            const extracted = parsed?.extractedData || {};
+            const jobTitle = extracted.jobTitle || lastUserMsg.replace(/مرحباً|أريد|إنشاء/g, '').trim() || 'مبرمج مواقع';
+            const dept = extracted.department || 'تكنولوجيا المعلومات';
+
+            const fullJD = await aiService.generateJobDescription({
+                jobTitle,
+                department: dept,
+                experience: extracted.experience || '2-4 سنوات',
+                location: extracted.location || 'الرياض',
+                skills: extracted.skills || ['HTML5', 'CSS3', 'JavaScript', 'تطوير المواقع']
+            }, companyId);
+
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: true,
+                    jobDescription: fullJD
+                }
+            });
+        }
+
+        // Return next question to continue chat
+        const nextQ = parsed?.nextQuestion || 'ما هي أبرز المهارات أو التقنيات المطلوبة لهذه الوظيفة؟';
 
         return res.json({
             success: true,
             data: {
-                nextQuestion: nextQuestion || 'هل يمكنك إخباري بالمسمى الوظيفي الذي تريد إنشاء وصفه؟',
-                isComplete: false
+                isComplete: false,
+                nextQuestion: nextQ
             }
         });
 
