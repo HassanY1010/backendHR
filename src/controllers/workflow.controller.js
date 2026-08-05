@@ -544,7 +544,22 @@ export const getWorkflowDashboard = async (req, res) => {
         const companyId = await resolveCompanyId(req);
         const companyWhere = companyId ? { companyId } : {};
 
-        // Single DB Query for all instances and step instances for the company
+        // Auto-sync missing workflow instances for any existing job requests
+        const orphanJobRequests = await prisma.jobRequest.findMany({
+            where: {
+                ...(companyId ? { companyId } : {}),
+                workflowInstance: null
+            },
+            select: { id: true, companyId: true }
+        });
+
+        if (orphanJobRequests.length > 0) {
+            for (const jr of orphanJobRequests) {
+                await initWorkflowInstance(jr.companyId || companyId, jr.id, req.user?.id, req.user?.name);
+            }
+        }
+
+        // Fetch all workflow instances for the company
         const instances = await prisma.workflowInstance.findMany({
             where: companyWhere,
             include: {
