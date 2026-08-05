@@ -30,6 +30,7 @@
         "mammoth": "^1.11.0",
         "morgan": "^1.10.0",
         "multer": "^2.0.2",
+        "node-cron": "^4.6.0",
         "openai": "^6.15.0",
         "pdf-parse": "^2.4.5",
         "pdfjs-dist": "^5.4.530",

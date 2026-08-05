@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { JobRequestStateMachine, JOB_REQUEST_STATUS } from '../services/jobRequestStateMachine.js';
+import { initWorkflowInstance } from './workflow.controller.js';
 
 const prisma = new PrismaClient();
 
@@ -211,6 +212,11 @@ export const createJobRequest = async (req, res) => {
       newStatus: initialStatus,
       target: jobRequest.id,
       details: { requestId, jobTitle }
+    });
+
+    // Auto-initialize Workflow Instance (non-blocking)
+    initWorkflowInstance(companyId, jobRequest.id, userId, req.user?.name).catch(err => {
+      console.error('[Workflow] Failed to init instance (non-blocking):', err.message);
     });
 
     const result = await prisma.jobRequest.findUnique({

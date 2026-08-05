@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import app from './app.js';
 import { startDeadlineChecker } from './jobs/deadlineChecker.js';
+import { startSLACheckerJob } from './jobs/sla-checker.job.js';
 import { QueueService } from './services/queue.service.js';
 import { initClamAV } from './utils/virusScanner.js';
 import logger from './utils/logger.js';
@@ -18,5 +19,7 @@ initClamAV().catch(err => {
 app.listen(PORT, () => {
     logger.info(`🚀 Server is running on port ${PORT}`);
     startDeadlineChecker();
+    startSLACheckerJob();
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+

@@ -183,6 +183,7 @@ model Company {
   users              User[]
   departments        Department[]
   jobRequests        JobRequest[]
+  workflowTemplates  WorkflowTemplate[]
 
   status             String            @default("active")
   @@map("company")
@@ -680,6 +681,8 @@ model User {
   hiringJobRequests  JobRequest[]        @relation("JobRequestHiringManager")
   jobRequestHistory  JobRequestHistory[]
   approvalRequests   ApprovalRequest[]
+  workflowStepAssignments WorkflowStepInstance[] @relation("WorkflowStepAssignee")
+  workflowLogs            WorkflowLog[]          @relation("WorkflowLogPerformer")
 
   @@index([companyId], map: "User_companyId_idx")
   @@index([companyId, deletedAt])
@@ -841,9 +844,10 @@ model JobRequest {
   createdByUser    User                        @relation("JobRequestCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
   hiringManager    User?                       @relation("JobRequestHiringManager", fields: [hiringManagerId], references: [id], onDelete: SetNull)
   department       Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  skills           JobRequestSkill[]
-  history          JobRequestHistory[]
-  approvals        ApprovalRequest[]
+  skills             JobRequestSkill[]
+  history            JobRequestHistory[]
+  approvals          ApprovalRequest[]
+  workflowInstance   WorkflowInstance?
 
   @@index([companyId])
   @@index([departmentId])
@@ -958,4 +962,156 @@ enum recruitmentjob_opening_reason {
   REPLACEMENT
   PROJECT
   RESTRUCTURE
+}
+
+// ============================================================================
+// RECRUITMENT WORKFLOW ENGINE + SLA SYSTEM
+// ============================================================================
+
+enum workflow_instance_status {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum workflow_step_status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  SKIPPED
+  REJECTED
+}
+
+enum workflow_log_action {
+  CREATED
+  ADVANCED
+  REJECTED
+  REASSIGNED
+  SLA_BREACH
+  SLA_WARNING
+  ESCALATED
+  COMPLETED
+  CANCELLED
+  COMMENT_ADDED
+}
+
+model WorkflowTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  nameAr      String
+  description String?  @db.Text
+  companyId   String
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  steps       WorkflowStep[]
+  instances   WorkflowInstance[]
+
+  @@index([companyId])
+  @@index([companyId, isDefault])
+  @@map("workflowtemplate")
+}
+
+model WorkflowStep {
+  id               String  @id @default(uuid())
+  templateId       String
+  stepOrder        Int
+  name             String
+  nameAr           String
+  description      String? @db.Text
+  role             String  // HIRING_MANAGER / HR_MANAGER / MANAGEMENT / RECRUITER
+  slaDurationHours Int     // SLA in hours: 24, 48, 72, etc.
+  isRequired       Boolean @default(true)
+  allowSkip        Boolean @default(false)
+  notifyRoles      String? @db.Text  // JSON array of roles to notify
+
+  template      WorkflowTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  stepInstances WorkflowStepInstance[]
+
+  @@unique([templateId, stepOrder])
+  @@index([templateId])
+  @@map("workflowstep")
+}
+
+model WorkflowInstance {
+  id           String                   @id @default(uuid())
+  templateId   String
+  jobRequestId String                   @unique
+  companyId    String
+  currentStep  Int                      @default(1)
+  status       workflow_instance_status @default(ACTIVE)
+  startedAt    DateTime                 @default(now())
+  completedAt  DateTime?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  template      WorkflowTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  jobRequest    JobRequest             @relation(fields: [jobRequestId], references: [id], onDelete: Cascade)
+  stepInstances WorkflowStepInstance[]
+  logs          WorkflowLog[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([jobRequestId])
+  @@map("workflowinstance")
+}
+
+model WorkflowStepInstance {
+  id               String               @id @default(uuid())
+  instanceId       String
+  stepId           String
+  stepOrder        Int
+  assignedToId     String?
+  assignedToName   String?
+  status           workflow_step_status @default(PENDING)
+  expectedDuration Int                  // Hours from SLA
+  actualDuration   Int?                 // Computed on completion
+  startedAt        DateTime?
+  dueAt            DateTime?
+  completedAt      DateTime?
+  delayReason      String?  @db.Text
+  notes            String?  @db.Text
+  slaBreach        Boolean  @default(false)
+  escalated        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  instance     WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  step         WorkflowStep     @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  assignedTo   User?            @relation("WorkflowStepAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([instanceId])
+  @@index([stepId])
+  @@index([status])
+  @@index([dueAt])
+  @@map("workflowstepinstance")
+}
+
+model WorkflowLog {
+  id          String               @id @default(uuid())
+  instanceId  String
+  stepOrder   Int?
+  fromStep    String?
+  toStep      String?
+  fromStatus  String?
+  toStatus    String?
+  performedBy String?
+  performedByName String?
+  action      workflow_log_action
+  comment     String?  @db.Text
+  metadata    String?  @db.Text  // JSON extra info
+  createdAt   DateTime @default(now())
+
+  instance    WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  performer   User?            @relation("WorkflowLogPerformer", fields: [performedBy], references: [id], onDelete: SetNull)
+
+  @@index([instanceId])
+  @@index([performedBy])
+  @@index([createdAt])
+  @@map("workflowlog")
 }
