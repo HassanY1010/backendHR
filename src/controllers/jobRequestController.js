@@ -967,6 +967,34 @@ export const convertToRecruitmentJob = async (req, res) => {
       return res.status(400).json({ error: 'يجب أن يكون طلب التوظيف معتمداً تحويله إلى وظيفة نشطة' });
     }
 
+    // Prepare rich requirements list
+    const reqList = [];
+    if (jobRequest.educationLevel) reqList.push(`• المؤهل العلمي المطلوب: ${jobRequest.educationLevel}`);
+    if (jobRequest.requiredExperience) reqList.push(`• سنوات الخبرة المطلوبة: ${jobRequest.requiredExperience}`);
+    if (Array.isArray(jobRequest.skills) && jobRequest.skills.length > 0) {
+      const skillNames = jobRequest.skills.map(s => s.skillName || s).join('، ');
+      reqList.push(`• المهارات الأساسية المطلوبة: ${skillNames}`);
+    }
+    if (jobRequest.certifications) reqList.push(`• الشهادات والاعتمادات: ${jobRequest.certifications}`);
+    if (jobRequest.languages) reqList.push(`• اللغات المفضلة: ${jobRequest.languages}`);
+
+    const formattedRequirements = reqList.length > 0 ? reqList.join('\n') : (jobRequest.requiredExperience || 'حسب المتطلبات والتخصص');
+
+    // Prepare rich responsibilities list
+    let formattedResponsibilities = jobRequest.responsibilities;
+    if (Array.isArray(jobRequest.responsibilities) && jobRequest.responsibilities.length > 0) {
+      formattedResponsibilities = jobRequest.responsibilities.map(r => `• ${r}`).join('\n');
+    }
+
+    // Prepare rich description
+    const descParts = [];
+    if (jobRequest.jobSummary) descParts.push(jobRequest.jobSummary);
+    if (jobRequest.educationLevel) descParts.push(`المؤهل العلمي: ${jobRequest.educationLevel}`);
+    if (jobRequest.salaryMin && jobRequest.salaryMax) {
+      descParts.push(`نطاق الراتب المخصص: ${Math.round(jobRequest.salaryMin).toLocaleString('ar-SA')} - ${Math.round(jobRequest.salaryMax).toLocaleString('ar-SA')} ريال`);
+    }
+    const formattedDescription = descParts.join('\n\n') || jobRequest.jobTitle;
+
     const createdJob = await prisma.$transaction(async (tx) => {
       const recruitmentJob = await tx.recruitmentJob.create({
         data: {
@@ -979,9 +1007,9 @@ export const convertToRecruitmentJob = async (req, res) => {
           workMode: jobRequest.employmentType === 'REMOTE' ? 'REMOTE' : jobRequest.employmentType === 'HYBRID' ? 'HYBRID' : 'ONSITE',
           salaryMin: jobRequest.salaryMin ? Math.round(jobRequest.salaryMin) : null,
           salaryMax: jobRequest.salaryMax ? Math.round(jobRequest.salaryMax) : null,
-          description: jobRequest.jobSummary || jobRequest.jobTitle,
-          requirements: jobRequest.requiredExperience,
-          responsibilities: jobRequest.responsibilities,
+          description: formattedDescription,
+          requirements: formattedRequirements,
+          responsibilities: formattedResponsibilities,
           status: 'OPEN',
           createdBy: userId
         }
