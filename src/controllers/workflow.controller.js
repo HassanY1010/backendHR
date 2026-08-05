@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 import slaService from '../services/sla.service.js';
 
-const prisma = new PrismaClient();
 
 // ============================================================
 // DEFAULT WORKFLOW STEPS (7 stages with SLA)
@@ -544,27 +543,52 @@ export const getWorkflowDashboard = async (req, res) => {
     try {
         const companyId = await resolveCompanyId(req);
         const companyWhere = companyId ? { companyId } : {};
-        const stepWhere = companyId ? { instance: { companyId } } : {};
 
-        const [totalInstances, activeInstances, completedInstances, slaBreachInstances, stepInstances] = await Promise.all([
-            prisma.workflowInstance.count({ where: companyWhere }),
-            prisma.workflowInstance.count({ where: { ...companyWhere, status: 'ACTIVE' } }),
-            prisma.workflowInstance.count({ where: { ...companyWhere, status: 'COMPLETED' } }),
-            prisma.workflowStepInstance.count({ where: { ...stepWhere, slaBreach: true } }),
-            prisma.workflowStepInstance.findMany({
-                where: stepWhere,
-                include: { step: true }
-            })
-        ]);
+        // Single DB Query for all instances and step instances for the company
+        const instances = await prisma.workflowInstance.findMany({
+            where: companyWhere,
+            include: {
+                stepInstances: {
+                    include: { step: true }
+                },
+                jobRequest: { select: { requestId: true, jobTitle: true } }
+            }
+        });
 
-        // Average duration per step
+        const totalInstances = instances.length;
+        let activeInstances = 0;
+        let completedInstances = 0;
+        let slaBreachInstances = 0;
         const stepStats = {};
-        for (const si of stepInstances) {
-            const key = si.step?.nameAr || `Step ${si.stepOrder}`;
-            if (!stepStats[key]) stepStats[key] = { total: 0, sumHours: 0, breaches: 0, completed: 0 };
-            stepStats[key].total++;
-            if (si.actualDuration) { stepStats[key].sumHours += si.actualDuration; stepStats[key].completed++; }
-            if (si.slaBreach) stepStats[key].breaches++;
+        const recentBreaches = [];
+
+        for (const inst of instances) {
+            if (inst.status === 'ACTIVE') activeInstances++;
+            if (inst.status === 'COMPLETED') completedInstances++;
+
+            for (const si of inst.stepInstances) {
+                if (si.slaBreach) {
+                    slaBreachInstances++;
+                    recentBreaches.push({
+                        id: si.id,
+                        stepName: si.step?.nameAr || 'غير معروف',
+                        stepOrder: si.stepOrder,
+                        jobTitle: inst.jobRequest?.jobTitle,
+                        requestId: inst.jobRequest?.requestId,
+                        assignedTo: null,
+                        expectedHours: si.expectedDuration,
+                        dueAt: si.dueAt,
+                        hoursOverdue: si.dueAt ? Math.round((Date.now() - new Date(si.dueAt).getTime()) / (1000 * 60 * 60)) : null,
+                        escalated: si.escalated
+                    });
+                }
+
+                const key = si.step?.nameAr || `Step ${si.stepOrder}`;
+                if (!stepStats[key]) stepStats[key] = { total: 0, sumHours: 0, breaches: 0, completed: 0 };
+                stepStats[key].total++;
+                if (si.actualDuration) { stepStats[key].sumHours += si.actualDuration; stepStats[key].completed++; }
+                if (si.slaBreach) stepStats[key].breaches++;
+            }
         }
 
         const stepSummary = Object.entries(stepStats).map(([name, s]) => ({
@@ -574,18 +598,6 @@ export const getWorkflowDashboard = async (req, res) => {
             total: s.total
         }));
 
-        // Recent SLA breaches
-        const recentBreaches = await prisma.workflowStepInstance.findMany({
-            where: { instance: { companyId }, slaBreach: true },
-            include: {
-                step: true,
-                instance: { include: { jobRequest: { select: { requestId: true, jobTitle: true } } } }
-            },
-            orderBy: { updatedAt: 'desc' },
-            take: 10
-        });
-
-        // Bottleneck: step with most overdue
         const bottleneck = stepSummary.sort((a, b) => b.breaches - a.breaches)[0];
 
         res.json({
@@ -600,7 +612,7 @@ export const getWorkflowDashboard = async (req, res) => {
                     completionRate: totalInstances > 0 ? Math.round((completedInstances / totalInstances) * 100) : 0
                 },
                 stepSummary,
-                recentBreaches,
+                recentBreaches: recentBreaches.slice(0, 10),
                 bottleneck
             }
         });

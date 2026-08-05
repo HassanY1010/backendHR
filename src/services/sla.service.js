@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
-import { createRequire } from 'module';
 
-const prisma = new PrismaClient();
 
 // ============================================================================
 // SLA SERVICE — Checks breaches every 15 minutes, triggers escalation
