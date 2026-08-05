@@ -136,7 +136,7 @@ export const createJobRequest = async (req, res) => {
           vacancies: Number(vacancies) || 1,
           jobSummary,
           requiredExperience,
-          educationLevel,
+          educationLevel: educationLevel && educationLevel.trim() ? educationLevel : 'بكالوريوس (Bachelor)',
           certifications,
           languages,
           responsibilities,

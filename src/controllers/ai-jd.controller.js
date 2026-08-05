@@ -60,6 +60,7 @@ export const generateJobDescription = async (req, res) => {
   "employmentType": "${employmentType || 'FULL_TIME'}",
   "workMode": "${workMode || 'ONSITE'}",
   "seniorityLevel": "${seniorityLevel || 'MID'}",
+  "educationLevel": "بكالوريوس (Bachelor)",
   "confidence_score": 0.95
 }`;
 
@@ -89,6 +90,7 @@ export const generateJobDescription = async (req, res) => {
             employmentType: employmentType || parsedResult?.employmentType || 'FULL_TIME',
             workMode: workMode || parsedResult?.workMode || 'HYBRID',
             seniorityLevel: seniorityLevel || parsedResult?.seniorityLevel || 'MID',
+            educationLevel: parsedResult?.educationLevel || 'بكالوريوس (Bachelor)',
             salaryInsight: (salaryMin && salaryMax)
                 ? `نطاق الراتب المخصص لهذه الوظيفة بين ${salaryMin} و ${salaryMax} ريال.`
                 : (parsedResult?.salaryInsight || 'نطاق الراتب تنافسي ومناسب لمستوى السوق.')
