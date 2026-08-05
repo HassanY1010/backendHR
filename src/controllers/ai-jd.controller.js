@@ -22,7 +22,8 @@ export const generateJobDescription = async (req, res) => {
             department,
             employmentType,
             workMode,
-            seniorityLevel
+            seniorityLevel,
+            educationLevel
         } = req.body;
 
         if (!jobTitle) {
@@ -33,6 +34,7 @@ export const generateJobDescription = async (req, res) => {
 
 المسمى الوظيفي: ${jobTitle}
 القسم / الإدارة: ${department || 'غير محدد'}
+المؤهل العلمي المطلوب: ${educationLevel || 'حسب التخصص والمتطلبات'}
 سنوات الخبرة المطلوبة: ${experience || 'غير محدد'}
 الموقع الجغرافي: ${location || 'الرياض'}
 نوع التوظيف: ${employmentType || 'دوام كامل'}
@@ -43,8 +45,8 @@ export const generateJobDescription = async (req, res) => {
 
 أرجع JSON بالهيكل التالي بالضبط:
 {
-  "jobTitle": "المسمى الوظيفي",
-  "summary": "ملخص وظيفي احترافي فقرة كاملة",
+  "jobTitle": "${jobTitle}",
+  "summary": "ملخص وظيفي احترافي يتضمن المسمى والمؤهل والخبرة والموقع بدقة",
   "responsibilities": ["مسؤولية 1", "مسؤولية 2", "..."],
   "requirements": ["متطلب 1", "متطلب 2", "..."],
   "requiredSkills": ["مهارة 1", "مهارة 2", "..."],
@@ -60,7 +62,7 @@ export const generateJobDescription = async (req, res) => {
   "employmentType": "${employmentType || 'FULL_TIME'}",
   "workMode": "${workMode || 'ONSITE'}",
   "seniorityLevel": "${seniorityLevel || 'MID'}",
-  "educationLevel": "بكالوريوس (Bachelor)",
+  "educationLevel": "${educationLevel || 'حسب التخصص والمتطلبات'}",
   "confidence_score": 0.95
 }`;
 
@@ -90,7 +92,7 @@ export const generateJobDescription = async (req, res) => {
             employmentType: employmentType || parsedResult?.employmentType || 'FULL_TIME',
             workMode: workMode || parsedResult?.workMode || 'HYBRID',
             seniorityLevel: seniorityLevel || parsedResult?.seniorityLevel || 'MID',
-            educationLevel: parsedResult?.educationLevel || 'بكالوريوس (Bachelor)',
+            educationLevel: educationLevel || parsedResult?.educationLevel || 'حسب التخصص والمتطلبات',
             salaryInsight: (salaryMin && salaryMax)
                 ? `نطاق الراتب المخصص لهذه الوظيفة بين ${salaryMin} و ${salaryMax} ريال.`
                 : (parsedResult?.salaryInsight || 'نطاق الراتب تنافسي ومناسب لمستوى السوق.')
@@ -185,8 +187,22 @@ export const interactiveJDChat = async (req, res) => {
         // Extract real experience from user turn 5
         const experienceInput = userMsgs[4] && !/لا شيء|لا شي/i.test(userMsgs[4]) ? userMsgs[4] : '2-4 سنوات';
 
-        // ── Turn 5: Ask for Location, Work Mode & Salary ───────────────────────
+        // ── Turn 5: Ask for Education Qualification ────────────────────────────
         if (turnCount === 5 && !isFinishRequested) {
+            return res.json({
+                success: true,
+                data: {
+                    isComplete: false,
+                    nextQuestion: `رائع! ما هو المؤهل العلمي المطلوب لهذه الوظيفة (مثل: بكالوريوس هندسة / دبلوم / ماجستير / شهادة مهنية مخصصة)؟`
+                }
+            });
+        }
+
+        // Extract real education qualification from user turn 6
+        const educationInput = userMsgs[5] && !/لا شيء|لا شي|غير محدد/i.test(userMsgs[5]) ? userMsgs[5] : 'بكالوريوس في التخصص المطلوب';
+
+        // ── Turn 6: Ask for Location, Work Mode & Salary ───────────────────────
+        if (turnCount === 6 && !isFinishRequested) {
             return res.json({
                 success: true,
                 data: {
@@ -197,7 +213,7 @@ export const interactiveJDChat = async (req, res) => {
         }
 
         // ── Advanced Real Data Extraction Engine ──────────────────────────────
-        const rawLocationAndSalaryMsg = userMsgs[5] || userMsgs[userMsgs.length - 1] || '';
+        const rawLocationAndSalaryMsg = userMsgs[6] || userMsgs[userMsgs.length - 1] || '';
         const rawExperienceMsg = userMsgs[4] || '';
 
         // Extract real location
@@ -245,6 +261,7 @@ export const interactiveJDChat = async (req, res) => {
             jobTitle,
             department: departmentInput,
             experience: realExperience,
+            educationLevel: educationInput,
             location: realLocation,
             workMode: realWorkMode,
             seniorityLevel,
