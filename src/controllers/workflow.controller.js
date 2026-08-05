@@ -20,7 +20,17 @@ const DEFAULT_STEPS = [
 // ============================================================
 // HELPER: Get or create default template for a company
 // ============================================================
+const resolveCompanyId = async (req) => {
+    let companyId = req.user?.companyId || req.user?.company?.id;
+    if (!companyId) {
+        const firstComp = await prisma.company.findFirst();
+        companyId = firstComp?.id || null;
+    }
+    return companyId;
+};
+
 const getOrCreateDefaultTemplate = async (companyId) => {
+    if (!companyId) return null;
     let template = await prisma.workflowTemplate.findFirst({
         where: { companyId, isDefault: true, isActive: true },
         include: { steps: { orderBy: { stepOrder: 'asc' } } }
@@ -57,9 +67,10 @@ const getOrCreateDefaultTemplate = async (companyId) => {
  */
 export const getTemplates = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
+        const whereClause = companyId ? { companyId, isActive: true } : { isActive: true };
         const templates = await prisma.workflowTemplate.findMany({
-            where: { companyId, isActive: true },
+            where: whereClause,
             include: {
                 steps: { orderBy: { stepOrder: 'asc' } },
                 _count: { select: { instances: true } }
@@ -67,10 +78,12 @@ export const getTemplates = async (req, res) => {
             orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }]
         });
 
-        // Ensure there's always a default
-        if (templates.length === 0) {
+        // Ensure there's always a default if company exists
+        if (templates.length === 0 && companyId) {
             const defaultTemplate = await getOrCreateDefaultTemplate(companyId);
-            return res.json({ success: true, data: [defaultTemplate] });
+            if (defaultTemplate) {
+                return res.json({ success: true, data: [defaultTemplate] });
+            }
         }
 
         res.json({ success: true, data: templates });
@@ -254,7 +267,7 @@ export const initWorkflowInstance = async (companyId, jobRequestId, performedBy,
  */
 export const getWorkflowInstance = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
         const { jobRequestId } = req.params;
 
         const instance = await prisma.workflowInstance.findUnique({
@@ -278,10 +291,12 @@ export const getWorkflowInstance = async (req, res) => {
 
         if (!instance) {
             // Auto-create if doesn't exist
-            const jobRequest = await prisma.jobRequest.findFirst({ where: { id: jobRequestId, companyId } });
+            const jobWhere = companyId ? { id: jobRequestId, companyId } : { id: jobRequestId };
+            const jobRequest = await prisma.jobRequest.findFirst({ where: jobWhere });
             if (!jobRequest) return res.status(404).json({ success: false, message: 'طلب التوظيف غير موجود' });
 
-            const newInstance = await initWorkflowInstance(companyId, jobRequestId, req.user?.id, req.user?.name);
+            const targetCompanyId = companyId || jobRequest.companyId;
+            const newInstance = await initWorkflowInstance(targetCompanyId, jobRequestId, req.user?.id, req.user?.name);
             return res.json({ success: true, data: newInstance });
         }
 
@@ -527,15 +542,17 @@ export const addComment = async (req, res) => {
  */
 export const getWorkflowDashboard = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
+        const companyWhere = companyId ? { companyId } : {};
+        const stepWhere = companyId ? { instance: { companyId } } : {};
 
         const [totalInstances, activeInstances, completedInstances, slaBreachInstances, stepInstances] = await Promise.all([
-            prisma.workflowInstance.count({ where: { companyId } }),
-            prisma.workflowInstance.count({ where: { companyId, status: 'ACTIVE' } }),
-            prisma.workflowInstance.count({ where: { companyId, status: 'COMPLETED' } }),
-            prisma.workflowStepInstance.count({ where: { instance: { companyId }, slaBreach: true } }),
+            prisma.workflowInstance.count({ where: companyWhere }),
+            prisma.workflowInstance.count({ where: { ...companyWhere, status: 'ACTIVE' } }),
+            prisma.workflowInstance.count({ where: { ...companyWhere, status: 'COMPLETED' } }),
+            prisma.workflowStepInstance.count({ where: { ...stepWhere, slaBreach: true } }),
             prisma.workflowStepInstance.findMany({
-                where: { instance: { companyId } },
+                where: stepWhere,
                 include: { step: true }
             })
         ]);
@@ -599,13 +616,11 @@ export const getWorkflowDashboard = async (req, res) => {
  */
 export const getSLABreaches = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
+        const stepWhere = companyId ? { instance: { companyId }, slaBreach: true } : { slaBreach: true };
 
         const breaches = await prisma.workflowStepInstance.findMany({
-            where: {
-                instance: { companyId },
-                slaBreach: true
-            },
+            where: stepWhere,
             include: {
                 step: true,
                 instance: {
