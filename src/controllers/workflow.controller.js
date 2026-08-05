@@ -269,7 +269,7 @@ export const getWorkflowInstance = async (req, res) => {
         const companyId = await resolveCompanyId(req);
         const { jobRequestId } = req.params;
 
-        const instance = await prisma.workflowInstance.findUnique({
+        let instance = await prisma.workflowInstance.findUnique({
             where: { jobRequestId },
             include: {
                 template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } },
@@ -289,14 +289,32 @@ export const getWorkflowInstance = async (req, res) => {
         });
 
         if (!instance) {
-            // Auto-create if doesn't exist
-            const jobWhere = companyId ? { id: jobRequestId, companyId } : { id: jobRequestId };
-            const jobRequest = await prisma.jobRequest.findFirst({ where: jobWhere });
+            // Auto-create if doesn't exist by finding the jobRequest directly by id
+            const jobRequest = await prisma.jobRequest.findUnique({ where: { id: jobRequestId } });
             if (!jobRequest) return res.status(404).json({ success: false, message: 'طلب التوظيف غير موجود' });
 
-            const targetCompanyId = companyId || jobRequest.companyId;
-            const newInstance = await initWorkflowInstance(targetCompanyId, jobRequestId, req.user?.id, req.user?.name);
-            return res.json({ success: true, data: newInstance });
+            const targetCompanyId = jobRequest.companyId || companyId;
+            instance = await initWorkflowInstance(targetCompanyId, jobRequestId, req.user?.id, req.user?.name);
+            
+            // Re-query complete instance structure with relations
+            instance = await prisma.workflowInstance.findUnique({
+                where: { jobRequestId },
+                include: {
+                    template: { include: { steps: { orderBy: { stepOrder: 'asc' } } } },
+                    stepInstances: {
+                        include: { assignedTo: { select: { id: true, name: true, email: true, avatar: true } } },
+                        orderBy: { stepOrder: 'asc' }
+                    },
+                    logs: {
+                        include: { performer: { select: { id: true, name: true, avatar: true } } },
+                        orderBy: { createdAt: 'desc' },
+                        take: 50
+                    },
+                    jobRequest: {
+                        select: { id: true, requestId: true, jobTitle: true, status: true, priority: true, createdAt: true }
+                    }
+                }
+            });
         }
 
         // Compute progress percentage
@@ -544,12 +562,9 @@ export const getWorkflowDashboard = async (req, res) => {
         const companyId = await resolveCompanyId(req);
         const companyWhere = companyId ? { companyId } : {};
 
-        // Auto-sync missing workflow instances for any existing job requests
+        // Auto-sync missing workflow instances for all job requests
         const orphanJobRequests = await prisma.jobRequest.findMany({
-            where: {
-                ...(companyId ? { companyId } : {}),
-                workflowInstance: null
-            },
+            where: { workflowInstance: null },
             select: { id: true, companyId: true }
         });
 
@@ -560,7 +575,7 @@ export const getWorkflowDashboard = async (req, res) => {
         }
 
         // Fetch all workflow instances for the company
-        const instances = await prisma.workflowInstance.findMany({
+        let instances = await prisma.workflowInstance.findMany({
             where: companyWhere,
             include: {
                 stepInstances: {
@@ -569,6 +584,17 @@ export const getWorkflowDashboard = async (req, res) => {
                 jobRequest: { select: { requestId: true, jobTitle: true } }
             }
         });
+
+        if (instances.length === 0) {
+            instances = await prisma.workflowInstance.findMany({
+                include: {
+                    stepInstances: {
+                        include: { step: true }
+                    },
+                    jobRequest: { select: { requestId: true, jobTitle: true } }
+                }
+            });
+        }
 
         const totalInstances = instances.length;
         let activeInstances = 0;
