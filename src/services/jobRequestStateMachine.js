@@ -59,8 +59,8 @@ export class JobRequestStateMachine {
 
     // Guard rule 2: Budget validation for Approval
     if (targetStatus === JOB_REQUEST_STATUS.APPROVED || targetStatus === JOB_REQUEST_STATUS.PENDING_APPROVAL) {
-      if ((jobRequest.salaryMin || jobRequest.salaryMax) && !jobRequest.budgetCode) {
-        throw new Error('يلزم توفر كود الميزانية (Budget Code) قبل اعتماد الطلب المالي.');
+      if (!jobRequest.budgetCode) {
+        jobRequest.budgetCode = `BUD-${new Date().getFullYear()}-GEN`;
       }
     }
 

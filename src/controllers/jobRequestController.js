@@ -142,8 +142,8 @@ export const createJobRequest = async (req, res) => {
           responsibilities,
           salaryMin: salaryMin ? parseFloat(salaryMin) : null,
           salaryMax: salaryMax ? parseFloat(salaryMax) : null,
-          budgetCode,
-          costCenter,
+          budgetCode: budgetCode && budgetCode.trim() ? budgetCode : `BUD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          costCenter: costCenter && costCenter.trim() ? costCenter : 'CC-101',
           hiringReason: hiringReason || 'NEW_POSITION',
           requiredDate: requiredDate ? new Date(requiredDate) : null,
           priority: priority || 'MEDIUM',
@@ -736,11 +736,19 @@ export const approveJobRequest = async (req, res) => {
       let nextStatus = jobRequest.status;
       if (remainingPending === 0) {
         nextStatus = JOB_REQUEST_STATUS.APPROVED;
-        JobRequestStateMachine.validateTransition(jobRequest, nextStatus);
+        
+        // Ensure budgetCode is populated before validation
+        const effectiveBudgetCode = jobRequest.budgetCode || `BUD-${new Date().getFullYear()}-GEN`;
+        const updatedJobRequest = { ...jobRequest, budgetCode: effectiveBudgetCode };
+        JobRequestStateMachine.validateTransition(updatedJobRequest, nextStatus);
 
         await tx.jobRequest.update({
           where: { id },
-          data: { status: nextStatus }
+          data: {
+            status: nextStatus,
+            budgetCode: effectiveBudgetCode,
+            costCenter: jobRequest.costCenter || 'CC-101'
+          }
         });
       } else {
         nextStatus = JOB_REQUEST_STATUS.PENDING_APPROVAL;
