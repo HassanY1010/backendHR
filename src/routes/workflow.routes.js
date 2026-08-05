@@ -1,5 +1,6 @@
 import express from 'express';
-import { authenticate } from '../middlewares/auth.middleware.js';
+import { protect as authenticate } from '../middlewares/auth.middleware.js';
+
 import {
     getTemplates,
     createTemplate,
