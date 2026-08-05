@@ -74,14 +74,14 @@ export const login = async (req, res, next) => {
             { expiresIn: '7d' }
         );
 
-        // Update last login
-        await prisma.user.update({
+        // Update last login asynchronously (non-blocking)
+        prisma.user.update({
             where: { id: user.id },
             data: {
                 lastLogin: new Date(),
                 updatedAt: new Date()
             }
-        });
+        }).catch(err => console.error('Error updating lastLogin async:', err));
 
         const dashboardUrls = {
             'SUPER_ADMIN': process.env.SUPER_ADMIN_DASHBOARD_URL,
