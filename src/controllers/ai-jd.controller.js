@@ -647,3 +647,78 @@ export const getJDTemplates = async (req, res) => {
 
     res.json({ success: true, data: templates });
 };
+
+/**
+ * POST /api/ai-jd/generate-summary
+ * Generate professional HR Job Summary based on form input fields
+ */
+export const generateSummaryOnly = async (req, res) => {
+    try {
+        const {
+            jobTitle,
+            department,
+            location,
+            employmentType,
+            requiredExperience,
+            skills,
+            educationLevel,
+            hiringReason
+        } = req.body;
+
+        if (!jobTitle || !jobTitle.trim()) {
+            return res.status(400).json({ error: 'المسمى الوظيفي مطلوب لتوليد ملخص الوظيفة' });
+        }
+
+        const empLabels = {
+            'FULL_TIME': 'دوام كامل',
+            'PART_TIME': 'دوام جزئي',
+            'CONTRACT': 'عقد مؤقت',
+            'REMOTE': 'عن بُعد',
+            'HYBRID': 'هجين'
+        };
+
+        const prompt = `أنت خبير موارد بشرية استراتيجي (HR Specialist).
+قم بكتابة "ملخص وظيفي" (Job Summary) احترافي، موجز، ومباشر باللغة العربية (حوالي 80 إلى 130 كلمة) لطلب توظيف جديد بالمعطيات التالية:
+- المسمى الوظيفي: ${jobTitle}
+- القسم / الإدارة: ${department || 'تكنولوجيا المعلومات'}
+- مكان العمل: ${location || 'الرياض'}
+- نوع التوظيف: ${empLabels[employmentType] || employmentType || 'دوام كامل'}
+- سنوات الخبرة المطلوبة: ${requiredExperience || 'حسب التخصص'}
+- المهارات المطلوبة: ${Array.isArray(skills) ? skills.join('، ') : (skills || 'غير محددة')}
+- المؤهل العلمي: ${educationLevel || 'بكالوريوس'}
+- سبب الاحتياج: ${hiringReason || 'استقطاب كفاءات متميزة'}
+
+الشروط البنائية المحددة:
+1. صياغة النص بأسلوب مهني جذّاب، وضح الهدف الأساسي من الدور الوظيفي، وأبرز المسؤوليات، والقيمة التي سيضيفها الموظف للشركة.
+2. عدم تكرار الحقول كقائمة، بل صياغتها كفقرة مترابطة واحترافية قابلة للاستخدام المباشر.
+3. قم بإرجاع نص الملخص فقط مباشرة دون أي مقدمات أو عناوين أو ملاحظات جانبية.`;
+
+        let summaryText = '';
+        try {
+            summaryText = await aiService.generateText(prompt);
+            summaryText = summaryText ? summaryText.trim() : '';
+        } catch (aiErr) {
+            logger.warn('AI Service fallback for summary generation:', aiErr?.message);
+        }
+
+        if (!summaryText) {
+            const tailored = getDomainTailoredJD({
+                jobTitle,
+                department,
+                experience: requiredExperience,
+                location,
+                educationLevel,
+                skills
+            });
+            summaryText = tailored.summary;
+        }
+
+        return res.json({
+            status: 'success',
+            summary: summaryText
+        });
+    } catch (err) {
+        logger.error('Error in generateSummaryOnly:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد ملخص الوظيفة بالذكاء الاصطناعي' });
+    }
+};
