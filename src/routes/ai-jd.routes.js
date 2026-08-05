@@ -1,6 +1,13 @@
 import express from 'express';
 import { protect } from '../middlewares/auth.middleware.js';
-import { generateJobDescription, interactiveJDChat, getJDTemplates, generateSummaryOnly } from '../controllers/ai-jd.controller.js';
+import {
+    generateJobDescription,
+    interactiveJDChat,
+    getJDTemplates,
+    generateSummaryOnly,
+    generateRecruitmentDescription,
+    generateRecruitmentRequirements
+} from '../controllers/ai-jd.controller.js';
 
 const router = express.Router();
 
@@ -11,6 +18,12 @@ router.post('/generate', generateJobDescription);
 
 // Generate AI Job Summary Only for job request forms
 router.post('/generate-summary', generateSummaryOnly);
+
+// Generate Recruitment Job Description (150-300 words)
+router.post('/generate-recruitment-description', generateRecruitmentDescription);
+
+// Generate Recruitment Requirements (clean line-by-line)
+router.post('/generate-recruitment-requirements', generateRecruitmentRequirements);
 
 // Interactive AI chat for JD creation
 router.post('/chat', interactiveJDChat);

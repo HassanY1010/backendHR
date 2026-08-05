@@ -722,3 +722,149 @@ export const generateSummaryOnly = async (req, res) => {
         return res.status(500).json({ error: 'حدث خطأ أثناء توليد ملخص الوظيفة بالذكاء الاصطناعي' });
     }
 };
+
+/**
+ * POST /api/ai-jd/generate-recruitment-description
+ * Generate 150-300 word professional job description for recruitment page
+ */
+export const generateRecruitmentDescription = async (req, res) => {
+    try {
+        const {
+            title,
+            department,
+            openingReason,
+            city,
+            location,
+            workMode,
+            employmentType,
+            seniorityLevel,
+            yearsOfExperience,
+            previousCompanyType,
+            workEnvironment,
+            managedTeamBefore,
+            teamSize,
+            salaryMin,
+            salaryMax
+        } = req.body;
+
+        if (!title || !title.trim()) {
+            return res.status(400).json({ error: 'عنوان الوظيفة مطلوب لتوليد الوصف الوظيفي' });
+        }
+
+        const workModeMap = { 'ONSITE': 'حضوري من المكتب', 'REMOTE': 'عن بُعد بالكامل', 'HYBRID': 'هجين (مكتب وعن بُعد)' };
+        const empTypeMap = { 'FULL_TIME': 'دوام كامل', 'PART_TIME': 'دوام جزئي', 'CONTRACT': 'عقد مؤقت' };
+        const seniorityMap = { 'ENTRY': 'مبتدئ (Entry-Level)', 'MID': 'متوسط (Mid-Level)', 'SENIOR': 'خبير (Senior)', 'LEAD': 'قائد فريق (Team Lead)', 'MANAGER': 'مدير قسم (Manager)', 'EXECUTIVE': 'تنفيذي (Executive)' };
+        const reasonMap = { 'NEW_ROLE': 'استحداث دور جديد', 'EXPANSION': 'توسع في الفريق', 'REPLACEMENT': 'إحلال وبديل' };
+
+        const prompt = `أنت خبير موارد بشرية واستقطاب كفاءات (Senior HR Recruiter).
+قم بكتابة "وصف وظيفي" (Job Description) احترافي، جذاب، ومتوافق مع أفضل ممارسات الموارد البشرية باللغة العربية (بطول 150 إلى 300 كلمة) جاهز للنشر مباشرة على منصات التوظيف، بناءً على البيانات التالية:
+- عنوان الوظيفة: ${title}
+- القسم / الإدارة: ${department || 'غير محدد'}
+- سبب التوظيف: ${reasonMap[openingReason] || openingReason || 'توسع وتطوير الأعمال'}
+- المدينة والموقع: ${city || ''} ${location ? `(${location})` : ''}
+- نمط العمل: ${workModeMap[workMode] || workMode || 'حضوري'}
+- نوع التوظيف: ${empTypeMap[employmentType] || employmentType || 'دوام كامل'}
+- المستوى الوظيفي: ${seniorityMap[seniorityLevel] || seniorityLevel || 'متوسط'}
+- سنوات الخبرة: ${yearsOfExperience ? `${yearsOfExperience} سنوات` : 'حسب التخصص'}
+- بيئة العمل السابقة المفضلة: ${previousCompanyType || 'غير محددة'}
+- طبيعة بيئة العمل لدينا: ${workEnvironment || 'بيئة عمل مرنة وتنافسية'}
+- إدارات سابقة وإدارة فريق: ${managedTeamBefore === true || managedTeamBefore === 'true' ? `نعم، يشترط خبرة سابقة في قيادة فريق بحجم (${teamSize || 'غير محدد'})` : 'لا يشترط'}
+- نطاق الراتب المتوقع: ${salaryMin && salaryMax ? `${salaryMin} - ${salaryMax} ريال` : 'تنافسي وحسب الخبرة'}
+
+المعايير المحددة:
+1. صياغة النص بأسلوب جذاب ومهني يشرح الهدف من الوظيفة، وأبرز المسؤوليات، ونمط بيئة العمل والقيمة المضافة للشركة.
+2. اجعل النص في فقرات مترابطة ومنسقة دون استخدام قوائم نقطية معقدة.
+3. قم بإرجاع نص الوصف فقط مباشرة دون مقدمات أو عناوين خارجية.`;
+
+        let descriptionText = '';
+        try {
+            descriptionText = await aiService.generateText(prompt);
+            descriptionText = descriptionText ? descriptionText.trim() : '';
+        } catch (aiErr) {
+            logger.warn('AI Service fallback for recruitment description:', aiErr?.message);
+        }
+
+        if (!descriptionText) {
+            const tailored = getDomainTailoredJD({
+                jobTitle: title,
+                department,
+                experience: yearsOfExperience ? `${yearsOfExperience} سنوات` : '3-5 سنوات',
+                location: city || location || 'الرياض',
+                educationLevel: 'بكالوريوس'
+            });
+            descriptionText = tailored.summary + '\n\nالمسؤوليات الرئيسية:\n' + tailored.responsibilities.map(r => `• ${r}`).join('\n');
+        }
+
+        return res.json({ status: 'success', description: descriptionText });
+    } catch (err) {
+        logger.error('Error in generateRecruitmentDescription:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد الوصف الوظيفي بالذكاء الاصطناعي' });
+    }
+};
+
+/**
+ * POST /api/ai-jd/generate-recruitment-requirements
+ * Generate clean line-by-line requirements list (NO bullet symbols, NO numbers)
+ */
+export const generateRecruitmentRequirements = async (req, res) => {
+    try {
+        const {
+            title,
+            department,
+            workMode,
+            employmentType,
+            seniorityLevel,
+            yearsOfExperience,
+            description
+        } = req.body;
+
+        if (!title || !title.trim()) {
+            return res.status(400).json({ error: 'عنوان الوظيفة مطلوب لتوليد المتطلبات' });
+        }
+
+        const seniorityMap = { 'ENTRY': 'مبتدئ', 'MID': 'متوسط', 'SENIOR': 'خبير', 'LEAD': 'قائد فريق', 'MANAGER': 'مدير قسم', 'EXECUTIVE': 'تنفيذي' };
+
+        const prompt = `أنت أخصائي توظيف وموارد بشرية (HR Specialist).
+قم بكتابة قائمة من المتطلبات والشروط (Job Requirements) الاحترافية والعملية باللغة العربية للوظيفة التالية:
+- عنوان الوظيفة: ${title}
+- المستوى الوظيفي: ${seniorityMap[seniorityLevel] || seniorityLevel || 'متوسط'}
+- سنوات الخبرة: ${yearsOfExperience ? `${yearsOfExperience} سنوات` : '3-5 سنوات'}
+- القسم: ${department || 'غير محدد'}
+- نوع التوظيف ونمط العمل: ${employmentType || ''} - ${workMode || ''}
+${description ? `- ملخص الوصف الوظيفي: ${description.slice(0, 300)}` : ''}
+
+الشرط الأهم والأساسي بالتنسيق:
+1. قم بإنشاء 5 إلى 8 متطلبات عملية شاملة للمؤهلات، والخبرات، والمهارات التقنية والسلوكية، والشهادات عند الحاجة.
+2. اكتب كل متطلب في سطر مستقل جديد.
+3. حذر صارم: لا تضع أي رموز نقطية (مثل • أو - أو *) ولا أرقام (مثل 1. أو 2.) إطلاقاً في بداية أو داخل الأسطر. اكتب فقط الجمل صريحة مباشرة في كل سطر جديد لأن النظام يعتمد كل سطر كعنصر مستقل.
+4. قم بإرجاع نص الأسطر فقط مباشرة بدون أي مقدمة أو خاتمة.`;
+
+        let reqText = '';
+        try {
+            reqText = await aiService.generateText(prompt);
+            reqText = reqText ? reqText.trim() : '';
+        } catch (aiErr) {
+            logger.warn('AI Service fallback for recruitment requirements:', aiErr?.message);
+        }
+
+        if (!reqText) {
+            const tailored = getDomainTailoredJD({
+                jobTitle: title,
+                department,
+                experience: yearsOfExperience ? `${yearsOfExperience} سنوات` : '3-5 سنوات'
+            });
+            reqText = tailored.requirements.join('\n');
+        }
+
+        // Clean up any bullets/numbers if AI accidentally included them
+        const cleanedLines = reqText
+            .split('\n')
+            .map(line => line.replace(/^[\s•\-*\d+.\)\s]+/, '').trim())
+            .filter(line => line.length > 0);
+
+        return res.json({ status: 'success', requirements: cleanedLines.join('\n'), requirementsList: cleanedLines });
+    } catch (err) {
+        logger.error('Error in generateRecruitmentRequirements:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد المتطلبات بالذكاء الاصطناعي' });
+    }
+};
