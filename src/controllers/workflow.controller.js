@@ -797,6 +797,59 @@ export const getWorkflowLogs = async (req, res) => {
     }
 };
 
+/**
+ * POST /api/workflow/reset-test-data
+ * Super Admin tool to clear test workflow instances and job requests safely
+ */
+export const resetTestData = async (req, res) => {
+    try {
+        const companyId = await resolveCompanyId(req);
+        const userRole = req.user?.role;
+
+        if (userRole !== 'SUPER_ADMIN' && userRole !== 'MANAGER' && userRole !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'عذراً، هذه الصلاحية تقتصر على مدراء النظام فقط' });
+        }
+
+        const confirmCode = req.body?.confirmCode;
+        if (confirmCode !== 'RESET' && confirmCode !== 'RESET_TEST_DATA') {
+            return res.status(400).json({ success: false, message: 'رمز التأكيد غير صحيح. يرجى كتابة RESET للتأكيد' });
+        }
+
+        const companyWhere = companyId ? { companyId } : {};
+
+        await prisma.$transaction(async (tx) => {
+            const instances = await tx.workflowInstance.findMany({
+                where: companyWhere,
+                select: { id: true }
+            });
+            const instanceIds = instances.map(i => i.id);
+
+            if (instanceIds.length > 0) {
+                await tx.workflowLog.deleteMany({ where: { instanceId: { in: instanceIds } } });
+                await tx.workflowStepInstance.deleteMany({ where: { instanceId: { in: instanceIds } } });
+                await tx.workflowInstance.deleteMany({ where: { id: { in: instanceIds } } });
+            }
+
+            await tx.approvalRequest.deleteMany({
+                where: companyId ? { jobRequest: { companyId } } : {}
+            });
+            await tx.jobRequest.deleteMany({
+                where: companyWhere
+            });
+        });
+
+        logger.info(`[Workflow] Test data reset performed by ${req.user?.name} (${req.user?.id})`);
+
+        res.json({
+            success: true,
+            message: 'تم تنظيف بيانات الاختبار وإعادة ضبط المسارات بنجاح ✨'
+        });
+    } catch (error) {
+        logger.error('[Workflow] resetTestData error:', error.message);
+        res.status(500).json({ success: false, message: 'فشل في إعادة ضبط بيانات الاختبار', error: error.message });
+    }
+};
+
 export default {
     getTemplates,
     createTemplate,
@@ -808,5 +861,6 @@ export default {
     addComment,
     getWorkflowDashboard,
     getSLABreaches,
-    getWorkflowLogs
+    getWorkflowLogs,
+    resetTestData
 };

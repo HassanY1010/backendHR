@@ -11,7 +11,8 @@ import {
     addComment,
     getWorkflowDashboard,
     getSLABreaches,
-    getWorkflowLogs
+    getWorkflowLogs,
+    resetTestData
 } from '../controllers/workflow.controller.js';
 
 const router = express.Router();
@@ -33,8 +34,9 @@ router.post('/instance/:jobRequestId/comment', addComment);
 // ==== Audit Logs ====
 router.get('/logs/:jobRequestId', getWorkflowLogs);
 
-// ==== Dashboard & SLA ====
+// ==== Dashboard, SLA & Reset ====
 router.get('/dashboard', getWorkflowDashboard);
 router.get('/sla-breaches', getSLABreaches);
+router.post('/reset-test-data', resetTestData);
 
 export default router;
