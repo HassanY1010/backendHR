@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../config/db.js';
 import { JobRequestStateMachine, JOB_REQUEST_STATUS } from '../services/jobRequestStateMachine.js';
 import { initWorkflowInstance } from './workflow.controller.js';
-
-const prisma = new PrismaClient();
 
 // Helper to generate request ID: JR-YYYYMMDD-XXXX
 const generateRequestId = async (companyId) => {

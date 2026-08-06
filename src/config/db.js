@@ -2,7 +2,11 @@ import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 import crypto from 'crypto';
 
-const prismaClient = new PrismaClient();
+const globalForPrisma = globalThis;
+const prismaClient = globalForPrisma.prisma || new PrismaClient({
+    log: ['error']
+});
+globalForPrisma.prisma = prismaClient;
 
 /**
  * Recursively injects UUIDs into any object lacking an 'id' within a 'create' context.
