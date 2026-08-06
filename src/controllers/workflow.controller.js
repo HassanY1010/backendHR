@@ -102,7 +102,7 @@ export const getTemplates = async (req, res) => {
  */
 export const createTemplate = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
         const { name, nameAr, description, steps, isDefault } = req.body;
 
         if (!name || !nameAr || !steps || steps.length === 0) {
@@ -110,7 +110,7 @@ export const createTemplate = async (req, res) => {
         }
 
         // If setting as default, unset other defaults
-        if (isDefault) {
+        if (isDefault && companyId) {
             await prisma.workflowTemplate.updateMany({
                 where: { companyId, isDefault: true },
                 data: { isDefault: false }
@@ -127,11 +127,11 @@ export const createTemplate = async (req, res) => {
                 steps: {
                     create: steps.map((s, idx) => ({
                         stepOrder: s.stepOrder || idx + 1,
-                        name: s.name,
-                        nameAr: s.nameAr,
+                        name: s.name || s.nameAr,
+                        nameAr: s.nameAr || s.name,
                         description: s.description,
                         role: s.role || 'HR_MANAGER',
-                        slaDurationHours: s.slaDurationHours || 48,
+                        slaDurationHours: Number(s.slaDurationHours) || 48,
                         isRequired: s.isRequired !== false,
                         allowSkip: s.allowSkip || false
                     }))
@@ -153,14 +153,15 @@ export const createTemplate = async (req, res) => {
  */
 export const updateTemplate = async (req, res) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = await resolveCompanyId(req);
         const { id } = req.params;
         const { name, nameAr, description, steps, isDefault } = req.body;
 
-        const existing = await prisma.workflowTemplate.findFirst({ where: { id, companyId } });
+        const whereClause = companyId ? { id, companyId } : { id };
+        const existing = await prisma.workflowTemplate.findFirst({ where: whereClause });
         if (!existing) return res.status(404).json({ success: false, message: 'القالب غير موجود' });
 
-        if (isDefault) {
+        if (isDefault && companyId) {
             await prisma.workflowTemplate.updateMany({
                 where: { companyId, isDefault: true, id: { not: id } },
                 data: { isDefault: false }
