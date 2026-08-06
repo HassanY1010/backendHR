@@ -29,6 +29,10 @@ const resolveCompanyId = async (req) => {
 };
 
 const getOrCreateDefaultTemplate = async (companyId) => {
+    if (!companyId) {
+        const firstComp = await prisma.company.findFirst();
+        companyId = firstComp?.id || null;
+    }
     if (!companyId) return null;
     let template = await prisma.workflowTemplate.findFirst({
         where: { companyId, isDefault: true, isActive: true },
@@ -207,6 +211,8 @@ export const initWorkflowInstance = async (companyId, jobRequestId, performedBy,
         if (existing) return existing;
 
         const template = await getOrCreateDefaultTemplate(companyId);
+        if (!template) return null;
+        const resolvedCompanyId = companyId || template.companyId;
         const now = new Date();
 
         // Create instance and all step instances
@@ -214,7 +220,7 @@ export const initWorkflowInstance = async (companyId, jobRequestId, performedBy,
             data: {
                 templateId: template.id,
                 jobRequestId,
-                companyId,
+                companyId: resolvedCompanyId,
                 currentStep: 1,
                 status: 'ACTIVE',
                 stepInstances: {
