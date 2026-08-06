@@ -585,23 +585,28 @@ export const getWorkflowDashboard = async (req, res) => {
             where: companyWhere,
             include: {
                 stepInstances: {
-                    include: { step: true }
+                    include: { step: true },
+                    orderBy: { stepOrder: 'asc' }
                 },
-                jobRequest: { select: { requestId: true, jobTitle: true } }
-            }
+                jobRequest: { select: { id: true, requestId: true, jobTitle: true, priority: true, status: true, createdAt: true } }
+            },
+            orderBy: { createdAt: 'desc' }
         });
 
         if (instances.length === 0) {
             instances = await prisma.workflowInstance.findMany({
                 include: {
                     stepInstances: {
-                        include: { step: true }
+                        include: { step: true },
+                        orderBy: { stepOrder: 'asc' }
                     },
-                    jobRequest: { select: { requestId: true, jobTitle: true } }
-                }
+                    jobRequest: { select: { id: true, requestId: true, jobTitle: true, priority: true, status: true, createdAt: true } }
+                },
+                orderBy: { createdAt: 'desc' }
             });
         }
 
+        const now = new Date();
         const totalInstances = instances.length;
         let activeInstances = 0;
         let completedInstances = 0;
@@ -614,38 +619,77 @@ export const getWorkflowDashboard = async (req, res) => {
             if (inst.status === 'COMPLETED') completedInstances++;
 
             for (const si of inst.stepInstances) {
-                if (si.slaBreach) {
+                const isOverdue = si.dueAt && new Date(si.dueAt) < now && si.status === 'IN_PROGRESS';
+                const isBreached = si.slaBreach || isOverdue;
+
+                if (isBreached) {
                     slaBreachInstances++;
+                    const hoursOverdue = si.dueAt
+                        ? Math.max(1, Math.round((now.getTime() - new Date(si.dueAt).getTime()) / (1000 * 60 * 60)))
+                        : 0;
+
                     recentBreaches.push({
                         id: si.id,
-                        stepName: si.step?.nameAr || 'غير معروف',
+                        stepName: si.step?.nameAr || si.step?.name || `المرحلة ${si.stepOrder}`,
                         stepOrder: si.stepOrder,
-                        jobTitle: inst.jobRequest?.jobTitle,
-                        requestId: inst.jobRequest?.requestId,
-                        assignedTo: null,
-                        expectedHours: si.expectedDuration,
+                        jobTitle: inst.jobRequest?.jobTitle || 'طلب توظيف',
+                        requestId: inst.jobRequest?.requestId || inst.jobRequestId,
+                        jobRequestId: inst.jobRequestId,
+                        priority: inst.jobRequest?.priority || 'MEDIUM',
+                        assignedTo: si.assignedToName ? { name: si.assignedToName } : null,
+                        expectedHours: si.expectedDuration || si.step?.slaDurationHours || 24,
                         dueAt: si.dueAt,
-                        hoursOverdue: si.dueAt ? Math.round((Date.now() - new Date(si.dueAt).getTime()) / (1000 * 60 * 60)) : null,
+                        hoursOverdue,
                         escalated: si.escalated
                     });
                 }
 
-                const key = si.step?.nameAr || `Step ${si.stepOrder}`;
-                if (!stepStats[key]) stepStats[key] = { total: 0, sumHours: 0, breaches: 0, completed: 0 };
-                stepStats[key].total++;
-                if (si.actualDuration) { stepStats[key].sumHours += si.actualDuration; stepStats[key].completed++; }
-                if (si.slaBreach) stepStats[key].breaches++;
+                const name = si.step?.nameAr || si.step?.name || `المرحلة ${si.stepOrder}`;
+                const role = si.step?.role || 'HR_MANAGER';
+                const slaDurationHours = si.expectedDuration || si.step?.slaDurationHours || 24;
+
+                if (!stepStats[name]) {
+                    stepStats[name] = {
+                        name,
+                        role,
+                        slaHours: slaDurationHours,
+                        total: 0,
+                        sumHours: 0,
+                        breaches: 0,
+                        completed: 0
+                    };
+                }
+
+                stepStats[name].total++;
+                if (isBreached) stepStats[name].breaches++;
+
+                let duration = si.actualDuration;
+                if (!duration && si.startedAt && si.completedAt) {
+                    duration = Math.round((new Date(si.completedAt).getTime() - new Date(si.startedAt).getTime()) / (1000 * 60 * 60));
+                } else if (!duration && si.startedAt && si.status === 'IN_PROGRESS') {
+                    duration = Math.round((now.getTime() - new Date(si.startedAt).getTime()) / (1000 * 60 * 60));
+                }
+
+                if (duration !== null && duration !== undefined && duration >= 0) {
+                    stepStats[name].sumHours += duration;
+                    stepStats[name].completed++;
+                }
             }
         }
 
-        const stepSummary = Object.entries(stepStats).map(([name, s]) => ({
-            name,
+        const stepSummary = Object.values(stepStats).map((s) => ({
+            name: s.name,
+            role: s.role,
+            slaHours: s.slaHours,
             avgHours: s.completed > 0 ? Math.round(s.sumHours / s.completed) : 0,
             breaches: s.breaches,
             total: s.total
         }));
 
-        const bottleneck = stepSummary.sort((a, b) => b.breaches - a.breaches)[0];
+        const bottleneckCandidate = [...stepSummary].sort((a, b) => b.breaches - a.breaches || b.avgHours - a.avgHours)[0];
+        const bottleneck = (bottleneckCandidate && (bottleneckCandidate.breaches > 0 || bottleneckCandidate.avgHours > bottleneckCandidate.slaHours))
+            ? bottleneckCandidate
+            : null;
 
         res.json({
             success: true,
@@ -654,13 +698,23 @@ export const getWorkflowDashboard = async (req, res) => {
                     totalInstances,
                     activeInstances,
                     completedInstances,
-                    cancelledInstances: totalInstances - activeInstances - completedInstances,
+                    cancelledInstances: Math.max(0, totalInstances - activeInstances - completedInstances),
                     slaBreachCount: slaBreachInstances,
                     completionRate: totalInstances > 0 ? Math.round((completedInstances / totalInstances) * 100) : 0
                 },
                 stepSummary,
                 recentBreaches: recentBreaches.slice(0, 10),
-                bottleneck
+                bottleneck,
+                instances: instances.map(inst => ({
+                    id: inst.id,
+                    jobRequestId: inst.jobRequestId,
+                    requestId: inst.jobRequest?.requestId,
+                    jobTitle: inst.jobRequest?.jobTitle,
+                    priority: inst.jobRequest?.priority,
+                    currentStep: inst.currentStep,
+                    status: inst.status,
+                    createdAt: inst.createdAt
+                }))
             }
         });
     } catch (error) {
