@@ -1,5 +1,5 @@
 import prisma from '../config/db.js';
-import { logger } from '../utils/logger.js';
+import logger from '../utils/logger.js';
 
 const resolveCompanyId = async (req) => {
     let companyId = req.user?.companyId || req.user?.company?.id;
