@@ -74,6 +74,14 @@ export const createJobRequest = async (req, res) => {
       salaryMax,
       budgetCode,
       costCenter,
+      hiringType,
+      hiringDeadline,
+      hiringPlanId,
+      freezeReason,
+      frozenDate,
+      resumeDate,
+      ownerId,
+      ownerName,
       hiringReason,
       requiredDate,
       priority,
@@ -118,7 +126,15 @@ export const createJobRequest = async (req, res) => {
     }
 
     const requestId = await generateRequestId(companyId);
-    const initialStatus = submitDirectly ? JOB_REQUEST_STATUS.SUBMITTED : JOB_REQUEST_STATUS.DRAFT;
+    const type = hiringType || 'IMMEDIATE';
+    let initialStatus = submitDirectly ? JOB_REQUEST_STATUS.SUBMITTED : JOB_REQUEST_STATUS.DRAFT;
+    let initialPriority = priority || 'MEDIUM';
+
+    if (type === 'IMMEDIATE') {
+      initialPriority = 'URGENT';
+    } else if (type === 'ON_HOLD') {
+      initialStatus = 'ON_HOLD';
+    }
 
     const jobRequest = await prisma.$transaction(async (tx) => {
       const created = await tx.jobRequest.create({
@@ -142,9 +158,17 @@ export const createJobRequest = async (req, res) => {
           salaryMax: salaryMax ? parseFloat(salaryMax) : null,
           budgetCode: budgetCode && budgetCode.trim() ? budgetCode : `BUD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
           costCenter: costCenter && costCenter.trim() ? costCenter : 'CC-101',
+          hiringType: type,
+          hiringDeadline: hiringDeadline ? new Date(hiringDeadline) : (type === 'IMMEDIATE' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null),
+          hiringPlanId: hiringPlanId || null,
+          freezeReason: freezeReason || (type === 'ON_HOLD' ? 'BUDGET_PENDING' : null),
+          frozenDate: frozenDate ? new Date(frozenDate) : (type === 'ON_HOLD' ? new Date() : null),
+          resumeDate: resumeDate ? new Date(resumeDate) : null,
+          ownerId: ownerId || (type === 'ON_HOLD' ? userId : null),
+          ownerName: ownerName || (type === 'ON_HOLD' ? req.user?.name : null),
           hiringReason: hiringReason || 'NEW_POSITION',
           requiredDate: requiredDate ? new Date(requiredDate) : null,
-          priority: priority || 'MEDIUM',
+          priority: initialPriority,
           status: initialStatus
         }
       });
@@ -1039,5 +1063,131 @@ export const convertToRecruitmentJob = async (req, res) => {
   } catch (err) {
     console.error('Error converting job request:', err);
     return res.status(500).json({ error: err.message || 'حدث خطأ أثناء تحويل طلب التوظيف' });
+  }
+};
+
+/**
+ * POST /api/job-requests/:id/freeze
+ * Put a job request on hold (Freeze)
+ */
+export const freezeJobRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { companyId, id: userId, name: userName } = req.user;
+    const { freezeReason, resumeDate, ownerId, ownerName, comment } = req.body;
+
+    const jobRequest = await prisma.jobRequest.findFirst({
+      where: { id, companyId }
+    });
+
+    if (!jobRequest) {
+      return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const resVal = await tx.jobRequest.update({
+        where: { id },
+        data: {
+          hiringType: 'ON_HOLD',
+          status: 'ON_HOLD',
+          freezeReason: freezeReason || 'BUDGET_PENDING',
+          frozenDate: new Date(),
+          resumeDate: resumeDate ? new Date(resumeDate) : null,
+          ownerId: ownerId || userId,
+          ownerName: ownerName || userName || req.user?.email
+        }
+      });
+
+      await tx.onHoldLog.create({
+        data: {
+          jobRequestId: id,
+          freezeReason: freezeReason || 'BUDGET_PENDING',
+          frozenDate: new Date(),
+          resumeDate: resumeDate ? new Date(resumeDate) : null,
+          action: 'FREEZE',
+          performedBy: userId,
+          performerName: userName || req.user?.email,
+          comment: comment || 'تم تجميد طلب التوظيف'
+        }
+      });
+
+      await tx.jobRequestHistory.create({
+        data: {
+          jobRequestId: id,
+          action: 'تجميد طلب التوظيف (On Hold)',
+          oldStatus: jobRequest.status,
+          newStatus: 'ON_HOLD',
+          performedBy: userId,
+          comment: comment || `سبب التجميد: ${freezeReason || 'BUDGET_PENDING'}`
+        }
+      });
+
+      return resVal;
+    });
+
+    return res.json({ message: 'تم تجميد طلب التوظيف بنجاح ❄️', data: updated });
+  } catch (err) {
+    console.error('Error freezing job request:', err);
+    return res.status(500).json({ error: err.message || 'فشل في تجميد طلب التوظيف' });
+  }
+};
+
+/**
+ * POST /api/job-requests/:id/unfreeze
+ * Resume an On-Hold job request into active recruitment
+ */
+export const unfreezeJobRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { companyId, id: userId, name: userName } = req.user;
+    const { comment } = req.body;
+
+    const jobRequest = await prisma.jobRequest.findFirst({
+      where: { id, companyId }
+    });
+
+    if (!jobRequest) {
+      return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const resVal = await tx.jobRequest.update({
+        where: { id },
+        data: {
+          status: 'SUBMITTED',
+          hiringType: 'IMMEDIATE'
+        }
+      });
+
+      await tx.onHoldLog.create({
+        data: {
+          jobRequestId: id,
+          freezeReason: jobRequest.freezeReason || 'OTHER',
+          frozenDate: jobRequest.frozenDate || new Date(),
+          action: 'UNFREEZE',
+          performedBy: userId,
+          performerName: userName || req.user?.email,
+          comment: comment || 'تم استئناف التوظيف وفك التجميد'
+        }
+      });
+
+      await tx.jobRequestHistory.create({
+        data: {
+          jobRequestId: id,
+          action: 'فك التجميد واستئناف التوظيف (Unfreeze)',
+          oldStatus: 'ON_HOLD',
+          newStatus: 'SUBMITTED',
+          performedBy: userId,
+          comment: comment || 'تم إرجاع الطلب لمسار التوظيف النشط'
+        }
+      });
+
+      return resVal;
+    });
+
+    return res.json({ message: 'تم فك التجميد واستئناف طلب التوظيف بنجاح ⚡', data: updated });
+  } catch (err) {
+    console.error('Error unfreezing job request:', err);
+    return res.status(500).json({ error: err.message || 'فشل في فك تجميد طلب التوظيف' });
   }
 };

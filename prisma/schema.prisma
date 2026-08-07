@@ -184,6 +184,7 @@ model Company {
   departments        Department[]
   jobRequests        JobRequest[]
   workflowTemplates  WorkflowTemplate[]
+  hiringPlans        HiringPlan[]
 
   status             String            @default("active")
   @@map("company")
@@ -198,6 +199,7 @@ model Department {
   company         Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   jobs            RecruitmentJob[]
   jobRequests     JobRequest[]
+  hiringPlans     HiringPlan[]
   
   // ✅ علاقة هرمية (Self-relation)
   parent          Department?      @relation("SubDepartments", fields: [parentId], references: [id], onDelete: Cascade)
@@ -803,6 +805,44 @@ enum approval_status {
   REJECTED
 }
 
+enum hiring_type {
+  IMMEDIATE
+  PLANNED
+  ON_HOLD
+}
+
+enum freeze_reason {
+  BUDGET_PENDING
+  MANAGEMENT_APPROVAL
+  BUSINESS_CHANGE
+  OTHER
+}
+
+model HiringPlan {
+  id             String       @id @default(uuid())
+  companyId      String
+  year           Int          @default(2027)
+  departmentId   String
+  position       String
+  quantity       Int          @default(1)
+  fulfilledCount Int          @default(0)
+  expectedDate   DateTime
+  budget         Float        @default(0)
+  status         String       @default("PLANNED") // PLANNED, IN_PROGRESS, FULFILLED, CANCELLED
+  notes          String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department     Department   @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  jobRequests    JobRequest[]
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([year])
+  @@map("hiringplan")
+}
+
 model JobRequest {
   id               String                      @id @default(uuid())
   requestId        String                      @unique
@@ -829,9 +869,17 @@ model JobRequest {
   budgetCode       String?
   costCenter       String?
   
-  // Hiring Info
+  // Hiring Info & Hiring Types System
+  hiringType       hiring_type                 @default(IMMEDIATE)
   hiringReason     job_request_hiring_reason   @default(NEW_POSITION)
   requiredDate     DateTime?
+  hiringDeadline   DateTime?                   // Immediate Hiring Deadline
+  hiringPlanId     String?                     // Manpower Force Plan Link
+  freezeReason     freeze_reason?              // On Hold Reason
+  frozenDate       DateTime?                   // Date Request Frozen
+  resumeDate       DateTime?                   // Expected Date To Resume
+  ownerId          String?                     // Owner / Assignee for On Hold Request
+  ownerName        String?
   priority         job_request_priority        @default(MEDIUM)
   status           job_request_status          @default(DRAFT)
   
@@ -844,9 +892,11 @@ model JobRequest {
   createdByUser    User                        @relation("JobRequestCreatedBy", fields: [createdBy], references: [id], onDelete: Cascade)
   hiringManager    User?                       @relation("JobRequestHiringManager", fields: [hiringManagerId], references: [id], onDelete: SetNull)
   department       Department                  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  hiringPlan       HiringPlan?                 @relation(fields: [hiringPlanId], references: [id], onDelete: SetNull)
   skills             JobRequestSkill[]
   history            JobRequestHistory[]
   approvals          ApprovalRequest[]
+  onHoldLogs         OnHoldLog[]
   workflowInstance   WorkflowInstance?
 
   @@index([companyId])
@@ -854,7 +904,26 @@ model JobRequest {
   @@index([createdBy])
   @@index([status])
   @@index([priority])
+  @@index([hiringType])
   @@map("jobrequest")
+}
+
+model OnHoldLog {
+  id           String         @id @default(uuid())
+  jobRequestId String
+  freezeReason freeze_reason
+  frozenDate   DateTime       @default(now())
+  resumeDate   DateTime?
+  action       String         @default("FREEZE") // FREEZE, UNFREEZE
+  performedBy  String
+  performerName String?
+  comment      String?        @db.Text
+  createdAt    DateTime       @default(now())
+
+  jobRequest   JobRequest     @relation(fields: [jobRequestId], references: [id], onDelete: Cascade)
+
+  @@index([jobRequestId])
+  @@map("onholdlog")
 }
 
 model JobRequestSkill {

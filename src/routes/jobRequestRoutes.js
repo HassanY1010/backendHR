@@ -19,11 +19,13 @@ router.get('/:id', jobRequestController.getJobRequestById);
 router.put('/:id', jobRequestController.updateJobRequest);
 router.delete('/:id', jobRequestController.deleteJobRequest);
 
-// Workflow Actions
+// Workflow Actions & Hiring Types Actions
 router.post('/:id/submit', jobRequestController.submitJobRequest);
 router.post('/:id/approve', jobRequestController.approveJobRequest);
 router.post('/:id/reject', jobRequestController.rejectJobRequest);
 router.post('/:id/transition', jobRequestController.transitionState);
 router.post('/:id/convert-to-job', jobRequestController.convertToRecruitmentJob);
+router.post('/:id/freeze', jobRequestController.freezeJobRequest);
+router.post('/:id/unfreeze', jobRequestController.unfreezeJobRequest);
 
 export default router;
