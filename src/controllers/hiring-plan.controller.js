@@ -10,6 +10,55 @@ const resolveCompanyId = async (req) => {
     return companyId;
 };
 
+const resolveDepartmentId = async (companyId, departmentIdInput) => {
+    if (!companyId) return null;
+
+    if (departmentIdInput && !departmentIdInput.startsWith('dep-')) {
+        const existingById = await prisma.department.findFirst({
+            where: { id: departmentIdInput, companyId }
+        });
+        if (existingById) return existingById.id;
+    }
+
+    const deptNameMap = {
+        'dep-tech': 'تكنولوجيا المعلومات والبرمجيات',
+        'dep-hr': 'الموارد البشرية',
+        'dep-finance': 'الإدارة المالية',
+        'dep-marketing': 'التسويق والمبيعات',
+        'dep-operations': 'العمليات والتشغيل'
+    };
+
+    const targetName = deptNameMap[departmentIdInput] || departmentIdInput || 'تكنولوجيا المعلومات والبرمجيات';
+
+    const existingByName = await prisma.department.findFirst({
+        where: { companyId, name: { equals: targetName, mode: 'insensitive' } }
+    });
+
+    if (existingByName) return existingByName.id;
+
+    const createdDep = await prisma.department.create({
+        data: { name: targetName, companyId }
+    });
+
+    return createdDep.id;
+};
+
+const parseRobustDate = (dStr) => {
+    if (!dStr) return new Date();
+    if (typeof dStr === 'string' && dStr.includes('/')) {
+        const parts = dStr.split('/');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) { // YYYY/MM/DD
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            } else { // DD/MM/YYYY
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+        }
+    }
+    const parsed = new Date(dStr);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
 /**
  * GET /api/hiring-plans
  * Fetch all annual manpower force plans for company
@@ -50,19 +99,21 @@ export const createHiringPlan = async (req, res) => {
         const companyId = await resolveCompanyId(req);
         const { year, departmentId, position, quantity, expectedDate, budget, notes } = req.body;
 
-        if (!departmentId || !position || !quantity || !expectedDate) {
-            return res.status(400).json({ success: false, message: 'يرجى تزويد جميع البيانات الأساسية لخطة التوظيف' });
+        if (!position || !quantity) {
+            return res.status(400).json({ success: false, message: 'يرجى تزويد المسمى الوظيفي والعدد المطلوب' });
         }
+
+        const validDeptId = await resolveDepartmentId(companyId, departmentId);
 
         const plan = await prisma.hiringPlan.create({
             data: {
                 companyId,
                 year: parseInt(year) || 2027,
-                departmentId,
+                departmentId: validDeptId,
                 position,
                 quantity: parseInt(quantity) || 1,
                 fulfilledCount: 0,
-                expectedDate: new Date(expectedDate),
+                expectedDate: parseRobustDate(expectedDate),
                 budget: parseFloat(budget) || 0,
                 notes: notes || null,
                 status: 'PLANNED'
@@ -97,15 +148,17 @@ export const updateHiringPlan = async (req, res) => {
             return res.status(404).json({ success: false, message: 'بند الخطة غير موجود' });
         }
 
+        const validDeptId = departmentId ? await resolveDepartmentId(companyId, departmentId) : undefined;
+
         const updated = await prisma.hiringPlan.update({
             where: { id },
             data: {
                 ...(year ? { year: parseInt(year) } : {}),
-                ...(departmentId ? { departmentId } : {}),
+                ...(validDeptId ? { departmentId: validDeptId } : {}),
                 ...(position ? { position } : {}),
                 ...(quantity !== undefined ? { quantity: parseInt(quantity) } : {}),
                 ...(fulfilledCount !== undefined ? { fulfilledCount: parseInt(fulfilledCount) } : {}),
-                ...(expectedDate ? { expectedDate: new Date(expectedDate) } : {}),
+                ...(expectedDate ? { expectedDate: parseRobustDate(expectedDate) } : {}),
                 ...(budget !== undefined ? { budget: parseFloat(budget) } : {}),
                 ...(status ? { status } : {}),
                 ...(notes !== undefined ? { notes } : {})
