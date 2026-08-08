@@ -740,6 +740,34 @@ export const submitInterviewAnswer = async (req, res, next) => {
                     aiSummary: summary
                 }
             });
+
+            // 🔄 Automatic sync to linked JobRequest on interview completion
+            if (candidate && candidate.recruitmentjob) {
+                const jobReq = await prisma.jobRequest.findFirst({
+                    where: {
+                        jobTitle: candidate.recruitmentjob.title,
+                        companyId: candidate.recruitmentjob.companyId,
+                        deletedAt: null
+                    }
+                });
+
+                if (jobReq) {
+                    await prisma.jobRequest.update({
+                        where: { id: jobReq.id },
+                        data: { status: 'INTERVIEW_PROCESS' }
+                    });
+
+                    await prisma.jobRequestHistory.create({
+                        data: {
+                            jobRequestId: jobReq.id,
+                            action: 'إكمال المقابلة والذكاء الاصطناعي',
+                            oldStatus: jobReq.status,
+                            newStatus: 'INTERVIEW_PROCESS',
+                            comment: `تحديث تلقائي للنظام بعد إكمال المقابلة للمرشح (${candidate.fullName}) بنتيجة ${score}%`
+                        }
+                    });
+                }
+            }
         } catch (aiError) {
             logger.error('Background AI evaluation failed', { interviewId: interview.id, error: aiError.message });
         }
