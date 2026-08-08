@@ -91,7 +91,7 @@ export const getPublicJobDetails = async (req, res, next) => {
             include: { company: { select: { name: true } } }
         });
 
-        if (!job || job.status !== 'OPEN') {
+        if (!job) {
             const error = new Error('Job not found');
             error.statusCode = 404;
             throw error;
