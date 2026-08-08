@@ -1101,6 +1101,34 @@ export const scheduleInterview = async (req, res, next) => {
             }
         });
 
+        // 🔄 Automatic sync to JobRequest on scheduling interview
+        if (interview.candidate && interview.candidate.recruitmentjob) {
+            const jobReq = await prisma.jobRequest.findFirst({
+                where: {
+                    jobTitle: interview.candidate.recruitmentjob.title,
+                    companyId: interview.candidate.recruitmentjob.companyId,
+                    deletedAt: null
+                }
+            });
+
+            if (jobReq && ['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
+                await prisma.jobRequest.update({
+                    where: { id: jobReq.id },
+                    data: { status: 'INTERVIEW_PROCESS' }
+                });
+
+                await prisma.jobRequestHistory.create({
+                    data: {
+                        jobRequestId: jobReq.id,
+                        action: 'جدولة المقابلة والانتقال التلقائي لمرحلة المقابلات',
+                        oldStatus: jobReq.status,
+                        newStatus: 'INTERVIEW_PROCESS',
+                        comment: `تحديث تلقائي للنظام عند جدولة مقابلة للمرشح (${interview.candidate.fullName})`
+                    }
+                });
+            }
+        }
+
         // Auto transition linked JobRequest to INTERVIEW_PROCESS
         if (candidate.jobId) {
             const jobReq = await prisma.jobRequest.findFirst({
