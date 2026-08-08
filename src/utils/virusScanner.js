@@ -10,9 +10,9 @@ let isInitialized = false;
  * Only runs in production environment
  */
 export const initClamAV = async () => {
-    // Skip in development
-    if (process.env.NODE_ENV !== 'production') {
-        logger.info('⚠️ ClamAV disabled in development mode');
+    // Skip in development or if CLAMAV_HOST is not configured
+    if (process.env.NODE_ENV !== 'production' || !process.env.CLAMAV_HOST) {
+        logger.info('⚠️ ClamAV disabled (CLAMAV_HOST not configured)');
         return null;
     }
 
@@ -22,15 +22,15 @@ export const initClamAV = async () => {
 
     try {
         const clamscan = await new NodeClam().init({
-            removeInfected: true, // Automatically remove infected files
+            removeInfected: true,
             quarantineInfected: false,
             scanLog: null,
             debugMode: false,
             clamdscan: {
                 host: process.env.CLAMAV_HOST,
                 port: process.env.CLAMAV_PORT || 3310,
-                timeout: 60000,
-                localFallback: true,
+                timeout: 5000,
+                localFallback: false,
             },
             preference: 'clamdscan'
         });
@@ -52,8 +52,8 @@ export const initClamAV = async () => {
  * @returns {Promise<{isInfected: boolean, viruses: string[]}>}
  */
 export const scanFile = async (filePath) => {
-    // Skip scanning in development
-    if (process.env.NODE_ENV !== 'production') {
+    // Skip scanning if disabled or CLAMAV_HOST not configured
+    if (process.env.NODE_ENV !== 'production' || !process.env.CLAMAV_HOST) {
         return { isInfected: false, viruses: [] };
     }
 
