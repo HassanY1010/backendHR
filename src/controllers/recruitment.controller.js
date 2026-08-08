@@ -336,61 +336,89 @@ export const applyToJob = async (req, res, next) => {
         const { name, fullName, email, phone, resumeUrl, location } = req.body;
         const jobId = req.params.id;
 
+        const candidateName = fullName || name || 'مرشح جديد';
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+
+        // Find linked recruitment job or job request fallback
+        let recJob = await prisma.recruitmentJob.findFirst({
+            where: { id: jobId, deletedAt: null }
+        });
+
+        if (!recJob) {
+            const jobReq = await prisma.jobRequest.findFirst({
+                where: { id: jobId, deletedAt: null }
+            });
+            if (jobReq) {
+                recJob = await prisma.recruitmentJob.findFirst({
+                    where: { companyId: jobReq.companyId, title: jobReq.jobTitle, deletedAt: null }
+                }) || await prisma.recruitmentJob.create({
+                    data: {
+                        companyId: jobReq.companyId,
+                        title: jobReq.jobTitle,
+                        department: jobReq.departmentId,
+                        location: jobReq.location || 'الرياض',
+                        status: 'OPEN'
+                    }
+                });
+            }
+        }
+
+        if (!recJob) {
+            return res.status(404).json({ status: 'error', message: 'الوظيفة غير موجودة أو معلقة' });
+        }
 
         const candidate = await prisma.candidate.create({
             data: {
-                fullName: fullName || name,
-                email,
-                phone,
-                resumeUrl,
-                location,
-                jobId,
+                fullName: candidateName,
+                email: email || '',
+                phone: phone || '',
+                resumeUrl: resumeUrl || null,
+                location: location || null,
+                jobId: recJob.id,
                 interviewCode,
                 status: 'NEW',
                 updatedAt: new Date()
             }
         });
 
-        const job = await prisma.recruitmentJob.findUnique({ where: { id: jobId } });
-
-        // Removed: Fake screening based on name/email.
-        // Logic: Application is accepted, but marked as NEW. 
-        // Real parsing happens when Resume is uploaded or if resumeUrl is a processable link.
-
-        // Notify Managers
-        try {
-            const managers = await prisma.user.findMany({
-                where: {
-                    companyId: job.companyId,
-                    role: { in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN'] }
-                },
-                select: { id: true, employee: { select: { id: true } } }
-            });
-
-            for (const manager of managers) {
-                await createNotification({
-                    userId: manager.id,
-                    employeeId: manager.employee?.id,
-                    title: 'طلب توظيف جديد',
-                    message: `تقدم ${name} لوظيفة ${job.title}`,
-                    type: 'recruitment',
-                    priority: 'high',
-                    metadata: { candidateId: candidate.id, jobId: job.id }
-                });
-            }
-        } catch (notifError) {
-            logger.error('Failed to notify managers', { error: notifError.message });
-        }
-
+        // Instant response to user
         res.status(201).json({
             status: 'success',
+            message: 'تم تقديم طلبك بنجاح ✨',
             data: {
                 candidateId: candidate.id,
                 interviewCode
             }
         });
+
+        // Non-blocking notifications
+        (async () => {
+            try {
+                const managers = await prisma.user.findMany({
+                    where: {
+                        companyId: recJob.companyId,
+                        role: { in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN', 'HR_MANAGER'] }
+                    },
+                    select: { id: true, employee: { select: { id: true } } }
+                });
+
+                for (const manager of managers) {
+                    await createNotification({
+                        userId: manager.id,
+                        employeeId: manager.employee?.id,
+                        title: 'طلب توظيف جديد',
+                        message: `تقدم ${candidateName} لوظيفة ${recJob.title}`,
+                        type: 'recruitment',
+                        priority: 'high',
+                        metadata: { candidateId: candidate.id, jobId: recJob.id }
+                    });
+                }
+            } catch (notifError) {
+                logger.error('Failed to notify managers', { error: notifError.message });
+            }
+        })();
     } catch (error) {
+        logger.error('applyToJob error:', error.message);
         next(error);
     }
 };
@@ -1270,48 +1298,56 @@ export const uploadCandidateResume = async (req, res, next) => {
             throw error;
         }
 
-        const aiAnalysis = await aiService.screenCV(
-            resumeText,
-            candidate.recruitmentjob.description,
-            candidate.recruitmentjob.companyId
-        );
-
-        // Smart Search Indexing for RAG
-        try {
-            const indexContent = `Candidate: ${candidate.fullName}. Position: ${candidate.recruitmentjob.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Experience: ${aiAnalysis.experience?.years || 'N/A'}. Summary: ${aiAnalysis.summary}`;
-            await aiService.indexDocument(
-                indexContent,
-                candidate.recruitmentjob.companyId,
-                candidate.id,
-                'CANDIDATE',
-                { name: candidate.fullName, job: candidate.recruitmentjob.title }
-            );
-        } catch (idxError) {
-            logger.error('Indexing failed for candidate', { candidateId: candidate.id, error: idxError.message });
-        }
-
         const updatedCandidate = await prisma.candidate.update({
             where: { id },
             data: {
                 resumeUrl,
-                aiScore: aiAnalysis.score || null,
-                aiSummary: aiAnalysis.summary,
-                aiAnalysisDetails: JSON.stringify(aiAnalysis),
-                skills: aiAnalysis.skills ? JSON.stringify(aiAnalysis.skills) : null,
-                experience: aiAnalysis.experience?.years || null,
-                education: aiAnalysis.education ? JSON.stringify(aiAnalysis.education) : null,
                 status: 'SCREENING',
                 updatedAt: new Date()
             }
         });
 
+        // Send instant response so the candidate doesn't hang waiting for AI
         res.status(200).json({
             status: 'success',
-            data: {
-                candidate: updatedCandidate,
-                aiAnalysis
-            }
+            message: 'تم رفع السيرة الذاتية بنجاح ✨',
+            data: { candidate: updatedCandidate }
         });
+
+        // Run AI screening & RAG Indexing asynchronously in background
+        (async () => {
+            try {
+                const aiAnalysis = await aiService.screenCV(
+                    resumeText,
+                    candidate.recruitmentjob?.description || candidate.recruitmentjob?.title || 'وصف وظيفي',
+                    candidate.recruitmentjob?.companyId
+                );
+
+                await prisma.candidate.update({
+                    where: { id },
+                    data: {
+                        aiScore: aiAnalysis.score || null,
+                        aiSummary: aiAnalysis.summary || '',
+                        aiAnalysisDetails: JSON.stringify(aiAnalysis),
+                        skills: aiAnalysis.skills ? JSON.stringify(aiAnalysis.skills) : null,
+                        experience: aiAnalysis.experience?.years || null,
+                        education: aiAnalysis.education ? JSON.stringify(aiAnalysis.education) : null
+                    }
+                });
+
+                // RAG Indexing
+                const indexContent = `Candidate: ${candidate.fullName}. Position: ${candidate.recruitmentjob?.title}. Skills: ${aiAnalysis.skills ? aiAnalysis.skills.join(', ') : 'N/A'}. Summary: ${aiAnalysis.summary}`;
+                await aiService.indexDocument(
+                    indexContent,
+                    candidate.recruitmentjob?.companyId,
+                    candidate.id,
+                    'CANDIDATE',
+                    { name: candidate.fullName, job: candidate.recruitmentjob?.title }
+                );
+            } catch (aiErr) {
+                logger.error('Background AI CV screening failed', { candidateId: id, error: aiErr.message });
+            }
+        })();
     } catch (error) {
         next(error);
     }
