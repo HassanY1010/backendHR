@@ -8,6 +8,12 @@ export const errorHandler = (err, req, res, next) => {
         body: req.body
     });
 
+    const origin = req.headers.origin;
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+
     const status = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
 
