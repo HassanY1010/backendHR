@@ -72,25 +72,24 @@ const corsOptions = {
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
 
-        if (ALLOWED_ORIGINS_ENV.indexOf(origin) !== -1) {
+        const allowedExplicit = [
+            'https://hr-manager-dashboard.onrender.com',
+            'https://hr-landing-page.onrender.com',
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:5173',
+            'http://localhost:8080'
+        ];
+
+        if (allowedExplicit.includes(origin) || ALLOWED_ORIGINS_ENV.includes(origin) || ALLOWED_PATTERNS.some(p => p.test(origin))) {
             return callback(null, true);
         }
 
-        if (ALLOWED_PATTERNS.some(pattern => pattern.test(origin))) {
-            return callback(null, true);
-        }
-
-        if (process.env.NODE_ENV !== 'production') {
-            if (/^http:\/\/localhost:\d+$/.test(origin)) {
-                return callback(null, true);
-            }
-        }
-
-        callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']
 };
 app.use(cors(corsOptions));
