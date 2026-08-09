@@ -10,7 +10,7 @@ import {
     matchCandidateWithJob,
     updateCandidateStatus
 } from '../controllers/ats-candidate.controller.js';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticateToken } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
