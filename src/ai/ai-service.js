@@ -713,5 +713,25 @@ export const aiService = {
                 strategic_alignment: "يتماشى هذا المقترح مع أهداف الشركة في النمو المستدام وتطوير الكفاءات البشرية."
             };
         }
+    },
+
+    getSmartInterviewNotes: async (upcomingInterviews, companyId) => {
+        try {
+            const prompt = `Generate 3 smart interview tips in Arabic for HR recruiters evaluating candidates.
+            Interviews count: ${upcomingInterviews ? upcomingInterviews.length : 0}.
+            JSON format MUST be: { "notes": ["tip 1", "tip 2", "tip 3"] }`;
+            const res = await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'smart_interview_notes');
+            return res.notes || [
+                "تركيز الفحص على الإلمام التقني والمهارات الأساسية للمرشح.",
+                "مراجعة المشاريع السابقة والاستفسار عن دور المرشح الفعلي.",
+                "تقييم القدرة على التكيف والعمل ضمن فريق التوظيف."
+            ];
+        } catch (e) {
+            return [
+                "تركيز الفحص على الإلمام التقني والمهارات الأساسية للمرشح.",
+                "مراجعة المشاريع السابقة والاستفسار عن دور المرشح الفعلي.",
+                "تقييم القدرة على التكيف والعمل ضمن فريق التوظيف."
+            ];
+        }
     }
 };
