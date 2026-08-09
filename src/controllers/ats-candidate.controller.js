@@ -515,3 +515,39 @@ export const updateCandidateStatus = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * 7. DELETE /api/candidates/:id
+ * Delete candidate profile (soft delete)
+ */
+export const deleteCandidate = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const candidate = await prisma.candidate.findUnique({ where: { id } });
+        if (!candidate) {
+            return res.status(404).json({ status: 'error', message: 'المرشح غير موجود' });
+        }
+
+        await prisma.candidate.update({
+            where: { id },
+            data: { deletedAt: new Date() }
+        });
+
+        // Log history
+        try {
+            await prisma.candidateHistory.create({
+                data: {
+                    candidateId: id,
+                    action: 'حذف ملف المرشح',
+                    comment: 'تم حذف ملف المرشح بنجاح من المنصة',
+                    performedBy: req.user?.id || 'SYSTEM'
+                }
+            });
+        } catch (hErr) {}
+
+        res.status(200).json({ status: 'success', message: 'تم حذف المرشح بنجاح ✨' });
+    } catch (error) {
+        logger.error('[ATS] deleteCandidate error:', error.message);
+        next(error);
+    }
+};

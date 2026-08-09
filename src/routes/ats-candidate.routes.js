@@ -8,7 +8,8 @@ import {
     getCandidates,
     getCandidateById,
     matchCandidateWithJob,
-    updateCandidateStatus
+    updateCandidateStatus,
+    deleteCandidate
 } from '../controllers/ats-candidate.controller.js';
 import { authenticateToken } from '../middlewares/auth.middleware.js';
 
@@ -55,5 +56,8 @@ router.post('/:id/match', matchCandidateWithJob);
 
 // 6. PUT /api/candidates/:id/status - Change candidate status/stage
 router.put('/:id/status', updateCandidateStatus);
+
+// 7. DELETE /api/candidates/:id - Delete candidate
+router.delete('/:id', deleteCandidate);
 
 export default router;
