@@ -1021,16 +1021,29 @@ export const getCandidate = async (req, res, next) => {
 
 export const getInterviews = async (req, res, next) => {
     try {
+        let companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            const firstComp = await prisma.company.findFirst();
+            companyId = firstComp?.id || null;
+        }
+
         const interviews = await prisma.interview.findMany({
-            where: { candidate: { recruitmentjob: { companyId: req.user.companyId } } },
+            where: companyId ? {
+                OR: [
+                    { candidate: { recruitmentjob: { companyId } } },
+                    { candidate: { companyId } },
+                    { jobId: { not: null } }
+                ]
+            } : {},
             include: {
                 candidate: {
                     include: {
-                        recruitmentjob: true
+                        recruitmentjob: true,
+                        candidateSkills: true
                     }
                 }
             },
-            orderBy: { scheduledAt: 'asc' }
+            orderBy: { createdAt: 'desc' }
         });
         res.status(200).json({ status: 'success', data: { interviews } });
     } catch (error) {
