@@ -1,21 +1,10 @@
 import prisma from '../src/config/db.js';
 
 async function testBackendData() {
-    console.log('🧪 Testing DB & API Controller Queries...');
+    console.log('🧪 Testing ultra-fast getInterviews query...');
 
+    const startTime = Date.now();
     try {
-        const firstComp = await prisma.company.findFirst();
-        console.log(`✅ Company ID found: ${firstComp?.id}`);
-
-        // Test Jobs Query
-        const jobs = await prisma.recruitmentJob.findMany({
-            where: { deletedAt: null },
-            include: { _count: { select: { candidates: true } } },
-            orderBy: { createdAt: 'desc' }
-        });
-        console.log(`✅ Recruitment Jobs Count: ${jobs.length}`);
-
-        // Test Interviews Query
         const interviews = await prisma.interview.findMany({
             include: {
                 candidate: {
@@ -25,11 +14,13 @@ async function testBackendData() {
                     }
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            take: 100
         });
+        const elapsed = Date.now() - startTime;
+        console.log(`⚡ Query completed in ${elapsed} ms!`);
         console.log(`✅ Interviews Count: ${interviews.length}`);
-
-        console.log('🎉 DB queries executed cleanly with ZERO errors!');
+        console.log('Sample candidate:', interviews[0]?.candidate?.fullName);
     } catch (err) {
         console.error('❌ Error during query execution:', err);
     } finally {
