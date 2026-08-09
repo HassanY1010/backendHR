@@ -911,6 +911,40 @@ export const updateCandidate = async (req, res, next) => {
             }
         }
 
+        // 🔄 Auto-increment HiringPlan.fulfilledCount when a candidate is hired
+        if (candidate.status === 'HIRED' && candidate.recruitmentjob) {
+            try {
+                const targetTitle = candidate.recruitmentjob.title;
+                const compId = candidate.recruitmentjob.companyId;
+
+                const plan = await prisma.hiringPlan.findFirst({
+                    where: {
+                        companyId: compId,
+                        position: { contains: targetTitle, mode: 'insensitive' }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                }) || await prisma.hiringPlan.findFirst({
+                    where: { companyId: compId },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                if (plan) {
+                    const newFulfilled = plan.fulfilledCount + 1;
+                    const isFullyFulfilled = newFulfilled >= plan.quantity;
+
+                    await prisma.hiringPlan.update({
+                        where: { id: plan.id },
+                        data: {
+                            fulfilledCount: newFulfilled,
+                            status: isFullyFulfilled ? 'FULFILLED' : 'IN_PROGRESS'
+                        }
+                    });
+                }
+            } catch (planErr) {
+                logger.error('Failed to auto-increment HiringPlan on candidate HIRED:', planErr.message);
+            }
+        }
+
         res.status(200).json({ status: 'success', data: { candidate } });
     } catch (error) {
         next(error);
