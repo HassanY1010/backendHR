@@ -1031,7 +1031,7 @@ export const getInterviews = async (req, res, next) => {
             where: companyId ? {
                 OR: [
                     { candidate: { recruitmentjob: { companyId } } },
-                    { candidate: { companyId } },
+                    { candidate: { jobId: { not: null } } },
                     { jobId: { not: null } }
                 ]
             } : {},
@@ -1047,6 +1047,7 @@ export const getInterviews = async (req, res, next) => {
         });
         res.status(200).json({ status: 'success', data: { interviews } });
     } catch (error) {
+        logger.error('[Recruitment] getInterviews error:', error.message);
         next(error);
     }
 };
