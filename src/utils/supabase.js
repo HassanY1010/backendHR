@@ -21,14 +21,23 @@ if (!supabaseUrl || !supabaseKey) {
     logger.info(`✅ Supabase configured: URL=${supabaseUrl}, bucket=${bucketName}, key type=${supabaseKey.startsWith('sb_publishable_') ? 'anon/publishable' : 'service_role JWT'}`);
 }
 
-const supabase = supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey, {
-        auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-        }
-    })
-    : null;
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+    try {
+        supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+            },
+            realtime: {
+                eventsPerSecond: 0
+            }
+        });
+    } catch (e) {
+        logger.error('Failed to initialize Supabase client:', e.message);
+        supabase = null;
+    }
+}
 
 const uploadsDir = path.join(__dirname, '../../uploads');
 

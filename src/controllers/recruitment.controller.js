@@ -10,6 +10,7 @@ import path from 'path';
 import { getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
 import { uploadFileToSupabase } from '../utils/supabase.js';
 import { emailService } from '../services/email.service.js';
+import logger from '../utils/logger.js';
 
 // Helper to check file security
 const validateFile = (fileInput) => {
@@ -1048,10 +1049,7 @@ export const getInterviews = async (req, res, next) => {
 
         const interviews = await prisma.interview.findMany({
             where: companyId ? {
-                OR: [
-                    { candidateId: { not: null } },
-                    { jobId: { not: null } }
-                ]
+                candidate: { recruitmentjob: { companyId } }
             } : {},
             include: {
                 candidate: {
