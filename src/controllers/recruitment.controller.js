@@ -1003,17 +1003,15 @@ export const deleteJob = async (req, res, next) => {
     try {
         const jobId = req.params.id;
         const now = new Date();
-        await prisma.$transaction([
-            prisma.candidate.updateMany({
-                where: { jobId, deletedAt: null },
-                data: { deletedAt: now }
-            }),
-            prisma.recruitmentJob.delete({
-                where: { id: jobId }
-            })
-        ]);
-        res.status(204).json({ status: 'success', data: null });
+
+        await prisma.recruitmentJob.update({
+            where: { id: jobId },
+            data: { deletedAt: now }
+        });
+
+        res.status(200).json({ status: 'success', message: 'تم حذف الوظيفة بنجاح' });
     } catch (error) {
+        logger.error('[Recruitment] deleteJob error:', error.message);
         next(error);
     }
 };

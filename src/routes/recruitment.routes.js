@@ -66,11 +66,11 @@ router.post('/interviews/upload-video-file', uploadVideo, virusScanMiddleware, u
 router.use(protect);
 
 router.get('/jobs', getAllJobs);
-router.post('/jobs', authorize('MANAGER', 'SUPER_ADMIN'), createJob);
+router.post('/jobs', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER', 'CEO_EXECUTIVE'), createJob);
 router.get('/jobs/:id', getJobDetails);
-router.put('/jobs/:id', authorize('MANAGER', 'SUPER_ADMIN'), updateJob);
-router.delete('/jobs/:id', authorize('MANAGER', 'SUPER_ADMIN'), deleteJob);
-router.post('/jobs/:id/publish', authorize('MANAGER', 'SUPER_ADMIN'), publishJob);
+router.put('/jobs/:id', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER', 'CEO_EXECUTIVE'), updateJob);
+router.delete('/jobs/:id', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER', 'CEO_EXECUTIVE'), deleteJob);
+router.post('/jobs/:id/publish', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER', 'CEO_EXECUTIVE'), publishJob);
 
 
 router.post('/ai/generate-description', authorize('MANAGER', 'SUPER_ADMIN'), generateAiJobDescription);
