@@ -35,24 +35,47 @@ const validateFile = (fileInput) => {
 
 export const getAllJobs = async (req, res, next) => {
     try {
+        let companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            const firstComp = await prisma.company.findFirst();
+            companyId = firstComp?.id || null;
+        }
+
         const jobs = await prisma.recruitmentJob.findMany({
-            where: {
-                companyId: req.user.companyId,
+            where: companyId ? {
+                companyId,
                 deletedAt: null
-            },
+            } : { deletedAt: null },
             include: { _count: { select: { candidates: true } } },
+            orderBy: { createdAt: 'desc' }
         });
 
-        const parsedJobs = jobs.map(job => ({
-            ...job,
-            salaryRange: job.salaryRange ? (typeof job.salaryRange === 'string' ? JSON.parse(job.salaryRange) : job.salaryRange) : null,
-            requirements: job.requirements ? (typeof job.requirements === 'string' ? JSON.parse(job.requirements) : job.requirements) : null,
-            responsibilities: job.responsibilities ? (typeof job.responsibilities === 'string' ? JSON.parse(job.responsibilities) : job.responsibilities) : null,
-            applicantsCount: job._count?.candidates || 0
-        }));
+        const parsedJobs = jobs.map(job => {
+            let salaryRange = job.salaryRange;
+            if (typeof salaryRange === 'string') {
+                try { salaryRange = JSON.parse(salaryRange); } catch (e) { /* keep as string/raw */ }
+            }
+            let requirements = job.requirements;
+            if (typeof requirements === 'string') {
+                try { requirements = JSON.parse(requirements); } catch (e) { /* keep as string/raw */ }
+            }
+            let responsibilities = job.responsibilities;
+            if (typeof responsibilities === 'string') {
+                try { responsibilities = JSON.parse(responsibilities); } catch (e) { /* keep as string/raw */ }
+            }
+
+            return {
+                ...job,
+                salaryRange,
+                requirements,
+                responsibilities,
+                applicantsCount: job._count?.candidates || 0
+            };
+        });
 
         res.status(200).json({ status: 'success', data: { jobs: parsedJobs } });
     } catch (error) {
+        logger.error('[Recruitment] getAllJobs error:', error.message);
         next(error);
     }
 };
