@@ -1,7 +1,7 @@
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 import crypto from 'crypto';
-import aiService from '../services/ai-service.js';
+import { aiService } from '../ai/ai-service.js';
 
 const resolveCompanyId = async (req) => {
     let companyId = req.user?.companyId || req.user?.company?.id;
