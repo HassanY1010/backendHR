@@ -219,9 +219,55 @@ export const getManpowerDashboard = async (req, res) => {
             where,
             include: {
                 department: { select: { id: true, name: true } },
-                jobRequests: { select: { id: true, status: true } }
+                jobRequests: { select: { id: true, status: true, jobTitle: true } }
             }
         });
+
+        // 🔄 RADICAL DYNAMIC SYNC: Recalculate fulfilledCount in real-time from HIRED requests & candidates
+        for (const plan of plans) {
+            try {
+                const [hiredRequestsCount, hiredCandidatesCount] = await Promise.all([
+                    prisma.jobRequest.count({
+                        where: {
+                            companyId: plan.companyId,
+                            status: 'HIRED',
+                            deletedAt: null,
+                            OR: [
+                                { hiringPlanId: plan.id },
+                                { jobTitle: { contains: plan.position, mode: 'insensitive' } }
+                            ]
+                        }
+                    }),
+                    prisma.candidate.count({
+                        where: {
+                            status: 'HIRED',
+                            deletedAt: null,
+                            recruitmentjob: {
+                                companyId: plan.companyId,
+                                title: { contains: plan.position, mode: 'insensitive' }
+                            }
+                        }
+                    })
+                ]);
+
+                const realFulfilled = Math.max(plan.fulfilledCount, hiredRequestsCount + hiredCandidatesCount);
+
+                if (realFulfilled !== plan.fulfilledCount) {
+                    plan.fulfilledCount = realFulfilled;
+                    plan.status = realFulfilled >= plan.quantity ? 'FULFILLED' : 'IN_PROGRESS';
+
+                    await prisma.hiringPlan.update({
+                        where: { id: plan.id },
+                        data: {
+                            fulfilledCount: realFulfilled,
+                            status: plan.status
+                        }
+                    });
+                }
+            } catch (syncErr) {
+                logger.error('[HiringPlan] Realtime sync error for plan:', plan.id, syncErr.message);
+            }
+        }
 
         let totalPlannedPositions = 0;
         let totalFulfilledPositions = 0;

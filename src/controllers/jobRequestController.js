@@ -948,6 +948,34 @@ export const transitionState = async (req, res) => {
           comment: comment || `تحديث حالة طلب التوظيف إلى ${targetStatus}`
         }
       });
+
+      // 🔄 Auto sync HiringPlan on JobRequest HIRED
+      if (targetStatus === 'HIRED') {
+        try {
+          const plan = jobRequest.hiringPlanId
+            ? await tx.hiringPlan.findUnique({ where: { id: jobRequest.hiringPlanId } })
+            : await tx.hiringPlan.findFirst({
+                where: {
+                  companyId,
+                  position: { contains: jobRequest.jobTitle, mode: 'insensitive' }
+                },
+                orderBy: { createdAt: 'desc' }
+              });
+
+          if (plan) {
+            const newFulfilled = plan.fulfilledCount + 1;
+            await tx.hiringPlan.update({
+              where: { id: plan.id },
+              data: {
+                fulfilledCount: newFulfilled,
+                status: newFulfilled >= plan.quantity ? 'FULFILLED' : 'IN_PROGRESS'
+              }
+            });
+          }
+        } catch (planErr) {
+          console.error('Failed to sync HiringPlan on JobRequest HIRED:', planErr.message);
+        }
+      }
     });
 
     await recordAuditLog({
