@@ -84,11 +84,20 @@ model Candidate {
   resumeUrl         String?
   coverLetter       String?          @db.Text
   experience        Int?
+  yearsOfExperience Int?
   education         String?          @db.Text
   skills            String?          @db.Text
+  currentTitle      String?
+  nationality       String?
+  dateOfBirth       DateTime?
+  previousCompanies String?          @db.Text
+  certifications    String?          @db.Text
+  languages         String?          @db.Text
+  portfolioLinks    String?          @db.Text
+  certificates      String?          @db.Text
   aiScore           Float?
   aiSummary         String?          @db.Text
-  status            candidate_status @default(NEW)
+  status            candidate_status @default(APPLIED)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
   deletedAt         DateTime?
@@ -99,12 +108,79 @@ model Candidate {
   location          String?
   termsAcceptedAt   DateTime?
   recruitmentjob    RecruitmentJob   @relation(fields: [jobId], references: [id], onDelete: Cascade, map: "Candidate_jobId_fkey")
-  interviews         Interview[]
+  interviews        Interview[]
+  candidateSkills       CandidateSkill[]
+  candidateExperiences  CandidateExperience[]
+  candidateApplications CandidateApplication[]
+  candidateHistories    CandidateHistory[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
   @@index([status, deletedAt])
   @@map("candidate")
+}
+
+model CandidateSkill {
+  id          String    @id @default(uuid())
+  candidateId String
+  skillName   String
+  level       String?   @default("INTERMEDIATE")
+  createdAt   DateTime  @default(now())
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("candidate_skill")
+}
+
+model CandidateExperience {
+  id          String    @id @default(uuid())
+  candidateId String
+  company     String
+  position    String
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?   @db.Text
+  createdAt   DateTime  @default(now())
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@map("candidate_experience")
+}
+
+model CandidateApplication {
+  id            String           @id @default(uuid())
+  candidateId   String
+  jobRequestId  String?
+  status        candidate_status @default(APPLIED)
+  score         Float?
+  matchAnalysis String?          @db.Text
+  createdAt     DateTime         @default(now())
+
+  candidate     Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  jobRequest    JobRequest?      @relation(fields: [jobRequestId], references: [id], onDelete: SetNull)
+
+  @@index([candidateId])
+  @@index([jobRequestId])
+  @@map("candidate_application")
+}
+
+model CandidateHistory {
+  id          String   @id @default(uuid())
+  candidateId String
+  action      String
+  oldStatus   String?
+  newStatus   String?
+  comment     String?  @db.Text
+  performedBy String?
+  createdAt   DateTime @default(now())
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([createdAt])
+  @@map("candidate_history")
 }
 
 model CheckInAssessment {
@@ -898,6 +974,7 @@ model JobRequest {
   approvals          ApprovalRequest[]
   onHoldLogs         OnHoldLog[]
   workflowInstance   WorkflowInstance?
+  candidateApplications CandidateApplication[]
 
   @@index([companyId])
   @@index([departmentId])
@@ -981,14 +1058,22 @@ enum recruitmentjob_status {
 
 enum candidate_status {
   NEW
+  APPLIED
+  SCREENING
+  AI_REVIEW
+  SHORTLISTED
+  INTERVIEW_SCHEDULED
   INTERVIEW_SENT
   INTERVIEW_COMPLETED
-  SCREENING
+  OFFER_SENT
+  OFFERED
+  ACCEPTED
   PRE_ACCEPTED
   INTERVIEWING
-  OFFERED
-  REJECTED
   HIRED
+  REJECTED
+  WITHDRAWN
+  NO_RESPONSE
 }
 
 enum recruitmentjob_employment_type {

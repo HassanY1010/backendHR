@@ -32,6 +32,7 @@ import aiJdRoutes from './routes/ai-jd.routes.js';
 import workflowRoutes from './routes/workflow.routes.js';
 import hiringPlanRoutes from './routes/hiring-plan.routes.js';
 import hiringReportsRoutes from './routes/hiring-reports.routes.js';
+import atsCandidateRoutes from './routes/ats-candidate.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { checkKillSwitch } from './middlewares/governance.middleware.js';
 import logger from './utils/logger.js';
@@ -163,6 +164,7 @@ app.use('/api/ai-jd', aiJdRoutes);
 app.use('/api/workflow', workflowRoutes);
 app.use('/api/hiring-plans', hiringPlanRoutes);
 app.use('/api/hiring-reports', hiringReportsRoutes);
+app.use('/api/candidates', atsCandidateRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
