@@ -20,19 +20,10 @@ const DEFAULT_STEPS = [
 // HELPER: Get or create default template for a company
 // ============================================================
 const resolveCompanyId = async (req) => {
-    let companyId = req.user?.companyId || req.user?.company?.id;
-    if (!companyId) {
-        const firstComp = await prisma.company.findFirst();
-        companyId = firstComp?.id || null;
-    }
-    return companyId;
+    return req.user?.companyId || req.user?.company?.id || null;
 };
 
 const getOrCreateDefaultTemplate = async (companyId) => {
-    if (!companyId) {
-        const firstComp = await prisma.company.findFirst();
-        companyId = firstComp?.id || null;
-    }
     if (!companyId) return null;
     let template = await prisma.workflowTemplate.findFirst({
         where: { companyId, isDefault: true, isActive: true },

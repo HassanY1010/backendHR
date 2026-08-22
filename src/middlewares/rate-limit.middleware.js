@@ -43,3 +43,15 @@ export const aiJdLimiter = rateLimit({
     }
 });
 
+// Client Log Limiter (30 requests per minute per IP to prevent log flooding / DoS)
+export const clientLogLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        status: 'error',
+        message: 'Too many log events submitted. Throttled.'
+    }
+});
+

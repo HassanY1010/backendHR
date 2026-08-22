@@ -102,4 +102,16 @@ export const authorize = (...roles) => {
     };
 };
 
+export const requireCompanyContext = (req, res, next) => {
+    const companyId = req.user?.companyId || req.user?.company?.id;
+    if (!companyId) {
+        return res.status(403).json({
+            success: false,
+            message: 'غير مصرح: هذا الإجراء يتطلب الارتباط بشركة صالحة (Missing Company Context)'
+        });
+    }
+    req.companyId = companyId;
+    next();
+};
+
 export const authenticateToken = protect;

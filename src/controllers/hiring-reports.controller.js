@@ -2,12 +2,7 @@ import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 
 const resolveCompanyId = async (req) => {
-    let companyId = req.user?.companyId || req.user?.company?.id;
-    if (!companyId) {
-        const firstComp = await prisma.company.findFirst();
-        companyId = firstComp?.id || null;
-    }
-    return companyId;
+    return req.user?.companyId || req.user?.company?.id || null;
 };
 
 /**

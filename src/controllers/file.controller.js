@@ -55,13 +55,7 @@ export const checkStorageHealth = async (req, res, next) => {
         const result = await checkSupabaseHealth();
         res.status(result.ok ? 200 : 503).json({
             status: result.ok ? 'success' : 'error',
-            storage: result,
-            env: {
-                SUPABASE_URL: process.env.SUPABASE_URL ? '✅ set' : '❌ MISSING',
-                SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ set' : '❌ MISSING',
-                SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? '✅ set' : '❌ MISSING',
-                SUPABASE_BUCKET: process.env.SUPABASE_BUCKET || '(default: uploads)',
-            }
+            ready: result.ok
         });
     } catch (error) {
         next(error);

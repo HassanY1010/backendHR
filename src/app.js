@@ -4,7 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { globalLimiter, authLimiter } from './middlewares/rate-limit.middleware.js';
+import { globalLimiter, authLimiter, clientLogLimiter } from './middlewares/rate-limit.middleware.js';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes.js';
 import checkInRoutes from './routes/check-in.routes.js';
@@ -60,32 +60,39 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
-const ALLOWED_ORIGINS_ENV = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
-const ALLOWED_PATTERNS = [
-    /^https:\/\/.*\.vercel\.app$/,      // Vercel deployments
-    /^https:\/\/.*\.onrender\.com$/,    // Render deployments
-    /^https:\/\/.*\.railway\.app$/,     // Railway deployments
-    /^http:\/\/localhost:\d+$/,         // Local dev
+const ALLOWED_ORIGINS_ENV = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) 
+    : [];
+
+const allowedExplicit = [
+    'https://hr-manager-dashboard.onrender.com',
+    'https://hr-landing-page.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:8080'
 ];
 
 const corsOptions = {
     origin: function (origin, callback) {
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
         if (!origin) return callback(null, true);
 
-        const allowedExplicit = [
-            'https://hr-manager-dashboard.onrender.com',
-            'https://hr-landing-page.onrender.com',
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'http://localhost:5173',
-            'http://localhost:8080'
-        ];
-
-        if (allowedExplicit.includes(origin) || ALLOWED_ORIGINS_ENV.includes(origin) || ALLOWED_PATTERNS.some(p => p.test(origin))) {
+        // Check explicit list and environment whitelist
+        if (allowedExplicit.includes(origin) || ALLOWED_ORIGINS_ENV.includes(origin)) {
             return callback(null, true);
         }
 
-        return callback(null, true);
+        // In non-production only, allow local development ports
+        if (process.env.NODE_ENV !== 'production') {
+            if (/^http:\/\/localhost:\d+$/.test(origin)) {
+                return callback(null, true);
+            }
+        }
+
+        // Reject all other origins
+        logger.warn(`[CORS] Blocked unauthorized origin: ${origin}`);
+        return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -98,10 +105,19 @@ app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Client-side log ingestion (not rate-limited — frontend sends logs on every action)
-app.post('/api/logs', (req, res) => {
+// Client-side log ingestion — protected with dedicated rate limiter, body size limit, and PII/Secret sanitization
+app.post('/api/logs', clientLogLimiter, express.json({ limit: '64kb' }), (req, res) => {
     try {
-        logger.info('📝 [Client Log]', { body: req.body });
+        const rawBody = req.body || {};
+        // Strip sensitive fields from client-supplied logs
+        const sanitized = JSON.parse(JSON.stringify(rawBody, (key, value) => {
+            const forbiddenKeys = ['password', 'passwordHash', 'token', 'authorization', 'secret', 'key', 'apiKey', 'cookie'];
+            if (forbiddenKeys.some(f => key.toLowerCase().includes(f))) {
+                return '[REDACTED]';
+            }
+            return value;
+        }));
+        logger.info('📝 [Client Log]', { body: sanitized });
     } catch (err) {
         // silently ignore logger failures
     }

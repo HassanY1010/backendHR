@@ -36,10 +36,9 @@ const validateFile = (fileInput) => {
 
 export const getAllJobs = async (req, res, next) => {
     try {
-        let companyId = req.user?.companyId || req.user?.company?.id;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         if (!companyId) {
-            const firstComp = await prisma.company.findFirst();
-            companyId = firstComp?.id || null;
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
         }
 
         const jobs = await prisma.recruitmentJob.findMany({
@@ -1069,17 +1068,16 @@ export const getInterviews = async (req, res, next) => {
 
 export const getSmartInterviewNotes = async (req, res, next) => {
     try {
-        let companyId = req.user?.companyId || req.user?.company?.id;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         if (!companyId) {
-            const firstComp = await prisma.company.findFirst();
-            companyId = firstComp?.id || null;
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
         }
 
         const upcomingInterviews = await prisma.interview.findMany({
-            where: companyId ? {
+            where: {
                 candidate: { recruitmentjob: { companyId } },
                 status: 'scheduled'
-            } : { status: 'scheduled' },
+            },
             include: { candidate: true },
             take: 10
         });
