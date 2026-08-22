@@ -1,9 +1,16 @@
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const globalForPrisma = globalThis;
 const prismaClient = globalForPrisma.prisma || new PrismaClient({
+    datasources: {
+        db: {
+            url: process.env.DATABASE_URL
+        }
+    },
     log: ['error']
 });
 globalForPrisma.prisma = prismaClient;

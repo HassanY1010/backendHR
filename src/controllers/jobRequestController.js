@@ -89,19 +89,46 @@ export const createJobRequest = async (req, res) => {
       submitDirectly = false
     } = req.body;
 
-    if (!jobTitle) {
-      return res.status(400).json({ error: 'المسمى الوظيفي مطلوب' });
+    if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
+      return res.status(400).json({ error: 'المسمى الوظيفي مطلوب ولا يمكن أن يكون فارغاً' });
     }
 
-    const targetDepName = req.body.departmentName || req.body.department || null;
+    if (vacancies !== undefined && (isNaN(Number(vacancies)) || Number(vacancies) <= 0)) {
+      return res.status(400).json({ error: 'عدد الشواغر يجب أن يكون رقماً صحيحاً موجباً أكبر من الصفر' });
+    }
 
-    // Resolve or find valid department for company
+    if (salaryMin && salaryMax && parseFloat(salaryMin) > parseFloat(salaryMax)) {
+      return res.status(400).json({ error: 'الحد الأدنى للراتب لا يمكن أن يتجاوز الحد الأعلى للراتب' });
+    }
+
+    const validEmploymentTypes = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'REMOTE', 'HYBRID'];
+    if (employmentType && !validEmploymentTypes.includes(employmentType)) {
+      return res.status(400).json({ error: 'نوع التوظيف المحدد غير صالح' });
+    }
+
+    const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+    if (priority && !validPriorities.includes(priority)) {
+      return res.status(400).json({ error: 'مستوى الأولوية المحدد غير صالح' });
+    }
+
+    const validHiringReasons = ['NEW_POSITION', 'REPLACEMENT', 'EXPANSION', 'PROJECT_BASED', 'SEASONAL'];
+    if (hiringReason && !validHiringReasons.includes(hiringReason)) {
+      return res.status(400).json({ error: 'سبب التوظيف المحدد غير صالح' });
+    }
+
+    // -------------------------------------------------------------
+    // Department Resolution
+    // -------------------------------------------------------------
+    const targetDepName = req.body.departmentName || req.body.department || null;
     let validDepartmentId = null;
 
-    if (departmentId && departmentId !== 'dep-tech') {
+    if (departmentId) {
       const existingDepById = await prisma.department.findFirst({
         where: { companyId, id: departmentId }
       });
+      if (!existingDepById && !targetDepName) {
+        return res.status(400).json({ error: 'القسم المحدد غير موجود في هذه الشركة' });
+      }
       if (existingDepById) validDepartmentId = existingDepById.id;
     }
 
@@ -120,13 +147,84 @@ export const createJobRequest = async (req, res) => {
     }
 
     if (!validDepartmentId) {
-      const defaultDep = await prisma.department.findFirst({ where: { companyId } }) || 
-        await prisma.department.create({ data: { name: 'تكنولوجيا المعلومات', companyId } });
-      validDepartmentId = defaultDep.id;
+      return res.status(400).json({ error: 'القسم مطلوب. يرجى تحديد قسم صالح للطلب.' });
+    }
+
+    // -------------------------------------------------------------
+    // Hiring Type Strict Validation & Rules
+    // -------------------------------------------------------------
+    const validHiringTypes = ['IMMEDIATE', 'PLANNED', 'ON_HOLD'];
+    const type = hiringType || 'IMMEDIATE';
+    if (!validHiringTypes.includes(type)) {
+      return res.status(400).json({ error: 'نوع التوظيف المحدد غير صالح. الأنواع المتاحة: IMMEDIATE, PLANNED, ON_HOLD' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let parsedRequiredDate = requiredDate ? new Date(requiredDate) : null;
+    let parsedHiringDeadline = hiringDeadline ? new Date(hiringDeadline) : null;
+
+    if (type === 'IMMEDIATE') {
+      if (!requiredDate) {
+        return res.status(400).json({ error: 'تاريخ الاحتياج (Required Date) إلزامي للتوظيف الفوري (Immediate Hiring)' });
+      }
+      if (!hiringDeadline) {
+        return res.status(400).json({ error: 'الموعد النهائي للتوظيف (Hiring Deadline) إلزامي للتوظيف الفوري (Immediate Hiring)' });
+      }
+      if (isNaN(parsedRequiredDate.getTime()) || parsedRequiredDate < today) {
+        return res.status(400).json({ error: 'تاريخ الاحتياج المطلوب لا يمكن أن يكون في الماضي' });
+      }
+      if (isNaN(parsedHiringDeadline.getTime()) || parsedHiringDeadline < today) {
+        return res.status(400).json({ error: 'الموعد النهائي للتوظيف لا يمكن أن يكون في الماضي' });
+      }
+      if (parsedHiringDeadline < parsedRequiredDate) {
+        return res.status(400).json({ error: 'الموعد النهائي للتوظيف (Deadline) لا يمكن أن يكون قبل تاريخ الاحتياج المطلوب' });
+      }
+    } else if (parsedRequiredDate && !isNaN(parsedRequiredDate.getTime()) && parsedRequiredDate < today) {
+      return res.status(400).json({ error: 'تاريخ التوظيف المطلوب لا يمكن أن يكون في الماضي' });
+    }
+
+    // Planned Hiring Validation & Concurrency Safety
+    let linkedPlan = null;
+    if (type === 'PLANNED') {
+      if (!hiringPlanId) {
+        return res.status(400).json({ error: 'يرجى تحديد بند خطة التوظيف السنوية (Hiring Plan) للطلبات المخططة' });
+      }
+      linkedPlan = await prisma.hiringPlan.findFirst({
+        where: { id: hiringPlanId, companyId }
+      });
+      if (!linkedPlan) {
+        return res.status(400).json({ error: 'بند خطة التوظيف المحدد غير موجود في الشركة' });
+      }
+      if (linkedPlan.departmentId !== validDepartmentId) {
+        return res.status(400).json({ error: 'بند الخطة المختار يتبع قسماً مختلفاً عن قسم طلب التوظيف' });
+      }
+      if (linkedPlan.fulfilledCount >= linkedPlan.quantity) {
+        return res.status(400).json({
+          error: `تم استيفاء كامل العدد المخطط له (${linkedPlan.quantity}) في بند الخطة هذا. لا يمكن إضافة طلبات جديدة.`
+        });
+      }
+    }
+
+    // On Hold Validation
+    const validFreezeReasons = ['BUDGET_PENDING', 'MANAGEMENT_APPROVAL', 'BUSINESS_CHANGE', 'OTHER'];
+    if (type === 'ON_HOLD') {
+      if (!freezeReason || !validFreezeReasons.includes(freezeReason)) {
+        return res.status(400).json({ error: 'سبب التجميد إلزامي ويجب أن يكون أحد الخيارات: BUDGET_PENDING, MANAGEMENT_APPROVAL, BUSINESS_CHANGE, OTHER' });
+      }
+      if (freezeReason === 'OTHER' && (!req.body.freezeNotes && !req.body.jobSummary)) {
+        return res.status(400).json({ error: 'يرجى تقديم تفاصيل أو ملاحظات توضيحية لسبب التجميد (OTHER)' });
+      }
+      if (resumeDate) {
+        const resDateObj = new Date(resumeDate);
+        if (isNaN(resDateObj.getTime()) || resDateObj < today) {
+          return res.status(400).json({ error: 'التاريخ المتوقع للاستئناف لا يمكن أن يكون في الماضي' });
+        }
+      }
     }
 
     const requestId = await generateRequestId(companyId);
-    const type = hiringType || 'IMMEDIATE';
     let initialStatus = submitDirectly ? JOB_REQUEST_STATUS.SUBMITTED : JOB_REQUEST_STATUS.DRAFT;
     let initialPriority = priority || 'MEDIUM';
 
@@ -137,6 +235,23 @@ export const createJobRequest = async (req, res) => {
     }
 
     const jobRequest = await prisma.$transaction(async (tx) => {
+      // Atomic increment if PLANNED to guarantee race-condition concurrency safety
+      if (type === 'PLANNED' && hiringPlanId) {
+        const updatedPlan = await tx.hiringPlan.updateMany({
+          where: {
+            id: hiringPlanId,
+            companyId,
+            fulfilledCount: { lt: linkedPlan.quantity }
+          },
+          data: {
+            fulfilledCount: { increment: 1 }
+          }
+        });
+        if (updatedPlan.count === 0) {
+          throw new Error('فشل حجز المقعد في الخطة السنوية: تم استيفاء كامل العدد المخطط له من قبل مستخدم آخر');
+        }
+      }
+
       const created = await tx.jobRequest.create({
         data: {
           requestId,
@@ -159,15 +274,15 @@ export const createJobRequest = async (req, res) => {
           budgetCode: budgetCode && budgetCode.trim() ? budgetCode : `BUD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
           costCenter: costCenter && costCenter.trim() ? costCenter : 'CC-101',
           hiringType: type,
-          hiringDeadline: hiringDeadline ? new Date(hiringDeadline) : (type === 'IMMEDIATE' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null),
-          hiringPlanId: hiringPlanId || null,
-          freezeReason: freezeReason || (type === 'ON_HOLD' ? 'BUDGET_PENDING' : null),
-          frozenDate: frozenDate ? new Date(frozenDate) : (type === 'ON_HOLD' ? new Date() : null),
-          resumeDate: resumeDate ? new Date(resumeDate) : null,
-          ownerId: ownerId || (type === 'ON_HOLD' ? userId : null),
-          ownerName: ownerName || (type === 'ON_HOLD' ? req.user?.name : null),
+          hiringDeadline: parsedHiringDeadline,
+          hiringPlanId: type === 'PLANNED' ? hiringPlanId : null,
+          freezeReason: type === 'ON_HOLD' ? freezeReason : null,
+          frozenDate: type === 'ON_HOLD' ? (frozenDate ? new Date(frozenDate) : new Date()) : null,
+          resumeDate: type === 'ON_HOLD' && resumeDate ? new Date(resumeDate) : null,
+          ownerId: type === 'ON_HOLD' ? (ownerId || userId) : null,
+          ownerName: type === 'ON_HOLD' ? (ownerName || req.user?.name || req.user?.email) : null,
           hiringReason: hiringReason || 'NEW_POSITION',
-          requiredDate: requiredDate ? new Date(requiredDate) : null,
+          requiredDate: parsedRequiredDate,
           priority: initialPriority,
           status: initialStatus
         }
@@ -208,7 +323,8 @@ export const createJobRequest = async (req, res) => {
       }
 
       return created;
-    });
+    }, { timeout: 15000, maxWait: 10000 });
+
 
     // Notify HR Managers if submitted directly
     if (submitDirectly) {
@@ -509,6 +625,10 @@ export const updateJobRequest = async (req, res) => {
       return res.status(400).json({ error: `لا يمكن تعديل الطلب وهو في حالة "${existing.status}"` });
     }
 
+    if (req.body.status && req.body.status !== existing.status) {
+      return res.status(400).json({ error: 'لا يمكن تعديل حالة الطلب مباشرة عبر هذا المسار. يرجى استخدام مسارات دورة العمل المخصصة (Submit, Approve, Transition).' });
+    }
+
     const {
       jobTitle,
       departmentId,
@@ -528,9 +648,30 @@ export const updateJobRequest = async (req, res) => {
       costCenter,
       hiringReason,
       requiredDate,
+      hiringDeadline,
       priority,
       skills
     } = req.body;
+
+    if (vacancies !== undefined && (isNaN(Number(vacancies)) || Number(vacancies) <= 0)) {
+      return res.status(400).json({ error: 'عدد الشواغر يجب أن يكون رقماً صحيحاً موجباً أكبر من الصفر' });
+    }
+
+    if (salaryMin !== undefined && salaryMax !== undefined && parseFloat(salaryMin) > parseFloat(salaryMax)) {
+      return res.status(400).json({ error: 'الحد الأدنى للراتب لا يمكن أن يتجاوز الحد الأعلى للراتب' });
+    }
+
+    // Enforce Immediate hiring invariant
+    if (existing.hiringType === 'IMMEDIATE') {
+      if (priority && priority !== 'URGENT') {
+        return res.status(400).json({ error: 'لا يمكن تغيير أولوية التوظيف الفوري (Immediate Hiring) عن المستوى العاجل (URGENT)' });
+      }
+      const checkReqDate = requiredDate ? new Date(requiredDate) : existing.requiredDate;
+      const checkDeadline = hiringDeadline ? new Date(hiringDeadline) : existing.hiringDeadline;
+      if (checkDeadline && checkReqDate && checkDeadline < checkReqDate) {
+        return res.status(400).json({ error: 'الموعد النهائي للتوظيف لا يمكن أن يكون قبل تاريخ الاحتياج' });
+      }
+    }
 
     const updated = await prisma.$transaction(async (tx) => {
       const result = await tx.jobRequest.update({
@@ -554,7 +695,8 @@ export const updateJobRequest = async (req, res) => {
           costCenter: costCenter !== undefined ? costCenter : existing.costCenter,
           hiringReason: hiringReason || existing.hiringReason,
           requiredDate: requiredDate ? new Date(requiredDate) : existing.requiredDate,
-          priority: priority || existing.priority
+          hiringDeadline: hiringDeadline ? new Date(hiringDeadline) : existing.hiringDeadline,
+          priority: existing.hiringType === 'IMMEDIATE' ? 'URGENT' : (priority || existing.priority)
         }
       });
 
@@ -663,7 +805,8 @@ export const submitJobRequest = async (req, res) => {
           }
         });
       }
-    });
+    }, { timeout: 15000, maxWait: 10000 });
+
 
     // Send notifications to HR Managers
     const hrUsers = await prisma.user.findMany({
@@ -790,7 +933,8 @@ export const approveJobRequest = async (req, res) => {
           comment: comment || 'تمت الموافقة'
         }
       });
-    });
+    }, { timeout: 15000, maxWait: 10000 });
+
 
     // Notifications logic
     if (jobRequest.createdBy) {
@@ -879,7 +1023,8 @@ export const rejectJobRequest = async (req, res) => {
           comment
         }
       });
-    });
+    }, { timeout: 15000, maxWait: 10000 });
+
 
     if (jobRequest.createdBy) {
       await createNotification({
@@ -976,7 +1121,8 @@ export const transitionState = async (req, res) => {
           console.error('Failed to sync HiringPlan on JobRequest HIRED:', planErr.message);
         }
       }
-    });
+    }, { timeout: 15000, maxWait: 10000 });
+
 
     await recordAuditLog({
       userId,
@@ -1014,8 +1160,28 @@ export const convertToRecruitmentJob = async (req, res) => {
     }
 
     if (!['APPROVED', 'RECRUITMENT_STARTED'].includes(jobRequest.status)) {
-      return res.status(400).json({ error: 'يجب أن يكون طلب التوظيف معتمداً تحويله إلى وظيفة نشطة' });
+      return res.status(400).json({ error: 'يجب أن يكون طلب التوظيف معتمداً لتحويله إلى وظيفة نشطة' });
     }
+
+    // Double Action / Idempotency Safety Check:
+    // Check if an active recruitment job was already created for this job request
+    const existingRecruitmentJob = await prisma.recruitmentJob.findFirst({
+      where: {
+        companyId,
+        title: jobRequest.jobTitle,
+        departmentId: jobRequest.departmentId,
+        deletedAt: null,
+        status: { not: 'CLOSED' }
+      }
+    });
+
+    if (existingRecruitmentJob && jobRequest.status === 'RECRUITMENT_STARTED') {
+      return res.status(200).json({
+        message: 'تم تحويل هذا الطلب إلى وظيفة توظيف نشطة بالفعل مسبقاً',
+        data: existingRecruitmentJob
+      });
+    }
+
 
     // Prepare rich requirements list
     const reqList = [];
@@ -1101,15 +1267,48 @@ export const convertToRecruitmentJob = async (req, res) => {
 export const freezeJobRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { companyId, id: userId, name: userName } = req.user;
-    const { freezeReason, resumeDate, ownerId, ownerName, comment } = req.body;
+    const { companyId, id: userId, name: userName, role } = req.user;
+    const { freezeReason, resumeDate, ownerId, ownerName, comment, freezeNotes } = req.body;
+
+    // RBAC: Only authorized roles can freeze requests
+    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'HR_MANAGER', 'MANAGER', 'CEO_EXECUTIVE'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'غير مصرح لك بتجميد طلبات التوظيف' });
+    }
 
     const jobRequest = await prisma.jobRequest.findFirst({
-      where: { id, companyId }
+      where: { id, companyId, deletedAt: null }
     });
 
     if (!jobRequest) {
       return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
+    }
+
+    // State Machine Check: Prevent freezing already frozen or completed requests
+    if (jobRequest.status === 'ON_HOLD') {
+      return res.status(400).json({ error: 'طلب التوظيف مجمد بالفعل (Already On Hold)' });
+    }
+    if (['HIRED', 'CLOSED', 'CANCELLED', 'REJECTED'].includes(jobRequest.status)) {
+      return res.status(400).json({ error: `لا يمكن تجميد طلب في حالة "${jobRequest.status}"` });
+    }
+
+    const validFreezeReasons = ['BUDGET_PENDING', 'MANAGEMENT_APPROVAL', 'BUSINESS_CHANGE', 'OTHER'];
+    if (!freezeReason || !validFreezeReasons.includes(freezeReason)) {
+      return res.status(400).json({ error: 'سبب التجميد مطلوب ويجب أن يكون أحد الخيارات: BUDGET_PENDING, MANAGEMENT_APPROVAL, BUSINESS_CHANGE, OTHER' });
+    }
+
+    if (freezeReason === 'OTHER' && (!comment && !freezeNotes)) {
+      return res.status(400).json({ error: 'يرجى تقديم تفاصيل أو ملاحظات توضيحية عند اختيار سبب التجميد (OTHER)' });
+    }
+
+    let parsedResumeDate = null;
+    if (resumeDate) {
+      parsedResumeDate = new Date(resumeDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(parsedResumeDate.getTime()) || parsedResumeDate < today) {
+        return res.status(400).json({ error: 'تاريخ الاستئناف المتوقع لا يمكن أن يكون في الماضي' });
+      }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -1118,9 +1317,9 @@ export const freezeJobRequest = async (req, res) => {
         data: {
           hiringType: 'ON_HOLD',
           status: 'ON_HOLD',
-          freezeReason: freezeReason || 'BUDGET_PENDING',
+          freezeReason,
           frozenDate: new Date(),
-          resumeDate: resumeDate ? new Date(resumeDate) : null,
+          resumeDate: parsedResumeDate,
           ownerId: ownerId || userId,
           ownerName: ownerName || userName || req.user?.email
         }
@@ -1129,13 +1328,13 @@ export const freezeJobRequest = async (req, res) => {
       await tx.onHoldLog.create({
         data: {
           jobRequestId: id,
-          freezeReason: freezeReason || 'BUDGET_PENDING',
+          freezeReason,
           frozenDate: new Date(),
-          resumeDate: resumeDate ? new Date(resumeDate) : null,
+          resumeDate: parsedResumeDate,
           action: 'FREEZE',
           performedBy: userId,
           performerName: userName || req.user?.email,
-          comment: comment || 'تم تجميد طلب التوظيف'
+          comment: comment || freezeNotes || `تم تجميد طلب التوظيف بسبب: ${freezeReason}`
         }
       });
 
@@ -1146,7 +1345,7 @@ export const freezeJobRequest = async (req, res) => {
           oldStatus: jobRequest.status,
           newStatus: 'ON_HOLD',
           performedBy: userId,
-          comment: comment || `سبب التجميد: ${freezeReason || 'BUDGET_PENDING'}`
+          comment: comment || freezeNotes || `سبب التجميد: ${freezeReason}`
         }
       });
 
@@ -1167,15 +1366,24 @@ export const freezeJobRequest = async (req, res) => {
 export const unfreezeJobRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { companyId, id: userId, name: userName } = req.user;
+    const { companyId, id: userId, name: userName, role } = req.user;
     const { comment } = req.body;
 
+    const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'HR_MANAGER', 'MANAGER', 'CEO_EXECUTIVE'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'غير مصرح لك باستئناف وتعديل تجميد طلبات التوظيف' });
+    }
+
     const jobRequest = await prisma.jobRequest.findFirst({
-      where: { id, companyId }
+      where: { id, companyId, deletedAt: null }
     });
 
     if (!jobRequest) {
       return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
+    }
+
+    if (jobRequest.status !== 'ON_HOLD') {
+      return res.status(400).json({ error: 'طلب التوظيف ليس في حالة تجميد (Not On Hold)' });
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -1183,7 +1391,9 @@ export const unfreezeJobRequest = async (req, res) => {
         where: { id },
         data: {
           status: 'SUBMITTED',
-          hiringType: 'IMMEDIATE'
+          hiringType: 'IMMEDIATE',
+          frozenDate: null,
+          resumeDate: null
         }
       });
 

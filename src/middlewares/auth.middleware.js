@@ -42,14 +42,21 @@ export const protect = async (req, res, next) => {
             }
         }
 
-        const currentStatus = user.company?.status?.toLowerCase() || 'active';
-        const isCompanyActive = currentStatus === 'active';
-
-        if (!user || user.status !== 'ACTIVE' || !isCompanyActive) {
+        if (!user || user.status !== 'ACTIVE') {
             const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
         }
+
+        const currentStatus = user.company?.status?.toLowerCase() || 'active';
+        const isCompanyActive = currentStatus === 'active';
+
+        if (!isCompanyActive) {
+            const error = new Error('Your company is no longer active.');
+            error.statusCode = 401;
+            throw error;
+        }
+
 
         // Grant access to protected route
         req.user = user;

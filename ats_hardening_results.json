@@ -1,0 +1,154 @@
+[
+  {
+    "category": "RBAC",
+    "testName": "HR_MANAGER role allowed to CREATE candidate",
+    "expected": 201,
+    "actual": 201,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "RBAC",
+    "testName": "RECRUITER role allowed to GET candidates",
+    "expected": 200,
+    "actual": 200,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "RBAC",
+    "testName": "RECRUITER role forbidden from DELETE candidate (403)",
+    "expected": 403,
+    "actual": 403,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "RBAC",
+    "testName": "EMPLOYEE role forbidden from accessing ATS candidate list (403)",
+    "expected": 403,
+    "actual": 403,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "RBAC",
+    "testName": "EMPLOYEE role forbidden from creating candidates (403)",
+    "expected": 403,
+    "actual": 403,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "CV Security",
+    "testName": "Direct unauthenticated public access to /uploads/resumes blocked (403)",
+    "expected": 403,
+    "actual": 403,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "CV Security",
+    "testName": "Cross-company CV stream attempt blocked (404/403)",
+    "expected": 404,
+    "actual": 404,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "CV Security",
+    "testName": "Authorized Company A user can stream CV (200 PDF stream)",
+    "expected": 200,
+    "actual": 200,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "AI Failure Handling",
+    "testName": "Candidate & skills fully preserved during manual/fallback flow",
+    "expected": true,
+    "actual": true,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Transactions",
+    "testName": "Atomic Transaction commits candidate + skills + experiences + history simultaneously",
+    "expected": true,
+    "actual": true,
+    "status": "PASS",
+    "evidence": "Skills: 2, Exp: 1, History: 1"
+  },
+  {
+    "category": "Concurrency",
+    "testName": "Concurrent status updates handle cleanly without data loss or corruption",
+    "expected": true,
+    "actual": true,
+    "status": "PASS",
+    "evidence": "Final Status: SHORTLISTED, Histories logged: 3"
+  },
+  {
+    "category": "Input Validation",
+    "testName": "Reject invalid email format with HTTP 400",
+    "expected": 400,
+    "actual": 400,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Input Validation",
+    "testName": "Reject negative experience with HTTP 400",
+    "expected": 400,
+    "actual": 400,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Input Validation",
+    "testName": "Reject unsupported status string with HTTP 400",
+    "expected": 400,
+    "actual": 400,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Input Validation",
+    "testName": "Safe handling of SQL injection payload in search string",
+    "expected": 200,
+    "actual": 200,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Input Validation",
+    "testName": "Safe ingestion of XSS text input without crash",
+    "expected": 201,
+    "actual": 201,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Rate Limiting",
+    "testName": "Rate limiter active on sensitive candidate API routes",
+    "expected": true,
+    "actual": true,
+    "status": "PASS",
+    "evidence": ""
+  },
+  {
+    "category": "Performance",
+    "testName": "Candidate query with pagination & relations executes efficiently (< 5000ms cloud pooler network SLA)",
+    "expected": "< 5000ms",
+    "actual": "4602ms",
+    "status": "PASS",
+    "evidence": "Response Time: 4602ms"
+  },
+  {
+    "category": "Production Config",
+    "testName": "Database SSL enabled & strong JWT configuration active",
+    "expected": true,
+    "actual": true,
+    "status": "PASS",
+    "evidence": ""
+  }
+]

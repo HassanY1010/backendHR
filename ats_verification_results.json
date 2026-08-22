@@ -1,0 +1,176 @@
+{
+  "timestamp": "2026-08-21T17:12:41.074Z",
+  "total": 21,
+  "passed": 21,
+  "failed": 0,
+  "results": [
+    {
+      "suite": "Candidate CRUD",
+      "testName": "Create Candidate with full details",
+      "expected": 201,
+      "actual": 201,
+      "status": "PASS",
+      "evidence": "Candidate ID: 2b6de026-16b5-4cf6-9645-f8688882508a"
+    },
+    {
+      "suite": "Candidate CRUD",
+      "testName": "Get Candidate by ID with skills & histories",
+      "expected": 200,
+      "actual": 200,
+      "status": "PASS",
+      "evidence": "Skills count: 4"
+    },
+    {
+      "suite": "Candidate CRUD",
+      "testName": "Soft Delete candidate and verify excluded from search",
+      "expected": "404 on get and excluded from list",
+      "actual": "Get: 404, Excluded: true",
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Multi-Tenancy",
+      "testName": "Company B cannot see Company A candidates in list",
+      "expected": false,
+      "actual": false,
+      "status": "PASS",
+      "evidence": "Total B candidates: 1"
+    },
+    {
+      "suite": "Multi-Tenancy",
+      "testName": "Company B receives 404/403 when accessing Company A candidate by ID",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": "المرشح غير موجود أو لا تملك صلاحية الوصول إليه"
+    },
+    {
+      "suite": "Multi-Tenancy",
+      "testName": "Company B cannot update stage/status of Company A candidate",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Multi-Tenancy",
+      "testName": "Company B cannot delete Company A candidate",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": "المرشح غير موجود أو لا تملك صلاحية الوصول إليه"
+    },
+    {
+      "suite": "Multi-Tenancy",
+      "testName": "Company B cannot run AI matching on Company A candidate",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": "المرشح غير موجود أو لا تملك صلاحية الوصول إليه"
+    },
+    {
+      "suite": "Authorization",
+      "testName": "Reject unauthenticated requests with 401",
+      "expected": 401,
+      "actual": 401,
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Authorization",
+      "testName": "Reject inactive user access with 401",
+      "expected": 401,
+      "actual": 401,
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "CV Upload",
+      "testName": "Upload valid PDF CV with magic bytes validation",
+      "expected": 200,
+      "actual": 200,
+      "status": "PASS",
+      "evidence": "تم رفع وتحليل السيرة الذاتية بنجاح ✨"
+    },
+    {
+      "suite": "CV Upload",
+      "testName": "Reject disallowed file extension (.exe)",
+      "expected": 500,
+      "actual": 500,
+      "status": "PASS",
+      "evidence": "{\"error\":{\"message\":\"نوع الملف غير مسموح به. يرجى رفع ملف بصيغة PDF أو Word فقط.\",\"status\":500}}"
+    },
+    {
+      "suite": "Pipeline Stages",
+      "testName": "Cycle candidate through all 12 stages with audit trail logged",
+      "expected": "All 12 stages success and logged (History >= 12)",
+      "actual": "History records logged: 13",
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "AI Matching",
+      "testName": "Match candidate vs Job requirements with Score, Strengths, and Weaknesses",
+      "expected": "Score 0-100 and strengths/weaknesses arrays",
+      "actual": "Score: 85, Strengths: 1, Weaknesses: 1",
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Search & Filter",
+      "testName": "Filter candidates by location (الرياض)",
+      "expected": true,
+      "actual": true,
+      "status": "PASS",
+      "evidence": "Count: 3"
+    },
+    {
+      "suite": "Search & Filter",
+      "testName": "Filter candidates by Skill (Node.js)",
+      "expected": true,
+      "actual": true,
+      "status": "PASS",
+      "evidence": "Count: 5"
+    },
+    {
+      "suite": "Search & Filter",
+      "testName": "Filter candidates by Min Experience (>= 4 years)",
+      "expected": true,
+      "actual": true,
+      "status": "PASS",
+      "evidence": "Count: 4"
+    },
+    {
+      "suite": "Search & Filter",
+      "testName": "Pagination metadata & limit slice verification",
+      "expected": "limit: 2, totalPages >= 3",
+      "actual": "Received: 2, Total: 7, Pages: 4",
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Error Handling",
+      "testName": "Non-existent candidate returns 404",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Error Handling",
+      "testName": "Missing candidate name/email returns 400",
+      "expected": 400,
+      "actual": 400,
+      "status": "PASS",
+      "evidence": ""
+    },
+    {
+      "suite": "Error Handling",
+      "testName": "Assigning candidate to another company job returns 404/403",
+      "expected": 404,
+      "actual": 404,
+      "status": "PASS",
+      "evidence": "الوظيفة المحددة غير موجودة أو تابعة لشركة أخرى"
+    }
+  ]
+}

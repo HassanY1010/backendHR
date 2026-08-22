@@ -106,6 +106,8 @@ model Candidate {
   aiAnalysisDetails String?          @db.Text
   resumePath        String?
   location          String?
+  salaryExpectation Float?
+  availability      String?
   termsAcceptedAt   DateTime?
   recruitmentjob    RecruitmentJob   @relation(fields: [jobId], references: [id], onDelete: Cascade, map: "Candidate_jobId_fkey")
   interviews        Interview[]
@@ -113,10 +115,15 @@ model Candidate {
   candidateExperiences  CandidateExperience[]
   candidateApplications CandidateApplication[]
   candidateHistories    CandidateHistory[]
+  candidateNotes        CandidateNote[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
   @@index([status, deletedAt])
+  @@index([email])
+  @@index([location])
+  @@index([aiScore])
+  @@index([createdAt])
   @@map("candidate")
 }
 
@@ -150,21 +157,25 @@ model CandidateExperience {
 }
 
 model CandidateApplication {
-  id            String           @id @default(uuid())
-  candidateId   String
-  jobRequestId  String?
-  status        candidate_status @default(APPLIED)
-  score         Float?
-  matchAnalysis String?          @db.Text
-  createdAt     DateTime         @default(now())
+  id               String           @id @default(uuid())
+  candidateId      String
+  jobId            String?
+  jobRequestId     String?
+  status           candidate_status @default(APPLIED)
+  score            Float?
+  matchAnalysis    String?          @db.Text
+  createdAt        DateTime         @default(now())
 
-  candidate     Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  jobRequest    JobRequest?      @relation(fields: [jobRequestId], references: [id], onDelete: SetNull)
+  candidate        Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  recruitmentjob   RecruitmentJob?  @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  jobRequest       JobRequest?      @relation(fields: [jobRequestId], references: [id], onDelete: SetNull)
 
   @@index([candidateId])
+  @@index([jobId])
   @@index([jobRequestId])
   @@map("candidate_application")
 }
+
 
 model CandidateHistory {
   id          String   @id @default(uuid())
@@ -182,6 +193,23 @@ model CandidateHistory {
   @@index([createdAt])
   @@map("candidate_history")
 }
+
+model CandidateNote {
+  id          String   @id @default(uuid())
+  candidateId String
+  authorId    String?
+  authorName  String?
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+  @@index([createdAt])
+  @@map("candidate_note")
+}
+
 
 model CheckInAssessment {
   id             String         @id @default(uuid())
@@ -229,7 +257,7 @@ model CheckInQuestion {
   isActive   Boolean  @default(true)
   createdBy  String?
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
 
   @@index([type, isActive], map: "CheckInQuestion_type_isActive_idx")
   @@map("checkinquestion")
@@ -241,7 +269,7 @@ model Company {
   subscriptionStatus String            @default("TRIAL")
   subscriptionExpiry DateTime?
   createdAt          DateTime          @default(now())
-  updatedAt          DateTime
+  updatedAt          DateTime          @updatedAt
   address            String?
   employeeLimit      Int               @default(10)
   language           String            @default("ar")
@@ -261,10 +289,12 @@ model Company {
   jobRequests        JobRequest[]
   workflowTemplates  WorkflowTemplate[]
   hiringPlans        HiringPlan[]
+  aiJobDescriptions  AIJobDescription[]
 
   status             String            @default("active")
   @@map("company")
 }
+
 
 model Department {
   id              String           @id @default(uuid())
@@ -553,6 +583,7 @@ model RecruitmentJob {
   deletedAt         DateTime?
   aiDescription    String?               @db.Text
   candidates        Candidate[]
+  candidateApplications CandidateApplication[]
   company          Company               @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "RecruitmentJob_companyId_fkey")
   departmentRel    Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
@@ -738,7 +769,7 @@ model User {
   status       String         @default("ACTIVE")
   companyId    String?
   createdAt    DateTime       @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime       @updatedAt
   deletedAt    DateTime?
   avatar       String?
   bio          String?        @db.Text
@@ -761,6 +792,8 @@ model User {
   approvalRequests   ApprovalRequest[]
   workflowStepAssignments WorkflowStepInstance[] @relation("WorkflowStepAssignee")
   workflowLogs            WorkflowLog[]          @relation("WorkflowLogPerformer")
+  aiJobDescriptions       AIJobDescription[]
+
 
   @@index([companyId], map: "User_companyId_idx")
   @@index([companyId, deletedAt])
@@ -975,6 +1008,8 @@ model JobRequest {
   onHoldLogs         OnHoldLog[]
   workflowInstance   WorkflowInstance?
   candidateApplications CandidateApplication[]
+  aiJobDescriptions    AIJobDescription[]
+
 
   @@index([companyId])
   @@index([departmentId])
@@ -1012,6 +1047,31 @@ model JobRequestSkill {
   @@index([jobRequestId])
   @@map("jobrequestskill")
 }
+
+model AIJobDescription {
+  id               String      @id @default(uuid())
+  companyId        String
+  jobRequestId     String?
+  jobTitle         String
+  generatedContent Json
+  marketAnalysis   Json?
+  version          Int         @default(1)
+  createdBy        String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdByUser    User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  jobRequest       JobRequest? @relation(fields: [jobRequestId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, jobTitle, version], map: "aijobdescription_companyId_jobTitle_version_key")
+  @@index([companyId])
+  @@index([jobRequestId])
+  @@index([createdBy])
+  @@map("aijobdescription")
+}
+
+
 
 model JobRequestHistory {
   id           String             @id @default(uuid())

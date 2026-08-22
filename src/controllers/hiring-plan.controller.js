@@ -65,11 +65,14 @@ const parseRobustDate = (dStr) => {
  */
 export const getHiringPlans = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
         const { year, departmentId } = req.query;
 
         const where = {
-            ...(companyId ? { companyId } : {}),
+            companyId,
             ...(year ? { year: parseInt(year) } : {}),
             ...(departmentId ? { departmentId } : {})
         };
@@ -96,26 +99,52 @@ export const getHiringPlans = async (req, res) => {
  */
 export const createHiringPlan = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
         const { year, departmentId, position, quantity, expectedDate, budget, notes } = req.body;
 
-        if (!position || !quantity) {
-            return res.status(400).json({ success: false, message: 'يرجى تزويد المسمى الوظيفي والعدد المطلوب' });
+        if (!position || !position.trim()) {
+            return res.status(400).json({ success: false, message: 'المسمى الوظيفي مطلوب في خطة التوظيف' });
+        }
+
+        const parsedQuantity = parseInt(quantity);
+        if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+            return res.status(400).json({ success: false, message: 'العدد المطلوب في الخطة يجب أن يكون رقماً صحيحاً أكبر من الصفر' });
+        }
+
+        const parsedYear = parseInt(year);
+        if (isNaN(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+            return res.status(400).json({ success: false, message: 'سنة الخطة يجب أن تكون سنة صالحة بين 2000 و 2100' });
+        }
+
+        const parsedBudget = budget !== undefined ? parseFloat(budget) : 0;
+        if (isNaN(parsedBudget) || parsedBudget < 0) {
+            return res.status(400).json({ success: false, message: 'الميزانية المخصصة يجب ألا تكون قيمة سالبة' });
+        }
+
+        const parsedDate = parseRobustDate(expectedDate);
+        if (isNaN(parsedDate.getTime())) {
+            return res.status(400).json({ success: false, message: 'التاريخ المتوقع غير صالح' });
         }
 
         const validDeptId = await resolveDepartmentId(companyId, departmentId);
+        if (!validDeptId) {
+            return res.status(400).json({ success: false, message: 'القسم المحدد غير موجود أو غير صالح' });
+        }
 
         const plan = await prisma.hiringPlan.create({
             data: {
                 companyId,
-                year: parseInt(year) || 2027,
+                year: parsedYear,
                 departmentId: validDeptId,
-                position,
-                quantity: parseInt(quantity) || 1,
+                position: position.trim(),
+                quantity: parsedQuantity,
                 fulfilledCount: 0,
-                expectedDate: parseRobustDate(expectedDate),
-                budget: parseFloat(budget) || 0,
-                notes: notes || null,
+                expectedDate: parsedDate,
+                budget: parsedBudget,
+                notes: notes ? notes.trim() : null,
                 status: 'PLANNED'
             },
             include: {
@@ -136,16 +165,49 @@ export const createHiringPlan = async (req, res) => {
  */
 export const updateHiringPlan = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
         const { id } = req.params;
         const { year, departmentId, position, quantity, fulfilledCount, expectedDate, budget, status, notes } = req.body;
 
         const existing = await prisma.hiringPlan.findFirst({
-            where: { id, ...(companyId ? { companyId } : {}) }
+            where: { id, companyId }
         });
 
         if (!existing) {
             return res.status(404).json({ success: false, message: 'بند الخطة غير موجود' });
+        }
+
+        let parsedQuantity = undefined;
+        if (quantity !== undefined) {
+            parsedQuantity = parseInt(quantity);
+            if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+                return res.status(400).json({ success: false, message: 'العدد المطلوب في الخطة يجب أن يكون رقماً صحيحاً أكبر من الصفر' });
+            }
+            if (parsedQuantity < existing.fulfilledCount) {
+                return res.status(400).json({
+                    success: false,
+                    message: `لا يمكن تقليل العدد المطلوب (${parsedQuantity}) إلى ما دون عدد الوظائف المحققة بالفعل (${existing.fulfilledCount})`
+                });
+            }
+        }
+
+        let parsedBudget = undefined;
+        if (budget !== undefined) {
+            parsedBudget = parseFloat(budget);
+            if (isNaN(parsedBudget) || parsedBudget < 0) {
+                return res.status(400).json({ success: false, message: 'الميزانية المخصصة يجب ألا تكون قيمة سالبة' });
+            }
+        }
+
+        let parsedYear = undefined;
+        if (year !== undefined) {
+            parsedYear = parseInt(year);
+            if (isNaN(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+                return res.status(400).json({ success: false, message: 'سنة الخطة يجب أن تكون سنة صالحة بين 2000 و 2100' });
+            }
         }
 
         const validDeptId = departmentId ? await resolveDepartmentId(companyId, departmentId) : undefined;
@@ -153,15 +215,15 @@ export const updateHiringPlan = async (req, res) => {
         const updated = await prisma.hiringPlan.update({
             where: { id },
             data: {
-                ...(year ? { year: parseInt(year) } : {}),
+                ...(parsedYear !== undefined ? { year: parsedYear } : {}),
                 ...(validDeptId ? { departmentId: validDeptId } : {}),
-                ...(position ? { position } : {}),
-                ...(quantity !== undefined ? { quantity: parseInt(quantity) } : {}),
+                ...(position ? { position: position.trim() } : {}),
+                ...(parsedQuantity !== undefined ? { quantity: parsedQuantity } : {}),
                 ...(fulfilledCount !== undefined ? { fulfilledCount: parseInt(fulfilledCount) } : {}),
                 ...(expectedDate ? { expectedDate: parseRobustDate(expectedDate) } : {}),
-                ...(budget !== undefined ? { budget: parseFloat(budget) } : {}),
+                ...(parsedBudget !== undefined ? { budget: parsedBudget } : {}),
                 ...(status ? { status } : {}),
-                ...(notes !== undefined ? { notes } : {})
+                ...(notes !== undefined ? { notes: notes ? notes.trim() : null } : {})
             },
             include: {
                 department: { select: { id: true, name: true } }
@@ -181,15 +243,26 @@ export const updateHiringPlan = async (req, res) => {
  */
 export const deleteHiringPlan = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
         const { id } = req.params;
 
         const existing = await prisma.hiringPlan.findFirst({
-            where: { id, ...(companyId ? { companyId } : {}) }
+            where: { id, companyId },
+            include: { _count: { select: { jobRequests: true } } }
         });
 
         if (!existing) {
             return res.status(404).json({ success: false, message: 'بند الخطة غير موجود' });
+        }
+
+        if (existing._count.jobRequests > 0) {
+            return res.status(400).json({
+                success: false,
+                message: `لا يمكن حذف بند الخطة لوجود ${existing._count.jobRequests} طلب توظيف مرتبط به حالياً. يرجى إعادة توجيه الطلبات أولاً.`
+            });
         }
 
         await prisma.hiringPlan.delete({ where: { id } });
@@ -207,11 +280,14 @@ export const deleteHiringPlan = async (req, res) => {
  */
 export const getManpowerDashboard = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
         const targetYear = parseInt(req.query.year) || new Date().getFullYear() + 1;
 
         const where = {
-            ...(companyId ? { companyId } : {}),
+            companyId,
             year: targetYear
         };
 

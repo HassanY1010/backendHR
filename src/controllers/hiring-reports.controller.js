@@ -19,8 +19,11 @@ const resolveCompanyId = async (req) => {
  */
 export const getHiringTypesReport = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
-        const where = companyId ? { companyId } : {};
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(401).json({ success: false, message: 'غير مصرح: لم يتم العثور على معرّف الشركة' });
+        }
+        const where = { companyId, deletedAt: null };
 
         // 1. Immediate Jobs stats
         const immediateJobs = await prisma.jobRequest.findMany({
@@ -44,7 +47,7 @@ export const getHiringTypesReport = async (req, res) => {
 
         // 2. Annual Force Plans stats
         const plans = await prisma.hiringPlan.findMany({
-            where,
+            where: { companyId },
             include: { department: { select: { id: true, name: true } } }
         });
 

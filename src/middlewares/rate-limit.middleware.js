@@ -31,3 +31,15 @@ export const recruitmentPublicLimiter = rateLimit({
         message: 'لقد تجاوزت حد الطلبات المسموح به للمقابلات. يرجى المحاولة لاحقاً'
     }
 });
+
+// AI Job Description Limiter (20 requests per minute to prevent AI quota exhaustion and DoS)
+export const aiJdLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: 'لقد تجاوزت الحد المسموح به لطلبات الذكاء الاصطناعي (20 طلب/دقيقة). يرجى الانتظار قليلاً.'
+    }
+});
+

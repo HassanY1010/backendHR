@@ -111,10 +111,17 @@ app.post('/api/logs', (req, res) => {
 // Use shared rate limiters
 app.use('/api/', globalLimiter);
 
-// Serve static files from uploads directory
+// Protect /uploads/resumes from direct unauthenticated public access
 import path from 'path';
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Explicitly block unauthenticated direct browsing to resumes directory
+app.use('/uploads/resumes', (req, res) => {
+    res.status(403).json({ status: 'error', message: 'الوصول المباشر لملفات السير الذاتية محظور لأسباب أمنية. يرجى استخدام بوابة المرشح المصرحة.' });
+});
+
+// Serve public static files (avatars, logos, etc.)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 if (process.env.NODE_ENV === 'development') {
@@ -160,7 +167,9 @@ app.use('/api/files', fileRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/job-requests', jobRequestRoutes);
 app.use('/api/ai-jd', aiJdRoutes);
+app.use('/api/ai/job-description', aiJdRoutes);
 app.use('/api/workflow', workflowRoutes);
+
 app.use('/api/hiring-plans', hiringPlanRoutes);
 app.use('/api/hiring-reports', hiringReportsRoutes);
 app.use('/api/candidates', atsCandidateRoutes);

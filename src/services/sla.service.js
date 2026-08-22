@@ -1,6 +1,6 @@
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
-
+import { emailService } from './email.service.js';
 
 // ============================================================================
 // SLA SERVICE — Checks breaches every 15 minutes, triggers escalation
@@ -15,7 +15,7 @@ export const slaService = {
         try {
             const now = new Date();
 
-            // Find all IN_PROGRESS / PENDING steps that are past their dueAt
+            // Find all IN_PROGRESS / PENDING steps that are past their dueAt and not yet marked breached
             const overdueSteps = await prisma.workflowStepInstance.findMany({
                 where: {
                     status: { in: ['PENDING', 'IN_PROGRESS'] },
@@ -30,14 +30,15 @@ export const slaService = {
                                     id: true,
                                     requestId: true,
                                     jobTitle: true,
-                                    companyId: true
+                                    companyId: true,
+                                    createdBy: true
                                 }
                             }
                         }
                     },
                     step: true,
                     assignedTo: {
-                        select: { id: true, name: true, email: true, companyId: true }
+                        select: { id: true, name: true, email: true, companyId: true, role: true }
                     }
                 }
             });
@@ -74,20 +75,36 @@ export const slaService = {
     },
 
     /**
-     * Handle an SLA breach — mark overdue, log, notify, escalate
+     * Handle an SLA breach — mark overdue, log, notify, email, escalate (Idempotent)
      */
     handleSLABreach: async (stepInstance) => {
         try {
-            // Mark step as breached
+            // 1. Idempotency Check: Don't re-process if already breached
+            const currentRecord = await prisma.workflowStepInstance.findUnique({
+                where: { id: stepInstance.id },
+                select: { slaBreach: true, status: true }
+            });
+
+            if (currentRecord?.slaBreach && currentRecord?.status === 'OVERDUE') {
+                return; // Already processed, prevent duplicate alerts
+            }
+
+            const now = new Date();
+            const hoursOverdue = stepInstance.dueAt
+                ? Math.max(1, Math.round((now.getTime() - new Date(stepInstance.dueAt).getTime()) / (1000 * 60 * 60)))
+                : 1;
+
+            // 2. Mark step as breached & escalated
             await prisma.workflowStepInstance.update({
                 where: { id: stepInstance.id },
                 data: {
                     slaBreach: true,
-                    status: 'OVERDUE'
+                    status: 'OVERDUE',
+                    escalated: true
                 }
             });
 
-            // Log SLA_BREACH
+            // 3. Log SLA_BREACH in audit trail
             await prisma.workflowLog.create({
                 data: {
                     instanceId: stepInstance.instanceId,
@@ -95,18 +112,28 @@ export const slaService = {
                     fromStatus: stepInstance.status,
                     toStatus: 'OVERDUE',
                     action: 'SLA_BREACH',
-                    comment: `تجاوز SLA للمرحلة: ${stepInstance.step?.nameAr || stepInstance.step?.name}. الوقت المتوقع: ${stepInstance.expectedDuration} ساعة`,
+                    comment: `تجاوز SLA للمرحلة: ${stepInstance.step?.nameAr || stepInstance.step?.name}. الوقت المتوقع: ${stepInstance.expectedDuration} ساعة (${hoursOverdue} ساعة تأخير)`,
                     metadata: JSON.stringify({
                         stepName: stepInstance.step?.nameAr,
                         expectedHours: stepInstance.expectedDuration,
+                        hoursOverdue,
                         dueAt: stepInstance.dueAt,
                         assignedTo: stepInstance.assignedToName
                     })
                 }
             });
 
-            // Create internal notification
-            if (stepInstance.assignedToId) {
+            const emailPayload = {
+                stepName: stepInstance.step?.nameAr || stepInstance.step?.name || 'مرحلة توظيف',
+                jobTitle: stepInstance.instance?.jobRequest?.jobTitle || 'طلب توظيف',
+                requestId: stepInstance.instance?.jobRequest?.requestId || stepInstance.instance?.jobRequestId,
+                expectedHours: stepInstance.expectedDuration || 24,
+                hoursOverdue,
+                isEscalation: false
+            };
+
+            // 4. In-App Notification & Email to Assignee
+            if (stepInstance.assignedToId && stepInstance.assignedTo) {
                 await prisma.notification.create({
                     data: {
                         userId: stepInstance.assignedToId,
@@ -123,9 +150,55 @@ export const slaService = {
                         updatedAt: new Date()
                     }
                 });
+
+                if (stepInstance.assignedTo.email) {
+                    await emailService.sendWorkflowSLABreachEmail(stepInstance.assignedTo, emailPayload);
+                }
             }
 
-            logger.warn(`[SLA Breach] Step: ${stepInstance.step?.nameAr} | Instance: ${stepInstance.instanceId}`);
+            // 5. ESCALATION: Notify HR Managers and Company Admins
+            const companyId = stepInstance.instance?.companyId || stepInstance.instance?.jobRequest?.companyId;
+            if (companyId) {
+                const escalationRecipients = await prisma.user.findMany({
+                    where: {
+                        companyId,
+                        role: { in: ['HR_MANAGER', 'SUPER_ADMIN', 'CEO_EXECUTIVE'] },
+                        status: 'ACTIVE',
+                        id: { not: stepInstance.assignedToId || '' }
+                    },
+                    select: { id: true, name: true, email: true }
+                });
+
+                for (const mgr of escalationRecipients) {
+                    // In-App Escalation Notification
+                    await prisma.notification.create({
+                        data: {
+                            userId: mgr.id,
+                            title: `🚨 تصعيد إداري: خرق SLA — ${stepInstance.step?.nameAr}`,
+                            message: `تم تصعيد مرحلة "${stepInstance.step?.nameAr}" في طلب "${stepInstance.instance?.jobRequest?.jobTitle}" لتجاوزها الـ SLA بمقدار ${hoursOverdue} ساعة.`,
+                            type: 'warning',
+                            priority: 'urgent',
+                            metadata: JSON.stringify({
+                                type: 'SLA_ESCALATION',
+                                instanceId: stepInstance.instanceId,
+                                jobRequestId: stepInstance.instance?.jobRequestId,
+                                stepOrder: stepInstance.stepOrder
+                            }),
+                            updatedAt: new Date()
+                        }
+                    });
+
+                    // Escalation Email
+                    if (mgr.email) {
+                        await emailService.sendWorkflowSLABreachEmail(mgr, {
+                            ...emailPayload,
+                            isEscalation: true
+                        });
+                    }
+                }
+            }
+
+            logger.warn(`[SLA Breach & Escalation] Step: ${stepInstance.step?.nameAr} | Instance: ${stepInstance.instanceId}`);
         } catch (error) {
             logger.error('[SLA Breach Handler] Error:', error.message);
         }
@@ -137,6 +210,28 @@ export const slaService = {
     handleSLAWarning: async (stepInstance) => {
         try {
             if (stepInstance.assignedToId) {
+                // Check if warning already sent
+                const existingWarnLog = await prisma.workflowLog.findFirst({
+                    where: {
+                        instanceId: stepInstance.instanceId,
+                        stepOrder: stepInstance.stepOrder,
+                        action: 'SLA_WARNING'
+                    }
+                });
+
+                if (existingWarnLog) return; // Prevent duplicate warnings
+
+                await prisma.workflowLog.create({
+                    data: {
+                        instanceId: stepInstance.instanceId,
+                        stepOrder: stepInstance.stepOrder,
+                        fromStatus: stepInstance.status,
+                        toStatus: stepInstance.status,
+                        action: 'SLA_WARNING',
+                        comment: `تحذير: اقتراب انتهاء SLA لمرحلة ${stepInstance.step?.nameAr}`
+                    }
+                });
+
                 await prisma.notification.create({
                     data: {
                         userId: stepInstance.assignedToId,

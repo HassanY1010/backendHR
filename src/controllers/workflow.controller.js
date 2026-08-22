@@ -351,6 +351,9 @@ export const getWorkflowInstance = async (req, res) => {
 export const advanceStep = async (req, res) => {
     try {
         const companyId = req.user?.companyId;
+        const userRole = req.user?.role;
+        const userId = req.user?.id;
+        const userName = req.user?.name;
         const { jobRequestId } = req.params;
         const { comment, notes, assignedToId } = req.body;
 
@@ -362,21 +365,48 @@ export const advanceStep = async (req, res) => {
             }
         });
 
-        if (!instance) return res.status(404).json({ success: false, message: 'مسار التوظيف غير موجود' });
-        if (instance.status !== 'ACTIVE') return res.status(400).json({ success: false, message: 'المسار غير نشط' });
+        if (!instance) {
+            return res.status(404).json({ success: false, message: 'مسار التوظيف غير موجود' });
+        }
+        if (instance.status !== 'ACTIVE') {
+            return res.status(400).json({ success: false, message: 'المسار غير نشط أو مكتمل بالفعل' });
+        }
 
         const currentStepInst = instance.stepInstances.find(s => s.stepOrder === instance.currentStep);
-        if (!currentStepInst) return res.status(400).json({ success: false, message: 'المرحلة الحالية غير موجودة' });
+        if (!currentStepInst || currentStepInst.status === 'COMPLETED') {
+            return res.status(400).json({ success: false, message: 'المرحلة الحالية منجزة بالفعل أو غير موجودة' });
+        }
+
+        const currentStep = instance.template.steps.find(s => s.stepOrder === instance.currentStep);
+        const requiredRole = currentStep?.role;
+
+        // RBAC ENFORCEMENT: Check if user role matches step required role or is Admin/SuperAdmin
+        const roleHierarchyAllowed = {
+            'HIRING_MANAGER': ['MANAGER', 'SUPER_ADMIN', 'ADMIN', 'CEO_EXECUTIVE'],
+            'HR_MANAGER': ['HR_MANAGER', 'SUPER_ADMIN', 'ADMIN'],
+            'MANAGEMENT': ['CEO_EXECUTIVE', 'SUPER_ADMIN', 'ADMIN', 'FINANCE_MANAGER'],
+            'RECRUITER': ['RECRUITER', 'HR_MANAGER', 'SUPER_ADMIN', 'ADMIN']
+        };
+
+        const allowedRoles = roleHierarchyAllowed[requiredRole] || ['SUPER_ADMIN', 'ADMIN', requiredRole];
+        const isAuthorized = allowedRoles.includes(userRole) || (currentStepInst.assignedToId && currentStepInst.assignedToId === userId);
+
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, message: `غير مصرح لك بإنجاز هذه المرحلة. المسؤول المطلوب: ${requiredRole}` });
+        }
 
         const now = new Date();
         const nextStepOrder = instance.currentStep + 1;
         const nextStep = instance.template.steps.find(s => s.stepOrder === nextStepOrder);
-        const currentStep = instance.template.steps.find(s => s.stepOrder === instance.currentStep);
 
-        // Complete current step
         const actualDuration = slaService.calculateActualDuration(currentStepInst.startedAt, now);
-        await prisma.workflowStepInstance.update({
-            where: { id: currentStepInst.id },
+
+        // Complete current step atomically only if it is currently IN_PROGRESS or PENDING
+        const updatedStep = await prisma.workflowStepInstance.updateMany({
+            where: {
+                id: currentStepInst.id,
+                status: { in: ['IN_PROGRESS', 'PENDING', 'OVERDUE'] }
+            },
             data: {
                 status: 'COMPLETED',
                 completedAt: now,
@@ -385,13 +415,17 @@ export const advanceStep = async (req, res) => {
             }
         });
 
+        if (updatedStep.count === 0) {
+            return res.status(400).json({ success: false, message: 'تم إنجاز هذه المرحلة بالفعل من قبل مستخدم آخر' });
+        }
+
         // Is this the last step?
         const isLastStep = !nextStep;
 
         if (isLastStep) {
-            // Complete the whole instance
-            await prisma.workflowInstance.update({
-                where: { id: instance.id },
+            // Complete the whole instance atomically
+            await prisma.workflowInstance.updateMany({
+                where: { id: instance.id, status: 'ACTIVE' },
                 data: { status: 'COMPLETED', completedAt: now }
             });
 
@@ -400,21 +434,32 @@ export const advanceStep = async (req, res) => {
                     instanceId: instance.id,
                     stepOrder: instance.currentStep,
                     fromStep: currentStep?.nameAr,
+                    toStep: 'مكتمل',
                     fromStatus: 'IN_PROGRESS',
                     toStatus: 'COMPLETED',
-                    performedBy: req.user?.id,
-                    performedByName: req.user?.name,
+                    performedBy: userId,
+                    performedByName: userName,
                     action: 'COMPLETED',
                     comment: comment || 'اكتمل مسار التوظيف بنجاح'
                 }
             });
 
-            return res.json({ success: true, message: 'تم إنجاز مسار التوظيف كاملاً 🎉', data: { completed: true } });
+            return res.json({
+                success: true,
+                message: 'تم إنجاز مسار التوظيف كاملاً 🎉',
+                data: { completed: true }
+            });
         }
 
         // Activate next step
         const nextStepInst = instance.stepInstances.find(s => s.stepOrder === nextStepOrder);
         const nextDueAt = new Date(now.getTime() + (nextStep.slaDurationHours * 60 * 60 * 1000));
+
+        let assignedUserName = null;
+        if (assignedToId) {
+            const assignedUser = await prisma.user.findUnique({ where: { id: assignedToId }, select: { name: true } });
+            assignedUserName = assignedUser?.name;
+        }
 
         await prisma.workflowStepInstance.update({
             where: { id: nextStepInst.id },
@@ -422,7 +467,8 @@ export const advanceStep = async (req, res) => {
                 status: 'IN_PROGRESS',
                 startedAt: now,
                 dueAt: nextDueAt,
-                assignedToId: assignedToId || null
+                assignedToId: assignedToId || null,
+                assignedToName: assignedUserName
             }
         });
 
@@ -441,14 +487,13 @@ export const advanceStep = async (req, res) => {
                 toStep: nextStep.nameAr,
                 fromStatus: 'IN_PROGRESS',
                 toStatus: 'IN_PROGRESS',
-                performedBy: req.user?.id,
-                performedByName: req.user?.name,
+                performedBy: userId,
+                performedByName: userName,
                 action: 'ADVANCED',
                 comment: comment || `انتقل من "${currentStep?.nameAr}" إلى "${nextStep.nameAr}"`
             }
         });
 
-        // Notify assigned user for next step
         if (assignedToId) {
             await prisma.notification.create({
                 data: {
@@ -466,11 +511,16 @@ export const advanceStep = async (req, res) => {
         res.json({
             success: true,
             message: `تم الانتقال إلى "${nextStep.nameAr}" بنجاح`,
-            data: { nextStep: nextStep.nameAr, nextStepOrder, dueAt: nextDueAt }
+            data: {
+                completed: false,
+                nextStep: nextStep.nameAr,
+                nextStepOrder,
+                dueAt: nextDueAt
+            }
         });
     } catch (error) {
         logger.error('[Workflow] advanceStep error:', error.message);
-        res.status(500).json({ success: false, message: 'فشل في تقديم المرحلة', error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -566,46 +616,44 @@ export const addComment = async (req, res) => {
  */
 export const getWorkflowDashboard = async (req, res) => {
     try {
-        const companyId = await resolveCompanyId(req);
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const companyWhere = companyId ? { companyId } : {};
 
-        // Auto-sync missing workflow instances for all job requests
-        const orphanJobRequests = await prisma.jobRequest.findMany({
-            where: { workflowInstance: null },
-            select: { id: true, companyId: true }
-        });
-
-        if (orphanJobRequests.length > 0) {
-            for (const jr of orphanJobRequests) {
-                await initWorkflowInstance(jr.companyId || companyId, jr.id, req.user?.id, req.user?.name);
-            }
-        }
-
-        // Fetch all workflow instances for the company
-        let instances = await prisma.workflowInstance.findMany({
+        // Fetch workflow instances for the company
+        const instances = await prisma.workflowInstance.findMany({
             where: companyWhere,
-            include: {
+            select: {
+                id: true,
+                jobRequestId: true,
+                currentStep: true,
+                status: true,
+                createdAt: true,
+                jobRequest: {
+                    select: { id: true, requestId: true, jobTitle: true, priority: true, status: true, createdAt: true }
+                },
                 stepInstances: {
-                    include: { step: true },
-                    orderBy: { stepOrder: 'asc' }
-                },
-                jobRequest: { select: { id: true, requestId: true, jobTitle: true, priority: true, status: true, createdAt: true } }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        if (instances.length === 0) {
-            instances = await prisma.workflowInstance.findMany({
-                include: {
-                    stepInstances: {
-                        include: { step: true },
-                        orderBy: { stepOrder: 'asc' }
+                    select: {
+                        id: true,
+                        stepOrder: true,
+                        status: true,
+                        startedAt: true,
+                        dueAt: true,
+                        completedAt: true,
+                        expectedDuration: true,
+                        actualDuration: true,
+                        slaBreach: true,
+                        escalated: true,
+                        assignedToId: true,
+                        assignedToName: true,
+                        assignedTo: { select: { id: true, name: true, email: true } },
+                        step: { select: { name: true, nameAr: true, role: true, slaDurationHours: true } }
                     },
-                    jobRequest: { select: { id: true, requestId: true, jobTitle: true, priority: true, status: true, createdAt: true } }
-                },
-                orderBy: { createdAt: 'desc' }
-            });
-        }
+                    orderBy: { stepOrder: 'asc' }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 100
+        });
 
         const now = new Date();
         const totalInstances = instances.length;
@@ -687,6 +735,62 @@ export const getWorkflowDashboard = async (req, res) => {
             total: s.total
         }));
 
+        const employeeStatsMap = {};
+        for (const inst of instances) {
+            for (const si of inst.stepInstances) {
+                const empId = si.assignedToId || si.assignedTo?.id;
+                const empName = si.assignedToName || si.assignedTo?.name;
+
+                if (empId && empName) {
+                    if (!employeeStatsMap[empId]) {
+                        employeeStatsMap[empId] = {
+                            id: empId,
+                            name: empName,
+                            assignedSteps: 0,
+                            completedSteps: 0,
+                            overdueSteps: 0,
+                            completedOnTime: 0,
+                            completedLate: 0,
+                            totalDurationHours: 0
+                        };
+                    }
+                    employeeStatsMap[empId].assignedSteps++;
+                    if (si.slaBreach || (si.dueAt && new Date(si.dueAt) < now && si.status === 'IN_PROGRESS')) {
+                        employeeStatsMap[empId].overdueSteps++;
+                    }
+                    if (si.status === 'COMPLETED') {
+                        employeeStatsMap[empId].completedSteps++;
+                        if (si.slaBreach) {
+                            employeeStatsMap[empId].completedLate++;
+                        } else {
+                            employeeStatsMap[empId].completedOnTime++;
+                        }
+                        if (si.actualDuration) {
+                            employeeStatsMap[empId].totalDurationHours += si.actualDuration;
+                        }
+                    }
+                }
+            }
+        }
+
+        const employeePerformance = Object.values(employeeStatsMap).map(emp => {
+            const avgHours = emp.completedSteps > 0 ? Math.round(emp.totalDurationHours / emp.completedSteps) : 0;
+            const complianceRate = emp.completedSteps > 0
+                ? Math.round((emp.completedOnTime / emp.completedSteps) * 100)
+                : 100;
+            return {
+                id: emp.id,
+                name: emp.name,
+                assignedSteps: emp.assignedSteps,
+                completedSteps: emp.completedSteps,
+                overdueSteps: emp.overdueSteps,
+                completedOnTime: emp.completedOnTime,
+                completedLate: emp.completedLate,
+                avgHours,
+                complianceRate
+            };
+        });
+
         const bottleneckCandidate = [...stepSummary].sort((a, b) => b.breaches - a.breaches || b.avgHours - a.avgHours)[0];
         const bottleneck = (bottleneckCandidate && (bottleneckCandidate.breaches > 0 || bottleneckCandidate.avgHours > bottleneckCandidate.slaHours))
             ? bottleneckCandidate
@@ -704,6 +808,7 @@ export const getWorkflowDashboard = async (req, res) => {
                     completionRate: totalInstances > 0 ? Math.round((completedInstances / totalInstances) * 100) : 0
                 },
                 stepSummary,
+                employeePerformance,
                 recentBreaches: recentBreaches.slice(0, 10),
                 bottleneck,
                 instances: instances.map(inst => ({

@@ -733,5 +733,15 @@ export const aiService = {
                 "تقييم القدرة على التكيف والعمل ضمن فريق التوظيف."
             ];
         }
+    },
+
+    generateText: async (prompt, companyId = null) => {
+        try {
+            return await callOpenAI(prompt, MODELS.DAILY, false, companyId, 'text_generation');
+        } catch (e) {
+            logger.warn('aiService.generateText fallback triggered:', e.message);
+            return null;
+        }
     }
 };
+
