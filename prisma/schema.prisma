@@ -116,6 +116,7 @@ model Candidate {
   candidateApplications CandidateApplication[]
   candidateHistories    CandidateHistory[]
   candidateNotes        CandidateNote[]
+  schedulingSessions    SchedulingSession[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
@@ -290,6 +291,10 @@ model Company {
   workflowTemplates  WorkflowTemplate[]
   hiringPlans        HiringPlan[]
   aiJobDescriptions  AIJobDescription[]
+  interviews         Interview[]
+  interviewSlots     InterviewSlot[]
+  schedulingSessions SchedulingSession[]
+  calendarIntegrations CalendarIntegration[]
 
   status             String            @default("active")
   @@map("company")
@@ -412,31 +417,124 @@ model FinancialTransaction {
 
 model Interview {
   id                String    @id @default(uuid())
+  companyId         String?
   candidateId       String
   jobId             String?
+  interviewerId     String?
   type              String
   score             Float?
   notes             String?   @db.Text
   completed         Boolean   @default(false)
   scheduledAt       DateTime?
-  createdAt         DateTime  @default(now())
-  aiAnalysis        String?   @db.Text
-  videoUrl          String?
+  startTime         DateTime?
+  endTime           DateTime?
+  timezone          String?   @default("Asia/Riyadh")
   duration          Int?
   interviewerName   String?
   status            String    @default("scheduled")
+  meetingUrl        String?
+  location          String?
+  phoneInfo         String?
+  schedulingSessionId String?
   candidateFeedback String?   @db.Text
   candidateRating   Int?
   token             String?   @unique
   expiresAt         DateTime?
   completedAt       DateTime?
+  cancelledAt       DateTime?
+  cancelledBy       String?
+  cancellationReason String?  @db.Text
+  rescheduledFromId String?
+  rescheduledAt     DateTime?
+  reminder24hSent   Boolean?  @default(false)
+  reminder1hSent    Boolean?  @default(false)
+  calendarEventId   String?
+  calendarSyncStatus String?  @default("PENDING")
   aiScore           Float?
   aiSummary         String?   @db.Text
   transcript        String?   @db.Text
-  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
+  videoUrl          String?
+  aiAnalysis        String?   @db.Text
+  createdAt         DateTime  @default(now())
 
+  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
+  company           Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Interview_companyId_fkey")
+  interviewer       User?     @relation(fields: [interviewerId], references: [id], onDelete: SetNull, map: "Interview_interviewerId_fkey")
+
+  @@index([companyId], map: "Interview_companyId_idx")
   @@index([candidateId], map: "Interview_candidateId_idx")
+  @@index([interviewerId], map: "Interview_interviewerId_idx")
+  @@index([startTime, endTime], map: "Interview_startTime_endTime_idx")
+  @@index([status], map: "Interview_status_idx")
   @@map("interview")
+}
+
+model InterviewSlot {
+  id          String   @id @default(uuid())
+  companyId   String
+  userId      String
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  timezone    String   @default("Asia/Riyadh")
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([userId, date])
+  @@index([startTime, endTime])
+  @@map("interviewslot")
+}
+
+model SchedulingSession {
+  id            String    @id @default(uuid())
+  companyId     String
+  candidateId   String
+  jobId         String?
+  interviewerId String
+  tokenHash     String    @unique
+  interviewType String    @default("VIDEO")
+  duration      Int       @default(45)
+  location      String?
+  meetingUrl    String?
+  status        String    @default("ACTIVE")
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  interviewer   User      @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([status])
+  @@map("schedulingsession")
+}
+
+model CalendarIntegration {
+  id           String   @id @default(uuid())
+  companyId    String
+  userId       String
+  provider     String   // GOOGLE or MICROSOFT
+  accessToken  String?  @db.Text
+  refreshToken String?  @db.Text
+  calendarId   String?
+  syncEnabled  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId, provider])
+  @@index([companyId])
+  @@map("calendarintegration")
 }
 
 model MarketMetric {
@@ -793,6 +891,10 @@ model User {
   workflowStepAssignments WorkflowStepInstance[] @relation("WorkflowStepAssignee")
   workflowLogs            WorkflowLog[]          @relation("WorkflowLogPerformer")
   aiJobDescriptions       AIJobDescription[]
+  conductedInterviews     Interview[]
+  interviewSlots          InterviewSlot[]
+  schedulingSessions      SchedulingSession[]
+  calendarIntegrations    CalendarIntegration[]
 
 
   @@index([companyId], map: "User_companyId_idx")

@@ -137,5 +137,116 @@ export const emailService = {
             console.error('[EmailService] Failed to send SLA Breach Email:', err);
             return { error: err.message, failed: true };
         }
+    },
+
+    /**
+     * Send self-service interview booking link to Candidate
+     */
+    sendInterviewSchedulingLinkEmail: async (candidate, job, bookingUrl, interviewerName) => {
+        try {
+            const subject = `رابط تحديد موعد المقابلة: ${job?.title || 'طلب التوظيف'}`;
+            if (!resend) {
+                console.warn(`⚠️ [EmailService] Resend unconfigured. Simulating scheduling link email to ${candidate.email}:`, bookingUrl);
+                return { id: 'simulated-sched-email-id', simulated: true, bookingUrl };
+            }
+
+            const { data, error } = await resend.emails.send({
+                from: 'AI HR Platform <onboarding@resend.dev>',
+                to: [candidate.email],
+                subject,
+                html: `
+                <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h1 style="color: #2563eb; margin-bottom: 8px;">دعوة لاختيار موعد المقابلة</h1>
+                        <p style="color: #64748b; font-size: 14px;">منصة التوظيف الذكية</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 16px; color: #1e293b;">مرحباً <strong>${candidate.fullName}</strong>،</p>
+                        <p style="font-size: 15px; color: #475569; line-height: 1.6;">
+                            يسعدنا إبلاغك بتأهلك لمرحلة المقابلة لوظيفة <strong>${job?.title}</strong> مع المقيم <strong>${interviewerName || 'فريق التوظيف'}</strong>.
+                        </p>
+                        <p style="font-size: 15px; color: #475569; line-height: 1.6;">
+                            يرجى استخدام الرابط أدناه لاختيار الموعد المناسب لك من خلال جدول المواعيد المتاحة خلال الـ 72 ساعة القادمة.
+                        </p>
+                    </div>
+
+                    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+                        <a href="${bookingUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 15px;">اختيار موعد المقابلة الآن</a>
+                        <p style="color: #94a3b8; font-size: 12px; margin-top: 12px;">ملاحظة: هذا الرابط آمن وصالح للاستخدام لمرة واحدة.</p>
+                    </div>
+
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p>&copy; 2026 AI HR Platform · Interview Scheduling System</p>
+                    </div>
+                </div>
+                `
+            });
+            if (error) throw error;
+            return data;
+        } catch (err) {
+            console.error('[EmailService] Failed to send scheduling email:', err);
+            return { error: err.message, failed: true };
+        }
+    },
+
+    /**
+     * Send Interview Confirmed / Rescheduled / Cancelled Notification
+     */
+    sendInterviewStatusUpdateEmail: async (candidate, job, interview, action = 'CONFIRMED') => {
+        try {
+            const actionTitles = {
+                CONFIRMED: 'تم تأكيد موعد المقابلة بنجاح',
+                RESCHEDULED: 'تمت إعادة جدولة موعد المقابلة',
+                CANCELLED: 'تم إلغاء موعد المقابلة'
+            };
+            const subject = `${actionTitles[action] || 'تحديث موعد المقابلة'} — ${job?.title || 'طلب التوظيف'}`;
+            if (!resend) {
+                console.warn(`⚠️ [EmailService] Resend unconfigured. Simulating status update email (${action}) to ${candidate.email}`);
+                return { id: 'simulated-status-email-id', simulated: true };
+            }
+
+            const { data, error } = await resend.emails.send({
+                from: 'AI HR Platform <onboarding@resend.dev>',
+                to: [candidate.email],
+                subject,
+                html: `
+                <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <h1 style="color: #2563eb; margin-bottom: 8px;">${actionTitles[action]}</h1>
+                        <p style="color: #64748b; font-size: 14px;">منصة التوظيف الذكية</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <p style="font-size: 16px; color: #1e293b;">مرحباً <strong>${candidate.fullName}</strong>،</p>
+                        <p style="font-size: 15px; color: #475569; line-height: 1.6;">
+                            نود إعلامك بحالة المقابلة الخاصة بك لوظيفة <strong>${job?.title}</strong>:
+                        </p>
+                    </div>
+
+                    <div style="background-color: #f8fafc; padding: 18px; border-radius: 8px; margin-bottom: 25px;">
+                        <table style="width: 100%; font-size: 14px; color: #334155;">
+                            <tr><td style="padding: 6px 0; font-weight: bold; width: 35%;">التاريخ والوقت:</td><td>${interview.startTime ? new Date(interview.startTime).toLocaleString('ar-SA') : '—'}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: bold;">المنطقة الزمنية:</td><td>${interview.timezone || 'Asia/Riyadh'}</td></tr>
+                            <tr><td style="padding: 6px 0; font-weight: bold;">نوع المقابلة:</td><td>${interview.type || 'VIDEO'}</td></tr>
+                            ${interview.meetingUrl ? `<tr><td style="padding: 6px 0; font-weight: bold;">رابط الاجتماع:</td><td><a href="${interview.meetingUrl}">${interview.meetingUrl}</a></td></tr>` : ''}
+                            ${interview.location ? `<tr><td style="padding: 6px 0; font-weight: bold;">الموقع:</td><td>${interview.location}</td></tr>` : ''}
+                            ${interview.cancellationReason ? `<tr><td style="padding: 6px 0; font-weight: bold;">سبب الإلغاء:</td><td style="color: #dc2626;">${interview.cancellationReason}</td></tr>` : ''}
+                        </table>
+                    </div>
+
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; text-align: center; font-size: 12px; color: #94a3b8;">
+                        <p>&copy; 2026 AI HR Platform · Interview Scheduling System</p>
+                    </div>
+                </div>
+                `
+            });
+            if (error) throw error;
+            return data;
+        } catch (err) {
+            console.error('[EmailService] Failed to send status update email:', err);
+            return { error: err.message, failed: true };
+        }
     }
 };
+
