@@ -271,7 +271,14 @@ export const uploadAndParseCV = async (req, res, next) => {
         } else {
             const firstJob = await prisma.recruitmentJob.findFirst({ where: { companyId, deletedAt: null } });
             targetJobId = firstJob ? firstJob.id : (await prisma.recruitmentJob.create({
-                data: { companyId, title: 'وظيفة عامة', department: 'الإدارة العامة', location: 'الرياض', status: 'OPEN' }
+                data: {
+                    companyId,
+                    title: 'وظيفة عامة',
+                    department: 'الإدارة العامة',
+                    location: 'الرياض',
+                    description: 'وظيفة عامة لاستقبال السير الذاتية والترشيحات المباشرة',
+                    status: 'OPEN'
+                }
             })).id;
         }
 
