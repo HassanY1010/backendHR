@@ -162,16 +162,22 @@ export const createJobRequest = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let parsedRequiredDate = requiredDate ? new Date(requiredDate) : null;
-    let parsedHiringDeadline = hiringDeadline ? new Date(hiringDeadline) : null;
+    // Auto-fill valid dates if omitted by one-click AI generators
+    let finalRequiredDate = requiredDate;
+    let finalHiringDeadline = hiringDeadline;
+    if (type === 'IMMEDIATE') {
+      if (!finalRequiredDate) {
+        finalRequiredDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      }
+      if (!finalHiringDeadline) {
+        finalHiringDeadline = new Date(today.getTime() + 21 * 24 * 60 * 60 * 1000).toISOString();
+      }
+    }
+
+    let parsedRequiredDate = finalRequiredDate ? new Date(finalRequiredDate) : null;
+    let parsedHiringDeadline = finalHiringDeadline ? new Date(finalHiringDeadline) : null;
 
     if (type === 'IMMEDIATE') {
-      if (!requiredDate) {
-        return res.status(400).json({ error: 'تاريخ الاحتياج (Required Date) إلزامي للتوظيف الفوري (Immediate Hiring)' });
-      }
-      if (!hiringDeadline) {
-        return res.status(400).json({ error: 'الموعد النهائي للتوظيف (Hiring Deadline) إلزامي للتوظيف الفوري (Immediate Hiring)' });
-      }
       if (isNaN(parsedRequiredDate.getTime()) || parsedRequiredDate < today) {
         return res.status(400).json({ error: 'تاريخ الاحتياج المطلوب لا يمكن أن يكون في الماضي' });
       }
