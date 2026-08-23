@@ -1082,13 +1082,166 @@ export const getJDTemplates = async (req, res) => {
 };
 
 export const generateSummaryOnly = async (req, res) => {
-    return res.json({ status: 'success', summary: 'ملخص وظيفي احترافي جاهز' });
+    try {
+        const companyId = req.user?.companyId;
+        const {
+            jobTitle,
+            department,
+            location,
+            employmentType,
+            requiredExperience,
+            skills,
+            educationLevel,
+            hiringReason
+        } = req.body;
+
+        if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
+            return res.status(400).json({ error: 'المسمى الوظيفي مطلوب لتوليد ملخص الوظيفة' });
+        }
+
+        const cleanTitle = normalizeInput(String(jobTitle));
+        const cleanDept = department ? normalizeInput(String(department)) : 'تكنولوجيا المعلومات';
+        const cleanLoc = location ? normalizeInput(String(location)) : 'الرياض، المملكة العربية السعودية';
+        const cleanExp = requiredExperience ? normalizeInput(String(requiredExperience)) : '3-5 سنوات';
+        const cleanEdu = educationLevel ? normalizeInput(String(educationLevel)) : 'درجة البكالوريوس في التخصص ذي الصلة';
+        const skillsList = Array.isArray(skills) ? skills.map(s => normalizeInput(String(s))).filter(Boolean) : [];
+
+        // Prompt Injection Check
+        const combined = `${cleanTitle} ${cleanDept} ${skillsList.join(' ')}`;
+        if (detectPromptInjection(combined)) {
+            return res.status(400).json({ error: 'تم اكتشاف مدخلات غير آمنة (Security Violation)' });
+        }
+
+        const prompt = `أنت خبير واستشاري موارد بشرية واستقطاب كفاءات محترف في السوق السعودي والخليجي.
+المطلوب: قم بصياغة "ملخص وظيفي احترافي وجذاب ومباشر" (Job Summary) من فقرتين متماسكتين ومكتوبتين بلغة عربية فصحى رفيعة المستوى للدور التالي:
+- المسمى الوظيفي: ${cleanTitle}
+- الإدارة / القسم: ${cleanDept}
+- موقع العمل: ${cleanLoc}
+- مستوى الخبرة المطلوبة: ${cleanExp}
+- المؤهل العلمي: ${cleanEdu}
+- المهارات التقنية والأساسية: ${skillsList.length > 0 ? skillsList.join('، ') : 'المهارات التخصصية والقيادية'}
+- طبيعة الدوام: ${employmentType || 'دوام كامل'}
+${hiringReason ? `- سياق التوظيف: ${normalizeInput(String(hiringReason))}` : ''}
+
+الضوابط الصارمة:
+1. اذكر القيمة المضافة لهذا الدور داخل قسم ${cleanDept} وكيف يسهم في تحقيق أهداف المنظمة.
+2. اذكر باختصار المسؤولية المحورية ونوع الكفاءة المطلوبة للنجاح في هذا الدور.
+3. لا ترجع أي JSON أو مقدمات أو خاتمة أو عناوين فرعية. أرجع نص الملخص الوظيفي فقط مباشرة.`;
+
+        let summaryText = '';
+        try {
+            const aiResponse = await aiService.generateJobDescription(prompt, companyId);
+            if (typeof aiResponse === 'string') {
+                summaryText = aiResponse.trim();
+            } else if (aiResponse?.summary) {
+                summaryText = aiResponse.summary.trim();
+            } else if (aiResponse?.job_summary) {
+                summaryText = aiResponse.job_summary.trim();
+            }
+        } catch (aiErr) {
+            logger.warn('[AI-JD] OpenAI generation fallback triggered for summary:', aiErr.message);
+        }
+
+        // High Quality Dynamic Fallback if AI fails or returns empty
+        if (!summaryText || summaryText.length < 20) {
+            const skillsSnippet = skillsList.length > 0 ? ` مع إتقان متقدم لـ (${skillsList.slice(0, 4).join('، ')})` : '';
+            summaryText = `نبحث عن كفاءة مهنية متميزة لشغل وظيفة "${cleanTitle}" للانضمام إلى فريق "${cleanDept}". سيتولى شاغل هذا الدور قيادة وتنفيذ المبادرات المحورية، والمساهمة الفعالة في رفع جودة المخرجات التشغيلية وتطوير منظومة العمل وفق أعلى المعايير المهنية.\n\nيتطلب هذا الدور خبرة عملية مثبتة (${cleanExp}) ومؤهل علمي (${cleanEdu})${skillsSnippet}، بالإضافة إلى مهارات تواصل قيادية وقدرة عالية على التحليل وحل المشكلات المعقدة والعمل بكفاءة في بيئة عمل ديناميكية وسريعة النمو.`;
+        }
+
+        return res.json({ status: 'success', summary: summaryText });
+    } catch (err) {
+        logger.error('[AI-JD] Error in generateSummaryOnly:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد ملخص الوظيفة' });
+    }
 };
 
 export const generateRecruitmentDescription = async (req, res) => {
-    return res.json({ status: 'success', description: 'وصف وظيفي لقسم التوظيف' });
+    try {
+        const companyId = req.user?.companyId;
+        const { title, department, skills, experience, location, type } = req.body;
+
+        if (!title || typeof title !== 'string' || !title.trim()) {
+            return res.status(400).json({ error: 'المسمى الوظيفي مطلوب' });
+        }
+
+        const cleanTitle = normalizeInput(String(title));
+        const cleanDept = department ? normalizeInput(String(department)) : 'التطوير والتشغيل';
+        const cleanExp = experience ? normalizeInput(String(experience)) : '3+ سنوات';
+        const skillsList = Array.isArray(skills) ? skills.map(s => normalizeInput(String(s))).filter(Boolean) : [];
+
+        const prompt = `أنت مدير توظيف تنفيذي خبير. قم بكتابة وصف وظيفي احترافي شامل وجذاب (150 إلى 250 كلمة) لوظيفة "${cleanTitle}" في قسم "${cleanDept}".
+المهارات المطلوبة: ${skillsList.join('، ')}
+الخبرة: ${cleanExp}
+أرجع نص الوصف الوظيفي باللغة العربية الفصحى مباشرة بدون JSON وبدون عناوين جانبية.`;
+
+        let description = '';
+        try {
+            const aiResponse = await aiService.generateJobDescription(prompt, companyId);
+            description = typeof aiResponse === 'string' ? aiResponse.trim() : (aiResponse?.summary || aiResponse?.description || '');
+        } catch (e) {
+            logger.warn('[AI-JD] Description fallback triggered:', e.message);
+        }
+
+        if (!description || description.length < 20) {
+            description = `تعلن الشركة عن رغبتها في استقطاب كفاءة متميزة لشغل دور "${cleanTitle}" ضمن فريق "${cleanDept}". سيكون المرشح مسؤولاً عن المساهمة الفاعلة في تحقيق مستهدفات الإدارة، وتطبيق أفضل الممارسات المعتمدة، وضمان سير العمل بأعلى درجات الكفاءة والاحترافية. يتطلب الدور شغفاً بالتميز وخبرة عملية (${cleanExp}) في مجالات التخصص، مع القدرة على التعاون البناء وتقديم حلول مبتكرة تسهم في دفع عجلة التطوير المستمر.`;
+        }
+
+        return res.json({ status: 'success', description });
+    } catch (err) {
+        logger.error('[AI-JD] Error in generateRecruitmentDescription:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد الوصف الوظيفي' });
+    }
 };
 
 export const generateRecruitmentRequirements = async (req, res) => {
-    return res.json({ status: 'success', requirements: 'متطلب 1\nمتطلب 2', requirementsList: ['متطلب 1', 'متطلب 2'] });
+    try {
+        const companyId = req.user?.companyId;
+        const { title, department, skills, experience, educationLevel } = req.body;
+
+        if (!title || typeof title !== 'string' || !title.trim()) {
+            return res.status(400).json({ error: 'المسمى الوظيفي مطلوب' });
+        }
+
+        const cleanTitle = normalizeInput(String(title));
+        const cleanDept = department ? normalizeInput(String(department)) : 'الموارد البشرية والعمليات';
+        const cleanExp = experience ? normalizeInput(String(experience)) : '3-5 سنوات';
+        const cleanEdu = educationLevel ? normalizeInput(String(educationLevel)) : 'درجة البكالوريوس في التخصص ذي الصلة';
+        const skillsList = Array.isArray(skills) ? skills.map(s => normalizeInput(String(s))).filter(Boolean) : [];
+
+        const prompt = `أنت خبير استقطاب كفاءات. قم بصياغة قائمة نقطية محددة واحترافية من 5 إلى 7 شروط ومتطلبات أساسية لشغل وظيفة "${cleanTitle}" في قسم "${cleanDept}".
+الخبرة: ${cleanExp}
+المؤهل: ${cleanEdu}
+المهارات: ${skillsList.join('، ')}
+
+أرجع كل متطلب في سطر مستقل يبدأ بشرطة (-) بدون أي مقدمات أو شروحات إضافية.`;
+
+        let rawReqs = '';
+        try {
+            const aiResponse = await aiService.generateJobDescription(prompt, companyId);
+            rawReqs = typeof aiResponse === 'string' ? aiResponse.trim() : (aiResponse?.requirements?.join('\n') || '');
+        } catch (e) {
+            logger.warn('[AI-JD] Requirements fallback triggered:', e.message);
+        }
+
+        let requirementsList = [];
+        if (rawReqs && rawReqs.length > 20) {
+            requirementsList = rawReqs.split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+        }
+
+        if (requirementsList.length === 0) {
+            requirementsList = [
+                `مؤهل علمي: ${cleanEdu}.`,
+                `خبرة عملية مثبتة لا تقل عن (${cleanExp}) في دور ${cleanTitle} أو مجال ذي صلة.`,
+                skillsList.length > 0 ? `إتقان متقدم للمهارات التقنية: ${skillsList.join('، ')}.` : 'إتقان الأدوات والبرمجيات التخصصية المرتبطة بمجال العمل.',
+                'مهارات تواصل شفهية وكتابية استثنائية مع القدرة على العمل ضمن فريق عمل متعدد المهام.',
+                'قدرة مثبتة على إدارة الأولويات والالتزام بالمواعيد النهائية وحل المشكلات بكفاءة.'
+            ];
+        }
+
+        const requirements = requirementsList.map(r => `• ${r}`).join('\n');
+        return res.json({ status: 'success', requirements, requirementsList });
+    } catch (err) {
+        logger.error('[AI-JD] Error in generateRecruitmentRequirements:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء توليد متطلبات الوظيفة' });
+    }
 };
