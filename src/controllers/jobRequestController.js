@@ -119,16 +119,13 @@ export const createJobRequest = async (req, res) => {
     // -------------------------------------------------------------
     // Department Resolution
     // -------------------------------------------------------------
-    const targetDepName = req.body.departmentName || req.body.department || null;
+    const targetDepName = req.body.departmentName || req.body.department || 'تكنولوجيا المعلومات والبرمجيات';
     let validDepartmentId = null;
 
     if (departmentId) {
       const existingDepById = await prisma.department.findFirst({
         where: { companyId, id: departmentId }
       });
-      if (!existingDepById && !targetDepName) {
-        return res.status(400).json({ error: 'القسم المحدد غير موجود في هذه الشركة' });
-      }
       if (existingDepById) validDepartmentId = existingDepById.id;
     }
 
@@ -147,7 +144,9 @@ export const createJobRequest = async (req, res) => {
     }
 
     if (!validDepartmentId) {
-      return res.status(400).json({ error: 'القسم مطلوب. يرجى تحديد قسم صالح للطلب.' });
+      const fallbackDep = await prisma.department.findFirst({ where: { companyId } }) 
+        || await prisma.department.create({ data: { name: 'الإدارة العامة', companyId } });
+      validDepartmentId = fallbackDep.id;
     }
 
     // -------------------------------------------------------------
