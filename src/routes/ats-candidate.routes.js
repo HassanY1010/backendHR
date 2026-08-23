@@ -83,7 +83,7 @@ router.post('/:id/match', authorize(...ATS_ROLES), matchCandidateWithJob);
 router.put('/:id/status', authorize(...ATS_ROLES), updateCandidateStatus);
 
 // 9. DELETE /api/candidates/:id - Delete candidate
-router.delete('/:id', authorize('SUPER_ADMIN', 'ADMIN', 'HR_MANAGER'), deleteCandidate);
+router.delete('/:id', authorize(...ATS_ROLES), deleteCandidate);
 
 // 10. Notes Endpoints
 router.post('/:id/notes', authorize(...ATS_ROLES), addCandidateNote);

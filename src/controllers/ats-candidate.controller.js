@@ -6,6 +6,7 @@ import path from 'path';
 import { aiService } from '../ai/ai-service.js';
 import { extractTextFromPDF } from '../utils/pdfExtractor.js';
 import { isAllowedCV, getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
+import { auditService } from '../services/audit.service.js';
 
 const resolveCompanyId = (req) => {
     const companyId = req.user?.companyId || req.user?.company?.id;
@@ -725,6 +726,18 @@ export const deleteCandidate = async (req, res, next) => {
                 }
             });
         }, { timeout: 15000, maxWait: 10000 });
+
+        // Record immutable system audit log
+        await auditService.log({
+            userId: req.user?.id,
+            companyId,
+            action: 'DELETE_CANDIDATE',
+            actionType: 'ATS_RECRUITMENT',
+            severity: 'MEDIUM',
+            target: id,
+            status: 'SUCCESS',
+            details: { candidateName: candidate.fullName, email: candidate.email, jobId: candidate.jobId }
+        });
 
         res.status(200).json({ status: 'success', message: 'تم حذف المرشح بنجاح ✨' });
     } catch (error) {
