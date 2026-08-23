@@ -2,14 +2,22 @@ import prisma from '../config/db.js';
 import { JobRequestStateMachine, JOB_REQUEST_STATUS } from '../services/jobRequestStateMachine.js';
 import { initWorkflowInstance } from './workflow.controller.js';
 
-// Helper to generate request ID: JR-YYYYMMDD-XXXX
+// Helper to generate globally unique request ID: JR-YYYYMMDD-XXXX-YY
 const generateRequestId = async (companyId) => {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const count = await prisma.jobRequest.count({
-    where: { companyId }
-  });
-  const seq = String(count + 1).padStart(4, '0');
-  return `JR-${dateStr}-${seq}`;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const randomHex = Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase();
+    const timeSuffix = Date.now().toString().slice(-3);
+    const candidateId = `JR-${dateStr}-${timeSuffix}${randomHex.slice(-2)}`;
+
+    const existing = await prisma.jobRequest.findUnique({
+      where: { requestId: candidateId }
+    });
+    if (!existing) {
+      return candidateId;
+    }
+  }
+  return `JR-${dateStr}-${Date.now()}`;
 };
 
 // Helper: Notify users
