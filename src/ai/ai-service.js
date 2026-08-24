@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import { memoryCache } from '../utils/cache.js';
 import logger from '../utils/logger.js';
 
@@ -133,10 +134,13 @@ const callOpenAI = async (prompt, model = MODELS.DAILY, jsonMode = true, company
         throw new Error('Security violation: Potential prompt injection detected.');
     }
 
-    const cacheKey = `ai_v2_${Buffer.from(promptString + model).toString('base64').substring(0, 80)}`;
+    const promptHash = crypto.createHash('sha256').update(promptString + model).digest('hex');
+    const cacheKey = `ai_v3_${promptHash}`;
     const cached = await memoryCache.get(cacheKey);
 
-    if (cached) return jsonMode ? JSON.parse(cached) : cached;
+    if (cached) {
+        return jsonMode ? (typeof cached === 'string' ? JSON.parse(cached) : cached) : cached;
+    }
 
     try {
         const messages = isMessagesArray ? prompt : [
@@ -372,45 +376,153 @@ export const aiService = {
 
     extractCVData: async (text, companyId) => {
         try {
-            const prompt = `Extract entities from Arabic CV to JSON { name, email, phone, location, skills: [], experience_years: 0 }. Text: ${text.substring(0, 4000)}`;
+            const prompt = `أنت خبير استخراج بيانات السير الذاتية (CV Parser).
+قم باستخراج البيانات الواقعية فقط من نص السيرة الذاتية التالي بدون أي افتراض أو اختلاق.
+إذا لم تكن المعلومة مذكورة صراحة في النص، ضع null أو مصفوفة فارغة [].
+
+يجب أن يكون الرد بصيغة JSON فقط بالهيكل التالي:
+{
+  "name": "الاسم الكامل أو null",
+  "email": "البريد الإلكتروني أو null",
+  "phone": "رقم الهاتف أو null",
+  "location": "المدينة/الدولة أو null",
+  "nationality": "الجنسية إذا ذكرت صراحة أو null",
+  "currentTitle": "المسمى الوظيفي الأخير/الحالي أو null",
+  "experienceYears": 0,
+  "skills": ["قائمة المهارات المذكورة صراحة في السيرة الذاتية"],
+  "previousCompanies": ["أسماء الشركات أو جهات العمل المذكورة"],
+  "education": "أعلى مؤهل علمي مذكور مع التخصص والجامعة أو null",
+  "summary": "ملخص مهني مستند فقط على الخبرات المذكورة"
+}
+
+نص السيرة الذاتية:
+${text.substring(0, 6000)}`;
+
             return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'extract_cv');
         } catch (e) {
-            return { name: "غير متوفر", email: "", phone: "", location: "", skills: [], experience_years: 0 };
+            logger.error('Extract CV Error', { error: e.message });
+            return {
+                name: null,
+                email: null,
+                phone: null,
+                location: null,
+                nationality: null,
+                currentTitle: null,
+                experienceYears: 0,
+                skills: [],
+                previousCompanies: [],
+                education: null,
+                summary: null
+            };
         }
     },
 
     screenCV: async (cvText, jobDesc, companyId) => {
         try {
-            const prompt = `أنت خبير توظيف تقني. قم بتحليل السيرة الذاتية التالية مقابل الوصف الوظيفي المرفق باللغة العربية.
-            يجب أن يكون الرد بصيغة JSON فقط بالهيكل التالي:
-            {
-                "score": 0-100 (رقم يمثل نسبة المطابقة),
-                "summary": "ملخص مهني قصير للمرشح وتوافقه مع الوظيفة",
-                "final_reason": "سبب القبول أو الرفض أو المراجعة",
-                "skills": ["قائمة المهارات المستخرجة من السيرة الذاتية"],
-                "missing_skills": ["المهارات المطلوبة في الوظيفة وغير موجودة في السيرة الذاتية"],
-                "strengths": ["نقاط القوة"],
-                "experience": { "years": 0, "summary": "ملخص الخبرة" },
-                "education": { "degree": "الدرجة العلمية", "field": "التخصص" },
-                "recommendation": "hire/reject/interview"
-            }
+            const prompt = `أنت خبير توظيف محايد ودقيق. قم بتحليل السيرة الذاتية ومقارنتها بدقة وموضوعية مع متطلبات ومسؤوليات الوظيفة المحددة.
+قواعد صارمة:
+1. لا تفترض أو تخترع أي مهارة أو خبرة غير موجودة في نص السيرة الذاتية.
+2. احسب الـ Match Score (0 - 100) بناءً على مدى تحقيق المرشح للمتطلبات الأساسية للوظيفة (المهارات المطلوبة، سنوات الخبرة، المؤهل).
+3. استخرج الأدلة المباشرة (Evidence) لنقاط القوة ونقاط الضعف.
 
-            الوصف الوظيفي: ${jobDesc}
-            السيرة الذاتية: ${cvText.substring(0, 6000)}`;
+يجب أن يكون الرد بصيغة JSON فقط بالهيكل التالي:
+{
+  "score": 0,
+  "scoreBreakdown": {
+    "skillsMatch": 0,
+    "experienceMatch": 0,
+    "educationMatch": 0
+  },
+  "summary": "ملخص تحليلي موضوعي يوضح مدى ملاءمة المرشح لهذه الوظيفة المحددة",
+  "strengths": ["نقاط القوة المدعومة بأدلة من السيرة الذاتية ومطابقة للوظيفة"],
+  "weaknesses": ["نقاط القصور أو النقص مقارنة بمتطلبات الوظيفة"],
+  "missingSkills": ["المهارات المطلوبة في الوظيفة ولم يذكرها المرشح في سيرته"],
+  "evidence": ["أدلة صريحة مستخرجة من السيرة الذاتية ذات صلة بالمتطلبات"],
+  "recommendation": "HIRE / INTERVIEW / REJECT / SHORTLIST"
+}
+
+الوصف الوظيفي والمتطلبات:
+${jobDesc}
+
+نص السيرة الذاتية وبيانات المرشح:
+${cvText.substring(0, 7000)}`;
 
             return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'cv_screening');
         } catch (e) {
             logger.error('Screen CV Error', { error: e.message });
             return {
-                score: 0,
-                summary: "فشل تحليل الذكاء الاصطناعي",
-                final_reason: "خطأ تقني في المعالجة",
-                skills: [],
-                missing_skills: [],
+                score: null,
+                scoreBreakdown: { skillsMatch: null, experienceMatch: null, educationMatch: null },
+                summary: "تعذر إكمال التحليل الآلي للذكاء الاصطناعي في الوقت الحالي.",
                 strengths: [],
-                experience: { years: 0, summary: "" },
-                recommendation: "interview"
+                weaknesses: [],
+                missingSkills: [],
+                evidence: [],
+                recommendation: "REVIEW"
             };
+        }
+    },
+
+    matchCandidateWithJobAI: async (candidateData, jobData, companyId) => {
+        try {
+            const candidateInfo = `
+الاسم: ${candidateData.fullName || 'غير محدد'}
+المسمى الحالي: ${candidateData.currentTitle || 'غير محدد'}
+سنوات الخبرة: ${candidateData.yearsOfExperience || candidateData.experience || 0} سنوات
+المهارات: ${Array.isArray(candidateData.skills) ? candidateData.skills.join(', ') : (candidateData.skills || 'غير متوفر')}
+التعليم: ${candidateData.education || 'غير متوفر'}
+الشركات السابقة: ${Array.isArray(candidateData.previousCompanies) ? candidateData.previousCompanies.join(', ') : (candidateData.previousCompanies || 'غير متوفر')}
+نص السيرة الذاتية (إن وجد): ${candidateData.cvText || 'غير متوفر'}
+`;
+
+            const jobInfo = `
+عنوان الوظيفة: ${jobData.title || 'غير محدد'}
+القسم: ${jobData.department || 'غير محدد'}
+الوصف: ${jobData.description || 'غير متوفر'}
+المتطلبات: ${jobData.requirements || 'غير متوفر'}
+المسؤوليات: ${jobData.responsibilities || 'غير متوفر'}
+نوع العمل والخبرة: ${jobData.employmentType || ''} - خبرة مطلوبة: ${jobData.yearsOfExperience || 'غير محدد'}
+المهارات المطلوبة: ${jobData.requiredSkills || 'غير محدد'}
+`;
+
+            const prompt = `أنت محرك تقييم ومطابقة التوظيف الحسابي الدقيق (AI Recruitment Matcher).
+مهمتك: مطابقة هذا المرشح المحدد حصراً مع هذه الوظيفة المحددة بدقة متناهية وبدون أي انحياز أو اختلاق لمعلومات غير مذكورة.
+
+قواعد التقييم الصارمة:
+1. قارن المهارات التقنية والمهنية للمرشح مع المتطلبات المذكورة في الوظيفة:
+   - إذا كانت مهارات المرشح مختلفة تماماً عن مجال الوظيفة (مثلاً: مرشح واجهات أمامية يتقدم لوظيفة مهندس تعلم آلي وذكاء اصطناعي أو إدارة مالية دون امتلاك مهارات بايثون أو تعلم آلي)، فيجب أن تكون درجة المهارات (skills) والدرجة الإجمالية (matchScore) منخفضة جداً (أقل من 40%).
+   - إذا كانت المهارات مطابقة بنسبة عالية للمتطلبات، تكون الدرجة مرتفعة (70% فما فوق).
+2. احسب score من 0 إلى 100 يعكس بدقة متناهية نسبة التطابق الحقيقي مع هذه الوظيفة المحددة.
+3. قدّم scoreBreakdown دقيق (skills: 0-100, experience: 0-100, education: 0-100).
+4. اذكر نقاط القوة ونقاط الضعف والمهارات الناقصة مع ذكر الدليل المباشر من بيانات المرشح.
+
+الرد المطلوب حصراً بصيغة JSON:
+{
+  "matchScore": 0,
+  "scoreBreakdown": {
+    "skills": 0,
+    "experience": 0,
+    "education": 0
+  },
+  "summary": "تقرير تحليلي موضوعي يوضح بدقة مدى تطابق المرشح مع متطلبات هذه الوظيفة تحديداً",
+  "strengths": ["نقاط القوة المدعومة بالأدلة"],
+  "weaknesses": ["نقاط الضعف والمتطلبات غير المتوفرة"],
+  "missingSkills": ["مهارات تطلبها الوظيفة ولا يمتلكها المرشح"],
+  "evidence": ["أدلة صريحة مستخرجة من ملف المرشح"],
+  "recommendation": "SHORTLIST / INTERVIEW / REJECT / HOLD",
+  "confidence": 0.95
+}
+
+بيانات المرشح:
+${candidateInfo}
+
+بيانات ومتطلبات الوظيفة:
+${jobInfo}`;
+
+            return await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'job_candidate_matching');
+        } catch (e) {
+            logger.error('Match Candidate Job AI Error', { error: e.message });
+            return null;
         }
     },
 

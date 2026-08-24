@@ -242,46 +242,77 @@ export const uploadAndParseCV = async (req, res, next) => {
             }
         }
 
-        const jobId = req.body.jobId;
-
-        // Run AI Parsing safely (never loses candidate on AI failure)
-        let parsedData = {};
-        if (extractedText && extractedText.trim().length > 10) {
-            try {
-                parsedData = await aiService.screenCV(extractedText, 'متطلبات الوظيفة العامة والمهارات المهنية', companyId);
-            } catch (aiErr) {
-                logger.error('[ATS] AI screening fallback:', aiErr.message);
-            }
-        }
-
-        const fullName = parsedData.name || req.body.fullName || req.body.name || 'مرشح جديد';
-        const email = parsedData.email || req.body.email || `candidate_${Date.now()}@example.com`;
-        const phone = parsedData.phone || req.body.phone || null;
-        const location = parsedData.location || req.body.location || 'الرياض';
-        const skillsList = parsedData.skills || (req.body.skills ? (typeof req.body.skills === 'string' ? req.body.skills.split(',') : req.body.skills) : []);
-
-        // Find or create Job for the current company
+        // Find target Job for the current company
         let targetJobId = jobId;
+        let targetJob = null;
         if (targetJobId) {
-            const existingJob = await prisma.recruitmentJob.findFirst({
+            targetJob = await prisma.recruitmentJob.findFirst({
                 where: { id: targetJobId, companyId, deletedAt: null }
             });
-            if (!existingJob) {
+            if (!targetJob) {
                 return res.status(404).json({ status: 'error', message: 'الوظيفة المحددة غير موجودة لدى شركتكم' });
             }
         } else {
-            const firstJob = await prisma.recruitmentJob.findFirst({ where: { companyId, deletedAt: null } });
-            targetJobId = firstJob ? firstJob.id : (await prisma.recruitmentJob.create({
-                data: {
-                    companyId,
-                    title: 'وظيفة عامة',
-                    department: 'الإدارة العامة',
-                    location: 'الرياض',
-                    description: 'وظيفة عامة لاستقبال السير الذاتية والترشيحات المباشرة',
-                    status: 'OPEN'
-                }
-            })).id;
+            targetJob = await prisma.recruitmentJob.findFirst({ where: { companyId, deletedAt: null } });
+            if (!targetJob) {
+                targetJob = await prisma.recruitmentJob.create({
+                    data: {
+                        companyId,
+                        title: 'وظيفة عامة',
+                        department: 'الإدارة العامة',
+                        location: 'الرياض',
+                        description: 'وظيفة عامة لاستقبال السير الذاتية والترشيحات المباشرة',
+                        status: 'OPEN'
+                    }
+                });
+            }
+            targetJobId = targetJob.id;
         }
+
+        // Run Structured AI CV Parsing
+        let extractedData = {};
+        let screeningResult = null;
+
+        if (extractedText && extractedText.trim().length > 10) {
+            try {
+                // 1. Pure extraction of facts
+                extractedData = await aiService.extractCVData(extractedText, companyId);
+
+                // 2. Job-specific match if job description exists
+                const jobDesc = `${targetJob.title} - ${targetJob.description || ''} - متطلبات: ${targetJob.requirements || ''}`;
+                screeningResult = await aiService.screenCV(extractedText, jobDesc, companyId);
+            } catch (aiErr) {
+                logger.error('[ATS] AI parsing error:', aiErr.message);
+            }
+        }
+
+        const fullName = extractedData.name || req.body.fullName || req.body.name || (req.file ? req.file.originalname.replace(/\.[^/.]+$/, '') : 'مرشح بدون اسم');
+        const email = extractedData.email || req.body.email || `applicant_${Date.now()}@cv-parsed.local`;
+        const phone = extractedData.phone || req.body.phone || null;
+        const location = extractedData.location || req.body.location || null;
+        const nationality = extractedData.nationality || req.body.nationality || null;
+        const currentTitle = extractedData.currentTitle || req.body.currentTitle || null;
+        const yearsOfExperience = typeof extractedData.experienceYears === 'number' ? extractedData.experienceYears : (req.body.yearsOfExperience ? Number(req.body.yearsOfExperience) : 0);
+        const skillsList = Array.isArray(extractedData.skills) && extractedData.skills.length > 0
+            ? extractedData.skills
+            : (req.body.skills ? (typeof req.body.skills === 'string' ? req.body.skills.split(',') : req.body.skills) : []);
+        const previousCompanies = Array.isArray(extractedData.previousCompanies) ? extractedData.previousCompanies : [];
+        const education = extractedData.education || req.body.education || null;
+
+        const aiScore = screeningResult && typeof screeningResult.score === 'number' ? Math.round(screeningResult.score) : null;
+        const aiSummary = screeningResult?.summary || (extractedData.summary ? extractedData.summary : 'تم استخراج بيانات السيرة الذاتية وحفظها في النظام.');
+        const aiAnalysisDetails = screeningResult ? JSON.stringify({
+            jobId: targetJobId,
+            jobTitle: targetJob.title,
+            matchScore: aiScore,
+            scoreBreakdown: screeningResult.scoreBreakdown || {},
+            strengths: screeningResult.strengths || [],
+            weaknesses: screeningResult.weaknesses || [],
+            missingSkills: screeningResult.missingSkills || [],
+            evidence: screeningResult.evidence || [],
+            recommendation: screeningResult.recommendation || 'REVIEW',
+            evaluatedAt: new Date().toISOString()
+        }) : null;
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
@@ -292,16 +323,18 @@ export const uploadAndParseCV = async (req, res, next) => {
                 email: email.substring(0, 200),
                 phone: phone ? String(phone).substring(0, 50) : null,
                 location: location ? String(location).substring(0, 100) : null,
+                nationality: nationality ? String(nationality).substring(0, 100) : null,
                 resumeUrl,
                 resumePath,
                 skills: JSON.stringify(skillsList),
-                experience: parsedData.experience?.years || parsedData.experienceYears || 0,
-                yearsOfExperience: parsedData.experience?.years || parsedData.experienceYears || 0,
-                education: typeof parsedData.education === 'object' ? JSON.stringify(parsedData.education) : (parsedData.education || null),
-                currentTitle: parsedData.currentTitle || null,
-                previousCompanies: JSON.stringify(parsedData.previousCompanies || []),
-                aiScore: parsedData.score || 80,
-                aiSummary: parsedData.summary || 'تم استخراج وتحليل السيرة الذاتية بواسطة الذكاء الاصطناعي بنجاح.',
+                experience: yearsOfExperience,
+                yearsOfExperience: yearsOfExperience,
+                education,
+                currentTitle,
+                previousCompanies: JSON.stringify(previousCompanies),
+                aiScore,
+                aiSummary,
+                aiAnalysisDetails,
                 interviewCode,
                 status: 'SCREENING'
             }
@@ -537,50 +570,121 @@ export const matchCandidateWithJob = async (req, res, next) => {
             return res.status(404).json({ status: 'error', message: 'الوظيفة المحددة غير موجودة لدى شركتكم' });
         }
 
-        // Calculate AI Match Score, Strengths, and Weaknesses
-        const candidateSkillsStr = candidate.candidateSkills.map(s => s.skillName).join(', ') || candidate.skills || '';
-
-        let matchScore = 85;
-        const strengths = [];
-        const weaknesses = [];
-
-        if (candidate.yearsOfExperience >= 3) {
-            matchScore += 5;
-            strengths.push(`خبرة قوية (${candidate.yearsOfExperience} سنوات) في المجال`);
-        } else {
-            weaknesses.push('الخبرة السابقة أقل من المستوى المستهدف المعتاد');
+        // Read CV content if available
+        let cvText = '';
+        if (candidate.resumePath && fs.existsSync(candidate.resumePath)) {
+            try {
+                const fileBuffer = fs.readFileSync(candidate.resumePath);
+                const mime = getMimeTypeFromBuffer(fileBuffer);
+                if (mime === 'application/pdf') {
+                    cvText = await extractTextFromPDF(fileBuffer);
+                } else if (mime && mime.includes('wordprocessingml')) {
+                    const mammoth = await import('mammoth');
+                    const result = await mammoth.extractRawText({ buffer: fileBuffer });
+                    cvText = result.value;
+                }
+            } catch (err) {
+                logger.warn('[ATS] Could not re-read CV file during matching:', err.message);
+            }
         }
 
-        if (candidateSkillsStr) {
-            strengths.push(`يمتلك المهارات الأساسية المطلوبة: ${candidateSkillsStr.slice(0, 60)}`);
-        } else {
-            weaknesses.push('يتطلب تعزيز بعض الشهادات والمهارات التقنية المتخصصة');
-        }
+        const candidatePayload = {
+            fullName: candidate.fullName,
+            currentTitle: candidate.currentTitle,
+            yearsOfExperience: candidate.yearsOfExperience || candidate.experience || 0,
+            skills: candidate.candidateSkills.length > 0
+                ? candidate.candidateSkills.map(s => s.skillName)
+                : (candidate.skills ? (candidate.skills.startsWith('[') ? JSON.parse(candidate.skills) : candidate.skills.split(',')) : []),
+            education: candidate.education,
+            previousCompanies: candidate.candidateExperiences.length > 0
+                ? candidate.candidateExperiences.map(e => `${e.position} في ${e.company}`)
+                : (candidate.previousCompanies ? (candidate.previousCompanies.startsWith('[') ? JSON.parse(candidate.previousCompanies) : [candidate.previousCompanies]) : []),
+            cvText
+        };
 
-        matchScore = Math.min(98, Math.max(60, matchScore));
+        const jobPayload = {
+            title: job.title,
+            department: job.department,
+            description: job.description,
+            requirements: job.requirements,
+            responsibilities: job.responsibilities,
+            employmentType: job.employmentType,
+            yearsOfExperience: job.yearsOfExperience,
+            requiredSkills: job.requiredSkills || job.skills
+        };
+
+        // Call real LLM matching engine
+        const aiResult = await aiService.matchCandidateWithJobAI(candidatePayload, jobPayload, companyId);
+        logger.info(`[ATS-MATCH-AI] jobId=${job.id} title="${job.title}" matchScore=${aiResult?.matchScore}`);
+
+        let matchScore = null;
+        let strengths = [];
+        let weaknesses = [];
+        let missingSkills = [];
+        let evidence = [];
+        let scoreBreakdown = {};
+        let summary = '';
+        let recommendation = 'REVIEW';
+
+        if (aiResult) {
+            matchScore = typeof aiResult.matchScore === 'number' ? Math.min(100, Math.max(0, Math.round(aiResult.matchScore))) : null;
+            strengths = Array.isArray(aiResult.strengths) ? aiResult.strengths : [];
+            weaknesses = Array.isArray(aiResult.weaknesses) ? aiResult.weaknesses : [];
+            missingSkills = Array.isArray(aiResult.missingSkills) ? aiResult.missingSkills : [];
+            evidence = Array.isArray(aiResult.evidence) ? aiResult.evidence : [];
+            scoreBreakdown = aiResult.scoreBreakdown || {};
+            summary = aiResult.summary || `تمت مطابقة المرشح مع وظيفة (${job.title}).`;
+            recommendation = aiResult.recommendation || 'REVIEW';
+        } else {
+            summary = `تعذر استخراج تحليل الذكاء الاصطناعي لوظيفة (${job.title}) في الوقت الحالي.`;
+        }
 
         const aiAnalysisDetails = JSON.stringify({
+            jobId: targetJobId,
+            jobTitle: job.title,
             matchScore,
+            scoreBreakdown,
             strengths,
             weaknesses,
+            missingSkills,
+            evidence,
+            recommendation,
             evaluatedAt: new Date().toISOString()
         });
 
+        // Update candidate with real job matching result
         await prisma.candidate.update({
             where: { id },
             data: {
                 aiScore: matchScore,
-                aiSummary: `مطابقة الذكاء الاصطناعي مع لوائح الوظيفة (${job.title}): النتيجة ${matchScore}/100.`,
+                aiSummary: summary,
                 aiAnalysisDetails
             }
         });
+
+        // Also upsert / record in CandidateApplication if exists
+        const existingApp = await prisma.candidateApplication.findFirst({
+            where: { candidateId: id, jobId: targetJobId }
+        });
+
+        if (existingApp) {
+            await prisma.candidateApplication.update({
+                where: { id: existingApp.id },
+                data: {
+                    score: matchScore,
+                    matchAnalysis: summary
+                }
+            });
+        }
 
         // Record history
         await prisma.candidateHistory.create({
             data: {
                 candidateId: id,
-                action: 'تشغيل مطابقة الذكاء الاصطناعي AI Matching',
-                comment: `تم حساب درجة المطابقة بنسبة ${matchScore}% وتوليد تقرير نقاط القوة والضعف لوظيفة (${job.title})`,
+                action: 'تشغيل مطابقة الذكاء الاصطناعي الفعلي AI Matching',
+                comment: matchScore !== null
+                    ? `تم حساب درجة المطابقة الحقيقية بنسبة ${matchScore}% لوظيفة (${job.title}) بناءً على متطلبات الوظيفة والسيرة الذاتية.`
+                    : `تم طلب مطابقة الذكاء الاصطناعي لوظيفة (${job.title}).`,
                 performedBy: req.user?.id || 'AI_ENGINE'
             }
         });
@@ -589,10 +693,16 @@ export const matchCandidateWithJob = async (req, res, next) => {
             status: 'success',
             data: {
                 matchScore,
+                scoreBreakdown,
                 strengths,
                 weaknesses,
+                missingSkills,
+                evidence,
                 candidateId: id,
-                jobTitle: job.title
+                jobId: targetJobId,
+                jobTitle: job.title,
+                summary,
+                recommendation
             }
         });
     } catch (error) {
@@ -971,8 +1081,10 @@ export const createCandidateApplication = async (req, res, next) => {
         }
 
         const jobTitle = rJob?.title || jRequest?.jobTitle || 'وظيفة';
-        const candidateScore = candidate.aiScore || 85;
-        const matchAnalysis = `تم تقديم طلب للمرشح ${candidate.fullName} على وظيفة (${jobTitle}) بدرجة مطابقة ${candidateScore}%`;
+        const candidateScore = candidate.aiScore !== null && candidate.aiScore !== undefined ? candidate.aiScore : null;
+        const matchAnalysis = candidateScore !== null 
+            ? `تم تقديم طلب للمرشح ${candidate.fullName} على وظيفة (${jobTitle}) بدرجة مطابقة ${candidateScore}%`
+            : `تم تقديم طلب للمرشح ${candidate.fullName} على وظيفة (${jobTitle}) (بانتظار إجراء مطابقة الذكاء الاصطناعي)`;
 
         const appStatus = (status || 'APPLIED').toUpperCase();
 
