@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 import http from 'http';
+import { jobRequestSyncService } from '../services/jobRequestSync.service.js';
 import { aiService } from '../ai/ai-service.js';
 import { extractTextFromPDF } from '../utils/pdfExtractor.js';
 import { isAllowedCV, getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
@@ -806,24 +807,17 @@ export const updateCandidateStatus = async (req, res, next) => {
                 }
             });
 
-            // Auto Sync with HiringPlan if HIRED
-            if (targetStatus === 'HIRED' && candidate.recruitmentjob) {
-                const plan = await tx.hiringPlan.findFirst({
-                    where: {
-                        companyId,
-                        position: { contains: candidate.recruitmentjob.title, mode: 'insensitive' }
-                    }
+            // 🔄 Atomic Sync with JobRequest & HiringPlan based on candidate progression & vacancies
+            try {
+                await jobRequestSyncService.syncOnCandidateStatusChange({
+                    candidateId: id,
+                    newCandidateStatus: targetStatus,
+                    oldCandidateStatus: oldStatus,
+                    performedBy: req.user?.id || 'SYSTEM',
+                    tx
                 });
-                if (plan) {
-                    const newFulfilled = plan.fulfilledCount + 1;
-                    await tx.hiringPlan.update({
-                        where: { id: plan.id },
-                        data: {
-                            fulfilledCount: newFulfilled,
-                            status: newFulfilled >= plan.quantity ? 'FULFILLED' : 'IN_PROGRESS'
-                        }
-                    });
-                }
+            } catch (syncErr) {
+                logger.warn('[ATS] Non-blocking sync error in jobRequestSyncService:', syncErr.message);
             }
 
             return updated;

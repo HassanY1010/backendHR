@@ -10,6 +10,7 @@ import path from 'path';
 import { getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
 import { uploadFileToSupabase } from '../utils/supabase.js';
 import { emailService } from '../services/email.service.js';
+import { jobRequestSyncService } from '../services/jobRequestSync.service.js';
 import logger from '../utils/logger.js';
 
 // Helper to check file security
@@ -885,87 +886,15 @@ export const updateCandidate = async (req, res, next) => {
             include: { recruitmentjob: true }
         });
 
-        // 🔄 Automatic sync to JobRequest based on candidate progression
-        if (candidate.recruitmentjob) {
-            const jobReq = await prisma.jobRequest.findFirst({
-                where: {
-                    jobTitle: candidate.recruitmentjob.title,
-                    companyId: candidate.recruitmentjob.companyId,
-                    deletedAt: null
-                }
+        // 🔄 Centralized Atomic Sync with JobRequest & HiringPlan based on candidate progression & vacancies
+        try {
+            await jobRequestSyncService.syncOnCandidateStatusChange({
+                candidateId: candidate.id,
+                newCandidateStatus: candidate.status,
+                performedBy: req.user?.id || 'SYSTEM'
             });
-
-            if (jobReq) {
-                let newStatus = null;
-                let actionText = '';
-
-                // Map Candidate Pipeline Status to JobRequest Lifecycle Status
-                if (['INTERVIEWING', 'INTERVIEW_SENT', 'INTERVIEW_COMPLETED', 'SCREENING'].includes(candidate.status)) {
-                    if (['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
-                        newStatus = 'INTERVIEW_PROCESS';
-                        actionText = 'بدء مرحلة المقابلات تلقائياً';
-                    }
-                } else if (['OFFERED', 'PRE_ACCEPTED'].includes(candidate.status)) {
-                    if (['APPROVED', 'RECRUITMENT_STARTED', 'INTERVIEW_PROCESS'].includes(jobReq.status)) {
-                        newStatus = 'OFFER_STAGE';
-                        actionText = 'الانتقال إلى مرحلة تقديم العرض تلقائياً';
-                    }
-                } else if (candidate.status === 'HIRED') {
-                    newStatus = 'HIRED';
-                    actionText = 'تم تعيين المرشح ونقل الطلب تلقائياً';
-                }
-
-                if (newStatus && newStatus !== jobReq.status) {
-                    await prisma.jobRequest.update({
-                        where: { id: jobReq.id },
-                        data: { status: newStatus }
-                    });
-
-                    await prisma.jobRequestHistory.create({
-                        data: {
-                            jobRequestId: jobReq.id,
-                            action: actionText,
-                            oldStatus: jobReq.status,
-                            newStatus: newStatus,
-                            comment: `تحديث تلقائي للنظام عند تقدم المرشح (${candidate.fullName}) إلى حالة ${candidate.status}`
-                        }
-                    });
-                }
-            }
-        }
-
-        // 🔄 Auto-increment HiringPlan.fulfilledCount when a candidate is hired
-        if (candidate.status === 'HIRED' && candidate.recruitmentjob) {
-            try {
-                const targetTitle = candidate.recruitmentjob.title;
-                const compId = candidate.recruitmentjob.companyId;
-
-                const plan = await prisma.hiringPlan.findFirst({
-                    where: {
-                        companyId: compId,
-                        position: { contains: targetTitle, mode: 'insensitive' }
-                    },
-                    orderBy: { createdAt: 'desc' }
-                }) || await prisma.hiringPlan.findFirst({
-                    where: { companyId: compId },
-                    orderBy: { createdAt: 'desc' }
-                });
-
-                if (plan) {
-                    const newFulfilled = plan.fulfilledCount + 1;
-                    const isFullyFulfilled = newFulfilled >= plan.quantity;
-
-                    await prisma.hiringPlan.update({
-                        where: { id: plan.id },
-                        data: {
-                            fulfilledCount: newFulfilled,
-                            status: isFullyFulfilled ? 'FULFILLED' : 'IN_PROGRESS'
-                        }
-                    });
-                }
-            } catch (planErr) {
-                logger.error('Failed to auto-increment HiringPlan on candidate HIRED:', planErr.message);
-            }
+        } catch (syncErr) {
+            logger.warn('[Recruitment] Sync error in jobRequestSyncService:', syncErr.message);
         }
 
         res.status(200).json({ status: 'success', data: { candidate } });
