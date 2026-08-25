@@ -722,6 +722,7 @@ export const submitInterviewAnswer = async (req, res, next) => {
 
         // Run AI evaluation in background
         try {
+            const jobTitle = candidate?.recruitmentjob?.title || 'الوظيفة';
             const questions = ['General Questions'];
             const answers = notes || 'No notes provided';
 
@@ -729,7 +730,8 @@ export const submitInterviewAnswer = async (req, res, next) => {
                 questions,
                 answers,
                 candidate.recruitmentjob.companyId,
-                interview.candidateId
+                jobTitle,
+                candidate.skills ? (typeof candidate.skills === 'string' ? candidate.skills.split(',') : candidate.skills) : []
             );
 
             const aiAnalysis = {
@@ -738,12 +740,13 @@ export const submitInterviewAnswer = async (req, res, next) => {
                 overall: evaluationResult.score || 0,
                 strengths: evaluationResult.strengths || [],
                 weaknesses: evaluationResult.weaknesses || [],
-                decision: evaluationResult.decision || 'review',
-                recommendation: evaluationResult.decision || 'review'
+                decision: evaluationResult.decision || 'PENDING_REVIEW',
+                recommendation: evaluationResult.decision || 'PENDING_REVIEW',
+                isEvaluated: evaluationResult.isEvaluated ?? false
             };
 
-            const score = evaluationResult.score || 0;
-            const summary = evaluationResult.summary || 'تم إكمال المقابلة بنجاح وهي بانتظار المراجعة.';
+            const score = evaluationResult.score;
+            const summary = evaluationResult.summary || 'تم تسجيل المقابلة بنجاح وهي بانتظار المراجعة والتقييم.';
 
             await prisma.interview.update({
                 where: { id: interview.id },

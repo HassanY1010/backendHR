@@ -578,28 +578,132 @@ ${jobInfo}`;
         }
     },
 
-    evaluateInterview: async (questions, answers, companyId) => {
+    evaluateInterview: async (questions, answers, companyId, candidateJobTitle = null, candidateCvSkills = []) => {
         try {
-            const prompt = `Evaluate interview in Arabic. Q: ${JSON.stringify(questions)} A: ${JSON.stringify(answers)}. JSON { score, strengths, weaknesses, decision, reasoning }.`;
-            return await callOpenAI(prompt, MODELS.STRATEGIC, true, companyId, 'eval_interview');
-        } catch (e) {
+            // Validation 1: Check if answers/transcript is provided and meaningful
+            if (!answers || (typeof answers === 'string' && (answers.trim() === '' || answers.trim() === 'No notes provided' || answers.trim() === 'General Questions'))) {
+                return {
+                    score: null,
+                    strengths: [],
+                    weaknesses: [],
+                    decision: 'PENDING_REVIEW',
+                    reasoning: 'لم يتم تسجيل إجابات نصية أو تفريغ صوتي للمرشح بعد.',
+                    summary: 'المقابلة مسجلة ولكن بانتظار التفريغ النصي والمراجعة اليدوية من مسؤول التوظيف.',
+                    isEvaluated: false
+                };
+            }
+
+            // Validation 2: Check if answers are merely repeating questions without candidate speech
+            const cleanAnswers = typeof answers === 'string' ? answers.trim() : JSON.stringify(answers);
+            const questionLines = Array.isArray(questions) ? questions : [questions];
+            const isJustQuestionsList = questionLines.length > 0 && questionLines.every(q => cleanAnswers.includes(typeof q === 'string' ? q.replace(/السؤال \d+:\s*/, '') : '')) && !cleanAnswers.includes('إجابة') && !cleanAnswers.includes('المرشح:');
+            
+            // If it only contains the questions template without candidate answers
+            if (cleanAnswers.startsWith('السؤال 1:') && !cleanAnswers.toLowerCase().includes('إجابة') && !cleanAnswers.toLowerCase().includes('جواب') && cleanAnswers.split('\n\n').every(p => p.trim().startsWith('السؤال'))) {
+                return {
+                    score: null,
+                    strengths: [],
+                    weaknesses: [],
+                    decision: 'PENDING_REVIEW',
+                    reasoning: 'تم تسجيل فيديو المقابلة بنجاح ولكن لم يتم تفريغ إجابات المرشح النصية حتى الآن.',
+                    summary: 'تم استلام تسجيل المقابلة المرئية بنجاح وهو بانتظار المراجعة والتقييم من قبل مسؤول التوظيف.',
+                    isEvaluated: false
+                };
+            }
+
+            const prompt = `أنت محكم ومقيم مقابلات توظيف ذكي ومحايد جداً.
+المهمة: تقييم إجابات المرشح الفعلية على أسئلة المقابلة لوظيفة (${candidateJobTitle || 'الوظيفة المتقدم لها'}).
+
+قواعد صارمة جداً:
+1. ممنوع منعاً باتاً اختلاق أو افتراض أي إجابة أو مهارة أو خبرة لم يذكرها المرشح صراحة في نص الإجابات (Answers/Transcript).
+2. إذا لم تكن هناك إجابات فعلية أو واضحة، أرجع score: null و strengths: [] و decision: "PENDING_REVIEW".
+3. كل نقطة قوة (Strength) يجب أن تكون مدعومة بدليل نصي مباشر ومقتبس من إجابة المرشح فقط.
+4. قيّم عمق الإجابة، الملاءمة لمتطلبات الوظيفة، ووضوح الطرح.
+
+الأسئلة:
+${JSON.stringify(questions, null, 2)}
+
+إجابات وتفريغ المرشح:
+${cleanAnswers}
+
+يجب أن يكون الرد بصيغة JSON فقط:
+{
+  "score": 0, // رقم من 0 إلى 100 أو null إذا لم تتوفر إجابات
+  "strengths": ["نقاط القوة المدعومة بالأدلة النصية من كلام المرشح"],
+  "weaknesses": ["نقاط الضعف أو القصور في الإجابات مقارنة بمتطلبات الوظيفة"],
+  "decision": "RECOMMENDED / REVIEW / NOT_RECOMMENDED / PENDING_REVIEW",
+  "reasoning": "سبب القرار بناءً على الإجابات المسجلة حصراً",
+  "summary": "ملخص تحليلي موضوعي لأداء المرشح في المقابلة",
+  "isEvaluated": true
+}`;
+
+            const res = await callOpenAI(prompt, MODELS.STRATEGIC, true, companyId, 'eval_interview');
             return {
-                score: 50,
-                strengths: "تحليل الذكاء الاصطناعي غير متاح حالياً لمراجعة نقاط القوة.",
-                weaknesses: "تحليل الذكاء الاصطناعي غير متاح حالياً لمراجعة نقاط الضعف.",
-                decision: "PENDING",
-                reasoning: "يرجى تقييم المقابلة يدوياً."
+                score: typeof res?.score === 'number' ? Math.min(100, Math.max(0, Math.round(res.score))) : null,
+                strengths: Array.isArray(res?.strengths) ? res.strengths : [],
+                weaknesses: Array.isArray(res?.weaknesses) ? res.weaknesses : [],
+                decision: res?.decision || 'PENDING_REVIEW',
+                reasoning: res?.reasoning || 'يرجى مراجعة إجابات المرشح.',
+                summary: res?.summary || 'تم تحليل المقابلة.',
+                isEvaluated: res?.isEvaluated ?? (typeof res?.score === 'number')
+            };
+        } catch (e) {
+            logger.error('Evaluate Interview Error', { error: e.message });
+            return {
+                score: null,
+                strengths: [],
+                weaknesses: [],
+                decision: "PENDING_REVIEW",
+                reasoning: "يرجى تقييم المقابلة يدوياً.",
+                summary: "بانتظار مراجعة المقابلة.",
+                isEvaluated: false
             };
         }
     },
 
     generateInterviewQuestions: async (jobTitle, skills, jobDetails, companyId) => {
         try {
-            const prompt = `Generate 5 interview questions in Arabic for ${jobTitle}. JSON { questions: [] }`;
+            const skillsStr = Array.isArray(skills) ? skills.join(', ') : (skills || '');
+            const prompt = `أنت خبير توظيف ومسؤول موارد بشرية متخصص.
+المهمة: توليد 5 أسئلة مقابلة متخصصة واحترافية باللغة العربية لوظيفة: (${jobTitle || 'غير محدد'}).
+المهارات المطلوبة: ${skillsStr}
+تفاصيل الوظيفة: ${jobDetails || ''}
+
+قواعد:
+1. يجب أن تكون الأسئلة شديدة التخصيص والملاءمة لمهام ومجال هذه الوظيفة تحديداً (${jobTitle}).
+2. تنوع بين الأسئلة الفنية/التخصصية وسؤالين عن السلوك وإدارة ضغوط العمل.
+3. لا تولد أسئلة عامة مكررة لجميع الوظائف.
+
+الرد بصيغة JSON فقط:
+{
+  "questions": [
+    "السؤال الأول...",
+    "السؤال الثاني...",
+    "السؤال الثالث...",
+    "السؤال الرابع...",
+    "السؤال الخامس..."
+  ]
+}`;
             const res = await callOpenAI(prompt, MODELS.DAILY, true, companyId, 'generate_questions');
-            return res.questions || [];
+            if (Array.isArray(res?.questions) && res.questions.length > 0) {
+                return res.questions;
+            }
+            return [
+                `ما هي أبرز خبراتك وإنجازاتك في مجال ${jobTitle}؟`,
+                `كيف تتعامل مع التحديات الفنية والمهنية المعقدة في مهامك؟`,
+                `حدثنا عن موقف واجهت فيه ضغط عمل أو موعد تسليم حرج وكيف تصرفت؟`,
+                `ما هي الأدوات والمنهجيات الأساسية التي تعتمد عليها في عملك كـ ${jobTitle}؟`,
+                `لماذا ترغب في الانضمام لفريقنا وما القيمة المضافة التي ستقدمها؟`
+            ];
         } catch (e) {
-            return ["ما هي خبراتك السابقة؟", "حدثنا عن تحدي واجهته في العمل.", "لماذا تريد الانضمام إلينا؟"];
+            logger.error('Generate Interview Questions Error', { error: e.message });
+            return [
+                `ما هي أبرز خبراتك في مجال ${jobTitle || 'تخصصك'}؟`,
+                `حدثنا عن تحدي مهني واجهته في عملك السابق وكيف تغلبت عليه؟`,
+                `ما هي الأدوات والتقنيات التي تجيد استخدامها في عملك؟`,
+                `كيف تضمن جودة ودقة مخرجات العمل تحت الضغط؟`,
+                `لماذا تعتقد أنك المرشح المناسب لهذه الفرصة؟`
+            ];
         }
     },
 
