@@ -3,6 +3,8 @@ import logger from '../utils/logger.js';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import https from 'https';
+import http from 'http';
 import { aiService } from '../ai/ai-service.js';
 import { extractTextFromPDF } from '../utils/pdfExtractor.js';
 import { isAllowedCV, getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
@@ -522,20 +524,54 @@ export const getCandidateCV = async (req, res, next) => {
             where: { id, recruitmentjob: { companyId }, deletedAt: null }
         });
 
-        if (!candidate || !candidate.resumePath) {
-            return res.status(404).json({ status: 'error', message: 'ملف السيرة الذاتية غير متوفر أو لا تملك صلاحية الوصول إليه' });
+        if (!candidate) {
+            return res.status(404).json({ status: 'error', message: 'المرشح غير موجود أو لا تملك صلاحية الوصول إليه' });
         }
 
-        const safePath = path.resolve(candidate.resumePath);
-        const uploadsRoot = path.resolve(process.cwd(), 'uploads');
-        if (!safePath.startsWith(uploadsRoot) || !fs.existsSync(safePath)) {
-            return res.status(404).json({ status: 'error', message: 'الملف غير موجود على الخادم' });
+        if (!candidate.resumePath && !candidate.resumeUrl) {
+            return res.status(404).json({ status: 'error', message: 'لا يوجد ملف سيرة ذاتية مرفق لهذا المرشح' });
         }
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="cv-${candidate.id}.pdf"`);
-        const stream = fs.createReadStream(safePath);
-        stream.pipe(res);
+        // 1. If stored locally in uploads
+        if (candidate.resumePath) {
+            const safePath = path.resolve(candidate.resumePath);
+            const uploadsRoot = path.resolve(process.cwd(), 'uploads');
+            if (safePath.startsWith(uploadsRoot) && fs.existsSync(safePath)) {
+                const ext = path.extname(safePath).toLowerCase();
+                const contentType = ext === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : (ext === '.doc' ? 'application/msword' : 'application/pdf');
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Content-Disposition', `inline; filename="cv-${candidate.id}${ext || '.pdf'}"`);
+                const stream = fs.createReadStream(safePath);
+                return stream.pipe(res);
+            }
+        }
+
+        // 2. If stored remotely (e.g. Supabase Storage / S3 / Cloud)
+        if (candidate.resumeUrl) {
+            const remoteUrl = candidate.resumeUrl;
+            const client = remoteUrl.startsWith('https') ? https : http;
+            
+            return client.get(remoteUrl, (remoteRes) => {
+                if (remoteRes.statusCode !== 200) {
+                    logger.error('[ATS] Failed to stream remote CV:', { statusCode: remoteRes.statusCode, remoteUrl });
+                    return res.status(404).json({ status: 'error', message: 'تعذر جلب ملف السيرة الذاتية من خادم التخزين' });
+                }
+
+                const contentType = remoteRes.headers['content-type'] || 'application/pdf';
+                res.setHeader('Content-Type', contentType);
+                res.setHeader('Content-Disposition', `inline; filename="cv-${candidate.id}.pdf"`);
+                if (remoteRes.headers['content-length']) {
+                    res.setHeader('Content-Length', remoteRes.headers['content-length']);
+                }
+
+                remoteRes.pipe(res);
+            }).on('error', (err) => {
+                logger.error('[ATS] Remote CV fetch stream error:', err.message);
+                return res.status(502).json({ status: 'error', message: 'خطأ أثناء الاتصال بخادم التخزين السحابي' });
+            });
+        }
+
+        return res.status(404).json({ status: 'error', message: 'ملف السيرة الذاتية غير موجود' });
     } catch (error) {
         logger.error('[ATS] getCandidateCV error:', error.message);
         next(error);
