@@ -260,7 +260,13 @@ export const analyzePracticeSession = async (req, res, next) => {
             });
         }
 
-        const validDuration = Math.min(180, Math.max(10, parseInt(durationSeconds, 10) || 60));
+        // Secure Duration Calculation from Server Timestamps
+        const now = new Date();
+        const serverElapsedSeconds = session.startedAt 
+            ? Math.round((now.getTime() - new Date(session.startedAt).getTime()) / 1000)
+            : (parseInt(durationSeconds, 10) || 60);
+
+        const validDuration = Math.min(180, Math.max(10, serverElapsedSeconds));
         const companyId = session.candidate.recruitmentjob?.companyId;
 
         // Run AI analysis with strictly real data
