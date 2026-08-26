@@ -34,6 +34,7 @@ import hiringPlanRoutes from './routes/hiring-plan.routes.js';
 import hiringReportsRoutes from './routes/hiring-reports.routes.js';
 import atsCandidateRoutes from './routes/ats-candidate.routes.js';
 import interviewSchedulingRoutes from './routes/interview-scheduling.routes.js';
+import interviewPracticeRoutes from './routes/interview-practice.routes.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { checkKillSwitch } from './middlewares/governance.middleware.js';
 import logger from './utils/logger.js';
@@ -190,6 +191,7 @@ app.use('/api/workflow', workflowRoutes);
 app.use('/api/hiring-plans', hiringPlanRoutes);
 app.use('/api/hiring-reports', hiringReportsRoutes);
 app.use('/api/candidates', atsCandidateRoutes);
+app.use('/api/interviews/practice', interviewPracticeRoutes);
 app.use('/api/interviews', interviewSchedulingRoutes);
 
 // Health check

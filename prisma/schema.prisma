@@ -117,6 +117,7 @@ model Candidate {
   candidateHistories    CandidateHistory[]
   candidateNotes        CandidateNote[]
   schedulingSessions    SchedulingSession[]
+  practiceSessions      PracticeSession[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
@@ -510,11 +511,41 @@ model SchedulingSession {
   company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   interviewer   User      @relation(fields: [interviewerId], references: [id], onDelete: Cascade)
+  practiceSessions PracticeSession[]
 
   @@index([companyId])
   @@index([candidateId])
   @@index([status])
   @@map("schedulingsession")
+}
+
+model PracticeSession {
+  id                    String             @id @default(uuid())
+  candidateId           String
+  schedulingSessionId   String?
+  tokenHash             String             @unique
+  duration              Int?               // المدة الفعلية بالثواني
+  overallScore          Float?             // 0 - 100
+  communicationScore    Float?
+  answerScore           Float?
+  voiceScore            Float?
+  visualScore           Float?
+  confidenceIndicators  Json?
+  feedback              Json?
+  answersData           Json?
+  status                String             @default("ACTIVE") // ACTIVE, COMPLETED, EXPIRED
+  expiresAt             DateTime
+  startedAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime           @default(now())
+
+  candidate             Candidate          @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  schedulingSession     SchedulingSession? @relation(fields: [schedulingSessionId], references: [id], onDelete: SetNull)
+
+  @@index([candidateId])
+  @@index([tokenHash])
+  @@index([status])
+  @@map("practicesession")
 }
 
 model CalendarIntegration {
