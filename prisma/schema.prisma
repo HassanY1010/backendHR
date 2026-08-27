@@ -451,6 +451,8 @@ model Interview {
   reminder1hSent    Boolean?  @default(false)
   calendarEventId   String?
   calendarSyncStatus String?  @default("PENDING")
+  // Legacy AI fields — preserved for backward compatibility with existing code.
+  // InterviewEvaluation (below) is the authoritative source for deep AI evaluations.
   aiScore           Float?
   aiSummary         String?   @db.Text
   transcript        String?   @db.Text
@@ -458,9 +460,10 @@ model Interview {
   aiAnalysis        String?   @db.Text
   createdAt         DateTime  @default(now())
 
-  candidate         Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
-  company           Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Interview_companyId_fkey")
-  interviewer       User?     @relation(fields: [interviewerId], references: [id], onDelete: SetNull, map: "Interview_interviewerId_fkey")
+  candidate         Candidate          @relation(fields: [candidateId], references: [id], onDelete: Cascade, map: "Interview_candidateId_fkey")
+  company           Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Interview_companyId_fkey")
+  interviewer       User?              @relation(fields: [interviewerId], references: [id], onDelete: SetNull, map: "Interview_interviewerId_fkey")
+  evaluations       InterviewEvaluation[]
 
   @@index([companyId], map: "Interview_companyId_idx")
   @@index([candidateId], map: "Interview_candidateId_idx")
@@ -468,6 +471,104 @@ model Interview {
   @@index([startTime, endTime], map: "Interview_startTime_endTime_idx")
   @@index([status], map: "Interview_status_idx")
   @@map("interview")
+}
+
+// ============================================================
+// AI Interview Evaluation — Authoritative deep evaluation source
+// Supports versioning: multiple evaluations per interview,
+// the latest (isActive=true) is the current official evaluation.
+// ============================================================
+model InterviewEvaluation {
+  id                    String   @id @default(uuid())
+  interviewId           String
+  companyId             String                      // Tenant isolation
+  candidateId           String
+  jobId                 String?
+
+  // Versioning
+  version               Int      @default(1)        // Incrementing version per interview
+  isActive              Boolean  @default(true)     // Only one active per interview
+  triggeredBy           String?                     // userId who triggered evaluation
+  triggerSource         String   @default("MANUAL") // MANUAL | AUTO_ON_COMPLETE | RE_EVALUATE
+
+  // Overall Score
+  overallScore          Float?                      // 0-100, null if insufficient data
+  recommendation        String   @default("PENDING") // STRONG_HIRE | HIRE | MAYBE | REJECT | PENDING
+
+  // Dimensional Scores — stored as JSON objects with score+explanation+evidence
+  technicalScore        Float?
+  technicalDetail       String?  @db.Text           // JSON: {score, weight, explanation, strengths[], weaknesses[], evidence[]}
+  communicationScore    Float?
+  communicationDetail   String?  @db.Text           // JSON: {score, weight, explanation, ...}
+  experienceScore       Float?
+  experienceDetail      String?  @db.Text           // JSON: {score, weight, explanation, ...}
+  problemSolvingScore   Float?
+  problemSolvingDetail  String?  @db.Text           // JSON: {score, weight, explanation, ...}
+  cultureFitScore       Float?
+  cultureFitDetail      String?  @db.Text           // JSON: {score, weight, explanation, ...}
+
+  // Scoring weights used (job-specific, stored for transparency)
+  scoringWeights        String?  @db.Text           // JSON: {technical:0.35, communication:0.25,...}
+
+  // Summary outputs
+  aiSummary             String?  @db.Text           // Human-readable executive summary
+  strengths             String?  @db.Text           // JSON array of strength objects with evidence
+  weaknesses            String?  @db.Text           // JSON array of weakness objects
+  riskFactors           String?  @db.Text           // JSON array of risk factors
+  rejectionReasons      String?  @db.Text           // JSON array — populated only when REJECT
+
+  // Input snapshot (what was fed to AI — for audit)
+  transcriptSnapshot    String?  @db.Text           // The transcript used in THIS evaluation
+  transcriptSource      String?                     // WHISPER | MANUAL | EXISTING | MIXED
+  transcriptLanguage    String?                     // ar | en | mixed
+  jobRequirementsSnapshot String? @db.Text          // Job requirements at time of evaluation
+  cvSummarySnapshot     String?  @db.Text           // Candidate CV summary at time of evaluation
+
+  // Ethics/Bias declaration
+  biasCheckPassed       Boolean  @default(true)     // Did evaluation skip prohibited attributes?
+  evaluatedAttributes   String?  @db.Text           // JSON: which attributes were actually evaluated
+
+  // Processing metadata
+  status                String   @default("PENDING") // PENDING | PROCESSING | DONE | FAILED
+  processingError       String?  @db.Text
+  aiModel               String?                     // Model used: gpt-4o, etc.
+  promptVersion         String?  @default("v2")     // For tracking prompt versions over time
+  rawAiResponse         String?  @db.Text           // Full JSON response from OpenAI (audit log)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  interview             Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  versions              InterviewEvaluationVersion[]
+
+  @@index([interviewId])
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([isActive])
+  @@index([status])
+  @@index([recommendation])
+  @@index([overallScore])
+  @@map("interviewevaluation")
+}
+
+// Historical versions archive — previous evaluations are moved here
+// when a re-evaluation is triggered, ensuring full audit trail.
+model InterviewEvaluationVersion {
+  id             String   @id @default(uuid())
+  evaluationId   String                           // References the current InterviewEvaluation
+  interviewId    String
+  companyId      String
+  version        Int
+  snapshot       String   @db.Text               // Full JSON snapshot of the evaluation at that version
+  archivedAt     DateTime @default(now())
+  archivedBy     String?                          // userId who triggered the new evaluation
+
+  evaluation     InterviewEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@index([evaluationId])
+  @@index([interviewId])
+  @@index([companyId])
+  @@map("interviewevaluationversion")
 }
 
 model InterviewSlot {

@@ -35,6 +35,7 @@ import hiringReportsRoutes from './routes/hiring-reports.routes.js';
 import atsCandidateRoutes from './routes/ats-candidate.routes.js';
 import interviewSchedulingRoutes from './routes/interview-scheduling.routes.js';
 import interviewPracticeRoutes from './routes/interview-practice.routes.js';
+import interviewEvaluationRoutes from './routes/interview-evaluation.routes.js';
 import cronRoutes from './routes/cron.routes.js';
 import prisma from './config/db.js';
 import { errorHandler } from './middlewares/error.middleware.js';
@@ -232,6 +233,7 @@ app.use('/api/hiring-reports', hiringReportsRoutes);
 app.use('/api/candidates', atsCandidateRoutes);
 app.use('/api/interviews/practice', interviewPracticeRoutes);
 app.use('/api/interviews', interviewSchedulingRoutes);
+app.use('/api/interview-evaluations', interviewEvaluationRoutes);
 app.use('/api/cron', cronRoutes);
 
 // Error handling
