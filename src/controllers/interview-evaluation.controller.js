@@ -361,9 +361,15 @@ export const evaluateInterview = async (req, res, next) => {
             });
         }
 
-        // 1. Fetch interview with tenant isolation
+        // 1. Fetch interview with tenant isolation (direct or via candidate->recruitmentjob)
         const interview = await prisma.interview.findFirst({
-            where: { id: interviewId, companyId },
+            where: {
+                id: interviewId,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            },
             include: {
                 candidate: {
                     include: {
@@ -780,7 +786,13 @@ export const getEvaluation = async (req, res, next) => {
         const { interviewId } = req.params;
 
         const interview = await prisma.interview.findFirst({
-            where: { id: interviewId, companyId },
+            where: {
+                id: interviewId,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            },
             select: { id: true }
         });
 
@@ -819,7 +831,13 @@ export const getEvaluationVersions = async (req, res, next) => {
         const { interviewId } = req.params;
 
         const interview = await prisma.interview.findFirst({
-            where: { id: interviewId, companyId },
+            where: {
+                id: interviewId,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            },
             select: { id: true }
         });
 
@@ -935,7 +953,13 @@ export const updateTranscript = async (req, res, next) => {
         }
 
         const interview = await prisma.interview.findFirst({
-            where: { id: interviewId, companyId }
+            where: {
+                id: interviewId,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            }
         });
 
         if (!interview) {
