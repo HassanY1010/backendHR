@@ -29,3 +29,4 @@ jest.unstable_mockModule('../src/services/email.service.js', () => ({
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret';
 process.env.RESEND_API_KEY = 'test-key';
+process.env.CRON_SECRET = 'test-cron-secret-key-123';

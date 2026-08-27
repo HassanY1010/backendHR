@@ -29,8 +29,11 @@ initClamAV().catch(err => {
     logger.error('⚠️ ClamAV initialization failed', { error: err.message });
 });
 
-app.listen(PORT, () => {
-    logger.info(`🚀 Server is running on port ${PORT}`);
+const HOST = '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+    logger.info(`🚀 Server is running on http://${HOST}:${PORT}`);
+    logger.info(`🔍 Health check available at http://${HOST}:${PORT}/health`);
     try {
         startDeadlineChecker();
         startSLACheckerJob();

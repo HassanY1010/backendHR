@@ -3,15 +3,26 @@ import prisma from '../config/db.js';
 import { memoryCache } from '../utils/cache.js';
 
 export const checkKillSwitch = async (req, res, next) => {
+    // Never block health check, readiness probe, or root info endpoint
+    const publicPaths = ['/health', '/ready', '/api/ready', '/'];
+    if (publicPaths.includes(req.path)) {
+        return next();
+    }
+
     try {
         let killSwitchValue = memoryCache.get('PLATFORM_KILL_SWITCH');
 
         if (killSwitchValue === null) {
-            const killSwitch = await prisma.systemsetting.findUnique({
-                where: { key: 'PLATFORM_KILL_SWITCH' }
-            });
-            killSwitchValue = killSwitch ? killSwitch.value : 'false';
-            memoryCache.set('PLATFORM_KILL_SWITCH', killSwitchValue, 300); // Cache for 5 minutes
+            try {
+                const killSwitch = await prisma.systemsetting.findUnique({
+                    where: { key: 'PLATFORM_KILL_SWITCH' }
+                });
+                killSwitchValue = killSwitch ? killSwitch.value : 'false';
+                memoryCache.set('PLATFORM_KILL_SWITCH', killSwitchValue, 300); // Cache for 5 minutes
+            } catch (dbErr) {
+                // If DB check fails, fail open (allow normal traffic) to prevent cascading outages
+                killSwitchValue = 'false';
+            }
         }
 
         if (killSwitchValue === 'true') {

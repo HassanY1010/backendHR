@@ -35,6 +35,8 @@ import hiringReportsRoutes from './routes/hiring-reports.routes.js';
 import atsCandidateRoutes from './routes/ats-candidate.routes.js';
 import interviewSchedulingRoutes from './routes/interview-scheduling.routes.js';
 import interviewPracticeRoutes from './routes/interview-practice.routes.js';
+import cronRoutes from './routes/cron.routes.js';
+import prisma from './config/db.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { checkKillSwitch } from './middlewares/governance.middleware.js';
 import logger from './utils/logger.js';
@@ -77,7 +79,7 @@ const allowedExplicit = [
 
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+        // Allow requests with no origin (e.g. mobile apps, curl, server-to-server, cron jobs)
         if (!origin) return callback(null, true);
 
         // Check explicit list and environment whitelist
@@ -98,10 +100,47 @@ const corsOptions = {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-cron-secret'],
     exposedHeaders: ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']
 };
 app.use(cors(corsOptions));
+
+// ==========================================
+// 1. Lightweight Health Check (No Auth, No DB)
+// ==========================================
+app.get('/health', (req, res) => {
+    logger.info('[HEALTH] GET /health -> 200');
+    res.status(200).json({
+        status: 'ok',
+        service: 'hr-backend',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ==========================================
+// 2. Readiness Probe (Checks Database Connection)
+// ==========================================
+app.get(['/ready', '/api/ready'], async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        logger.info('[READY] GET /ready -> 200 (DB Connected)');
+        res.status(200).json({
+            status: 'ok',
+            service: 'hr-backend',
+            database: 'connected',
+            timestamp: new Date().toISOString()
+        });
+    } catch (dbError) {
+        logger.error('[READY] GET /ready -> 503 (DB Disconnected):', { error: dbError.message });
+        res.status(503).json({
+            status: 'error',
+            service: 'hr-backend',
+            database: 'disconnected',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
 app.use(cookieParser());
 
 app.use(express.json({ limit: '10mb' }));
@@ -193,11 +232,7 @@ app.use('/api/hiring-reports', hiringReportsRoutes);
 app.use('/api/candidates', atsCandidateRoutes);
 app.use('/api/interviews/practice', interviewPracticeRoutes);
 app.use('/api/interviews', interviewSchedulingRoutes);
-
-// Health check
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
+app.use('/api/cron', cronRoutes);
 
 // Error handling
 app.use(errorHandler);
