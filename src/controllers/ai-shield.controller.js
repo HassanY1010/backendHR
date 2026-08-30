@@ -2,9 +2,11 @@
  * AI Shield Controller
  * =====================
  * Production-ready controller handling lifecycle management, privacy consent,
- * structured signal ingestion, deterministic report generation, and human review.
+ * structured signal ingestion, rotating nonces, replay protection, degraded mode,
+ * deterministic report generation, scheduled retention cleanup, and human review.
  */
 
+import crypto from 'crypto';
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 import { auditService } from '../services/audit.service.js';
@@ -15,8 +17,14 @@ import {
     extractAnswerIntegritySignals,
     computeSessionScoresAndRisk,
     SESSION_STATUS,
-    HUMAN_REVIEW_STATUS
+    HUMAN_REVIEW_STATUS,
+    EVENT_TYPES,
+    SEVERITY_LEVELS
 } from '../services/ai-shield.service.js';
+
+// In-memory active nonce store with TTL
+// Map<sessionId, { nonce: string, expiresAt: number, lastSequence: number }>
+const activeNonces = new Map();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +48,80 @@ const safeJsonParse = (str, fallback = {}) => {
     }
 };
 
-// ─── 1. Start / Initialize AI Shield Session ──────────────────────────────────
+const generateChallengeNonce = (sessionId) => {
+    const nonce = crypto.randomBytes(16).toString('hex');
+    activeNonces.set(sessionId, {
+        nonce,
+        expiresAt: Date.now() + 90 * 1000, // 90s validity
+        lastSequence: 0
+    });
+    return nonce;
+};
+
+const validateNonceAndSequence = (sessionId, nonce, sequenceNumber = 0) => {
+    const record = activeNonces.get(sessionId);
+    if (!record) return { valid: false, reason: 'NONCE_NOT_FOUND_OR_EXPIRED' };
+    if (Date.now() > record.expiresAt) {
+        activeNonces.delete(sessionId);
+        return { valid: false, reason: 'NONCE_EXPIRED' };
+    }
+    if (record.nonce !== nonce) {
+        return { valid: false, reason: 'INVALID_NONCE' };
+    }
+    if (sequenceNumber > 0 && sequenceNumber <= record.lastSequence) {
+        return { valid: false, reason: 'REPLAY_DETECTED_OLD_SEQUENCE' };
+    }
+    record.lastSequence = sequenceNumber;
+    return { valid: true };
+};
+
+// ─── 1. Generate / Rotate Challenge Nonce ──────────────────────────────────────
+
+/**
+ * POST /api/ai-shield/nonce/:sessionId
+ * Issues a fresh challenge nonce for session binding and replay prevention.
+ */
+export const getChallengeNonce = async (req, res, next) => {
+    try {
+        const companyId = resolveCompanyId(req);
+        const { sessionId } = req.params;
+
+        const session = await prisma.aIShieldSession.findFirst({
+            where: { id: sessionId, companyId }
+        });
+
+        if (!session) {
+            return res.status(404).json({
+                status: 'error',
+                code: 'SESSION_NOT_FOUND',
+                message: 'AI Shield session not found.'
+            });
+        }
+
+        if (session.status !== SESSION_STATUS.ACTIVE && session.status !== SESSION_STATUS.CREATED) {
+            return res.status(409).json({
+                status: 'error',
+                code: 'SESSION_NOT_ACTIVE',
+                message: `Cannot issue nonce for session in '${session.status}' state.`
+            });
+        }
+
+        const challengeNonce = generateChallengeNonce(sessionId);
+
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                sessionId,
+                challengeNonce,
+                expiresInSeconds: 90
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── 2. Start / Initialize AI Shield Session ──────────────────────────────────
 
 /**
  * POST /api/ai-shield/start
@@ -55,7 +136,8 @@ export const startShieldSession = async (req, res, next) => {
             consentGiven = false,
             consentVersion = 'v1.0',
             consentPurpose = 'ANTI_CHEATING_PROCTORING',
-            baselineSnapshot = {}
+            baselineSnapshot = {},
+            livenessProof = {}
         } = req.body || {};
 
         if (!interviewId) {
@@ -105,15 +187,19 @@ export const startShieldSession = async (req, res, next) => {
         });
 
         if (existingActiveSession) {
+            const freshNonce = generateChallengeNonce(existingActiveSession.id);
             return res.status(200).json({
                 status: 'success',
                 message: 'An active AI Shield session already exists for this interview.',
-                data: { session: existingActiveSession, isExisting: true }
+                data: { session: existingActiveSession, isExisting: true, challengeNonce: freshNonce }
             });
         }
 
         // Run Identity Verification Baseline
-        const identityResult = verifyIdentityBaseline(baselineSnapshot);
+        const identityResult = verifyIdentityBaseline({
+            ...baselineSnapshot,
+            livenessProof
+        });
 
         const targetCandidateId = candidateId || interview.candidateId;
 
@@ -141,6 +227,8 @@ export const startShieldSession = async (req, res, next) => {
                 expiresAt: new Date(Date.now() + 4 * 60 * 60 * 1000) // 4 hours auto-expiry
             }
         });
+
+        const challengeNonce = generateChallengeNonce(session.id);
 
         // If identity check produced initial signals, save them as events
         if (identityResult.signals && identityResult.signals.length > 0) {
@@ -179,6 +267,7 @@ export const startShieldSession = async (req, res, next) => {
             message: 'AI Shield session initialized successfully.',
             data: {
                 session,
+                challengeNonce,
                 identityVerification: identityResult
             }
         });
@@ -187,19 +276,21 @@ export const startShieldSession = async (req, res, next) => {
     }
 };
 
-// ─── 2. Ingest Frame / Visual Signals ─────────────────────────────────────────
+// ─── 3. Ingest Telemetry Batch (Frames + Audio) with Nonce Protection ─────────
 
 /**
- * POST /api/ai-shield/analyze-frame
- * Analyzes structured visual signals (presence, face count, gaze, landmarks)
+ * POST /api/ai-shield/telemetry-batch
+ * Ingests client-side CV telemetry batches with nonce verification.
  */
-export const analyzeFrame = async (req, res, next) => {
+export const ingestTelemetryBatch = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
         const {
             sessionId,
-            timestamp = 0,
-            frameMetrics = {}
+            challengeNonce,
+            sequenceNumber = 1,
+            frameBatches = [],
+            audioBatches = []
         } = req.body || {};
 
         if (!sessionId) {
@@ -222,32 +313,177 @@ export const analyzeFrame = async (req, res, next) => {
             });
         }
 
-        // Validate Session Lifecycle
         if (session.status !== SESSION_STATUS.ACTIVE) {
             return res.status(409).json({
                 status: 'error',
                 code: 'SESSION_NOT_ACTIVE',
-                message: `Cannot analyze frame: Session is currently in '${session.status}' state.`
+                message: `Cannot ingest telemetry: Session is in '${session.status}' state.`
             });
         }
 
-        // Check if expired
-        if (session.expiresAt && new Date(session.expiresAt) < new Date()) {
-            await prisma.aIShieldSession.update({
-                where: { id: sessionId },
-                data: { status: SESSION_STATUS.EXPIRED }
-            });
-            return res.status(410).json({
+        // Nonce & Sequence Validation
+        if (challengeNonce) {
+            const nonceCheck = validateNonceAndSequence(sessionId, challengeNonce, sequenceNumber);
+            if (!nonceCheck.valid) {
+                logger.warn(`[AIShield] Telemetry rejected for session ${sessionId}: ${nonceCheck.reason}`);
+                return res.status(403).json({
+                    status: 'error',
+                    code: nonceCheck.reason,
+                    message: 'Security telemetry validation failed (replay or invalid nonce).'
+                });
+            }
+        }
+
+        const eventsToCreate = [];
+
+        // Process Frame Batches
+        for (const frame of frameBatches) {
+            const { detectedEvents } = processFrameSignals(frame.metrics || {}, frame.timestamp || 0);
+            for (const ev of detectedEvents) {
+                eventsToCreate.push({
+                    sessionId,
+                    companyId,
+                    eventType: ev.eventType,
+                    timestamp: Number(ev.timestamp || 0),
+                    duration: ev.duration || 1,
+                    severity: ev.severity,
+                    confidence: ev.confidence,
+                    description: ev.description,
+                    metadata: JSON.stringify(ev.metadata || {})
+                });
+            }
+        }
+
+        // Process Audio Batches
+        for (const audio of audioBatches) {
+            const { detectedEvents } = processAudioSignals(audio.metrics || {}, audio.timestamp || 0);
+            for (const ev of detectedEvents) {
+                eventsToCreate.push({
+                    sessionId,
+                    companyId,
+                    eventType: ev.eventType,
+                    timestamp: Number(ev.timestamp || 0),
+                    duration: ev.duration || 1,
+                    severity: ev.severity,
+                    confidence: ev.confidence,
+                    description: ev.description,
+                    metadata: JSON.stringify(ev.metadata || {})
+                });
+            }
+        }
+
+        if (eventsToCreate.length > 0) {
+            await prisma.aIShieldEvent.createMany({ data: eventsToCreate });
+        }
+
+        await prisma.aIShieldSession.update({
+            where: { id: sessionId },
+            data: {
+                totalFramesAnalyzed: { increment: frameBatches.length },
+                totalAudioSlicesAnalyzed: { increment: audioBatches.length },
+                suspiciousEventsCount: { increment: eventsToCreate.length }
+            }
+        });
+
+        // Rotate Nonce
+        const nextNonce = generateChallengeNonce(sessionId);
+
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                eventsDetected: eventsToCreate.length,
+                nextChallengeNonce: nextNonce
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── 4. Degraded Mode Logging ─────────────────────────────────────────────────
+
+/**
+ * POST /api/ai-shield/degraded/:sessionId
+ * Gracefully records that browser CV failed due to device limitations.
+ */
+export const logDegradedMode = async (req, res, next) => {
+    try {
+        const companyId = resolveCompanyId(req);
+        const { sessionId } = req.params;
+        const { reason = 'BROWSER_CV_NOT_SUPPORTED', details = '' } = req.body || {};
+
+        const session = await prisma.aIShieldSession.findFirst({
+            where: { id: sessionId, companyId }
+        });
+
+        if (!session) {
+            return res.status(404).json({
                 status: 'error',
-                code: 'SESSION_EXPIRED',
-                message: 'AI Shield session has expired.'
+                code: 'SESSION_NOT_FOUND',
+                message: 'AI Shield session not found.'
             });
         }
 
-        // Process frame signals
+        await prisma.aIShieldEvent.create({
+            data: {
+                sessionId,
+                companyId,
+                eventType: 'CV_DEGRADED',
+                timestamp: 0,
+                duration: 0,
+                severity: SEVERITY_LEVELS.LOW,
+                confidence: 1.0,
+                description: `تعذر تشغيل المراقبة البصرية الحية بسبب قيود المتصفح أو الجهاز (${reason}).`,
+                metadata: JSON.stringify({ reason, details })
+            }
+        });
+
+        return res.status(200).json({
+            status: 'success',
+            message: 'Session transitioned to degraded mode gracefully.'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ─── 5. Analyze Frame (Legacy Single Endpoint) ────────────────────────────────
+
+export const analyzeFrame = async (req, res, next) => {
+    try {
+        const companyId = resolveCompanyId(req);
+        const { sessionId, timestamp = 0, frameMetrics = {} } = req.body || {};
+
+        if (!sessionId) {
+            return res.status(400).json({
+                status: 'error',
+                code: 'MISSING_SESSION_ID',
+                message: 'sessionId is required.'
+            });
+        }
+
+        const session = await prisma.aIShieldSession.findFirst({
+            where: { id: sessionId, companyId }
+        });
+
+        if (!session) {
+            return res.status(404).json({
+                status: 'error',
+                code: 'SESSION_NOT_FOUND',
+                message: 'AI Shield session not found.'
+            });
+        }
+
+        if (session.status !== SESSION_STATUS.ACTIVE) {
+            return res.status(409).json({
+                status: 'error',
+                code: 'SESSION_NOT_ACTIVE',
+                message: `Session is in '${session.status}' state.`
+            });
+        }
+
         const { detectedEvents } = processFrameSignals(frameMetrics, timestamp);
 
-        // Store detected events if any
         if (detectedEvents.length > 0) {
             for (const ev of detectedEvents) {
                 await prisma.aIShieldEvent.create({
@@ -266,7 +502,6 @@ export const analyzeFrame = async (req, res, next) => {
             }
         }
 
-        // Increment frame count and suspicious event counter
         await prisma.aIShieldSession.update({
             where: { id: sessionId },
             data: {
@@ -277,30 +512,19 @@ export const analyzeFrame = async (req, res, next) => {
 
         return res.status(200).json({
             status: 'success',
-            data: {
-                eventsDetected: detectedEvents.length,
-                events: detectedEvents
-            }
+            data: { eventsDetected: detectedEvents.length, events: detectedEvents }
         });
     } catch (error) {
         next(error);
     }
 };
 
-// ─── 3. Ingest Audio Signals ──────────────────────────────────────────────────
+// ─── 6. Analyze Audio (Legacy Single Endpoint) ────────────────────────────────
 
-/**
- * POST /api/ai-shield/analyze-audio
- * Analyzes acoustic telemetry (multi-speakers, background voices, silent pauses)
- */
 export const analyzeAudio = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
-        const {
-            sessionId,
-            timestamp = 0,
-            audioMetrics = {}
-        } = req.body || {};
+        const { sessionId, timestamp = 0, audioMetrics = {} } = req.body || {};
 
         if (!sessionId) {
             return res.status(400).json({
@@ -318,7 +542,7 @@ export const analyzeAudio = async (req, res, next) => {
             return res.status(404).json({
                 status: 'error',
                 code: 'SESSION_NOT_FOUND',
-                message: 'AI Shield session not found or unauthorized.'
+                message: 'AI Shield session not found.'
             });
         }
 
@@ -326,7 +550,7 @@ export const analyzeAudio = async (req, res, next) => {
             return res.status(409).json({
                 status: 'error',
                 code: 'SESSION_NOT_ACTIVE',
-                message: `Cannot analyze audio: Session is in '${session.status}' state.`
+                message: `Session is in '${session.status}' state.`
             });
         }
 
@@ -360,31 +584,19 @@ export const analyzeAudio = async (req, res, next) => {
 
         return res.status(200).json({
             status: 'success',
-            data: {
-                eventsDetected: detectedEvents.length,
-                events: detectedEvents
-            }
+            data: { eventsDetected: detectedEvents.length, events: detectedEvents }
         });
     } catch (error) {
         next(error);
     }
 };
 
-// ─── 4. Ingest & Analyze Answer Integrity ─────────────────────────────────────
+// ─── 7. Analyze Answers ───────────────────────────────────────────────────────
 
-/**
- * POST /api/ai-shield/analyze-answers
- * Analyzes candidate answers for LLM recitation markers and CV complexity variance.
- */
 export const analyzeAnswers = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
-        const {
-            sessionId,
-            answersText = '',
-            cvText = '',
-            jobTitle = ''
-        } = req.body || {};
+        const { sessionId, answersText = '', cvText = '', jobTitle = '' } = req.body || {};
 
         if (!sessionId) {
             return res.status(400).json({
@@ -396,18 +608,14 @@ export const analyzeAnswers = async (req, res, next) => {
 
         const session = await prisma.aIShieldSession.findFirst({
             where: { id: sessionId, companyId },
-            include: {
-                candidate: {
-                    include: { recruitmentjob: true }
-                }
-            }
+            include: { candidate: { include: { recruitmentjob: true } } }
         });
 
         if (!session) {
             return res.status(404).json({
                 status: 'error',
                 code: 'SESSION_NOT_FOUND',
-                message: 'AI Shield session not found or unauthorized.'
+                message: 'AI Shield session not found.'
             });
         }
 
@@ -444,23 +652,15 @@ export const analyzeAnswers = async (req, res, next) => {
 
         return res.status(200).json({
             status: 'success',
-            data: {
-                signalsDetected: signals.length,
-                signals,
-                metrics: extractedMetrics
-            }
+            data: { signalsDetected: signals.length, signals, metrics: extractedMetrics }
         });
     } catch (error) {
         next(error);
     }
 };
 
-// ─── 5. Complete AI Shield Session & Compute Final Scores ─────────────────────
+// ─── 8. Complete Session & Deterministic Scoring ──────────────────────────────
 
-/**
- * POST /api/ai-shield/complete/:sessionId
- * Closes the session and executes deterministic scoring + hard rule risk evaluation.
- */
 export const completeShieldSession = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
@@ -475,7 +675,7 @@ export const completeShieldSession = async (req, res, next) => {
             return res.status(404).json({
                 status: 'error',
                 code: 'SESSION_NOT_FOUND',
-                message: 'AI Shield session not found or unauthorized.'
+                message: 'AI Shield session not found.'
             });
         }
 
@@ -487,7 +687,9 @@ export const completeShieldSession = async (req, res, next) => {
             });
         }
 
-        // Deterministic Score & Risk Calculation
+        // Clean up active nonces
+        activeNonces.delete(sessionId);
+
         const computed = computeSessionScoresAndRisk(session, session.events);
 
         const summaryText = `تم استكمال فحص أمان ونزاهة المقابلة بالذكاء الاصطناعي. النتيجة الإجمالية لمؤشر النزاهة: ${computed.overallScore}/100، بمستوى خطر: ${computed.riskLevel}. تم رصد إجمالي ${session.events.length} إشارة وملاحظة سلوكية.`;
@@ -535,23 +737,15 @@ export const completeShieldSession = async (req, res, next) => {
     }
 };
 
-// ─── 6. Get AI Shield Report by Interview / Session ───────────────────────────
+// ─── 9. Get Shield Report ─────────────────────────────────────────────────────
 
-/**
- * GET /api/ai-shield/report/:interviewId
- * Fetches the complete explainable security report for an interview.
- */
 export const getShieldReport = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
         const { interviewId } = req.params;
 
-        // Fetch latest session for interview
         const session = await prisma.aIShieldSession.findFirst({
-            where: {
-                interviewId,
-                companyId
-            },
+            where: { interviewId, companyId },
             orderBy: { createdAt: 'desc' },
             include: {
                 events: { orderBy: { timestamp: 'asc' } },
@@ -577,7 +771,6 @@ export const getShieldReport = async (req, res, next) => {
             });
         }
 
-        // Parse structured metadata safely
         const report = {
             id: session.id,
             interviewId: session.interviewId,
@@ -646,19 +839,15 @@ export const getShieldReport = async (req, res, next) => {
     }
 };
 
-// ─── 7. Human Review Audit Action ─────────────────────────────────────────────
+// ─── 10. Human Review Audit Action ────────────────────────────────────────────
 
-/**
- * POST /api/ai-shield/review/:sessionId
- * Allows authorized HR Reviewer to mark human review decision and notes.
- */
 export const submitHumanReview = async (req, res, next) => {
     try {
         const companyId = resolveCompanyId(req);
         const { sessionId } = req.params;
         const {
-            status = 'REVIEWED', // UNDER_REVIEW, REVIEWED
-            reviewerDecision = 'APPROVED', // APPROVED, REJECTED, INCONCLUSIVE
+            status = 'REVIEWED',
+            reviewerDecision = 'APPROVED',
             reviewNotes = ''
         } = req.body || {};
 
@@ -704,5 +893,49 @@ export const submitHumanReview = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+
+// ─── 11. Scheduled 90-Day Retention Purge Routine ─────────────────────────────
+
+/**
+ * Executes cleanup of telemetry events and sensitive metadata older than 90 days.
+ */
+export const purgeExpiredRetentionData = async () => {
+    try {
+        const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+
+        const expiredSessions = await prisma.aIShieldSession.findMany({
+            where: {
+                createdAt: { lte: ninetyDaysAgo },
+                dataPurgedAt: null
+            },
+            select: { id: true, companyId: true }
+        });
+
+        if (expiredSessions.length === 0) return { purgedCount: 0 };
+
+        const sessionIds = expiredSessions.map(s => s.id);
+
+        // Delete all detailed timeline events for expired sessions
+        const deleteResult = await prisma.aIShieldEvent.deleteMany({
+            where: { sessionId: { in: sessionIds } }
+        });
+
+        // Mark sessions as purged while keeping audit summary
+        await prisma.aIShieldSession.updateMany({
+            where: { id: { in: sessionIds } },
+            data: {
+                dataPurgedAt: new Date(),
+                identityDetails: null,
+                hardRuleReasons: null
+            }
+        });
+
+        logger.info(`[AIShield Retention] Purged ${deleteResult.count} events across ${sessionIds.length} expired sessions.`);
+        return { purgedSessions: sessionIds.length, purgedEvents: deleteResult.count };
+    } catch (err) {
+        logger.error('[AIShield Retention] Purge failed:', err);
+        throw err;
     }
 };

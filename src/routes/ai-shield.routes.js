@@ -12,7 +12,10 @@
 
 import { Router } from 'express';
 import {
+    getChallengeNonce,
     startShieldSession,
+    ingestTelemetryBatch,
+    logDegradedMode,
     analyzeFrame,
     analyzeAudio,
     analyzeAnswers,
@@ -35,7 +38,14 @@ router.use(requireProSubscription);
 
 const SHIELD_ROLES = ['SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER', 'MANAGER'];
 
-// 1. POST /api/ai-shield/start — Start/Initialize session
+// 1. POST /api/ai-shield/nonce/:sessionId — Issue rotating challenge nonce
+router.post(
+    '/nonce/:sessionId',
+    authorize(...SHIELD_ROLES),
+    getChallengeNonce
+);
+
+// 2. POST /api/ai-shield/start — Start/Initialize session with consent & baseline
 router.post(
     '/start',
     authorize(...SHIELD_ROLES),
@@ -43,21 +53,35 @@ router.post(
     startShieldSession
 );
 
-// 2. POST /api/ai-shield/analyze-frame — Stream visual / telemetry frame metrics
+// 3. POST /api/ai-shield/telemetry-batch — Stream batched CV & Audio signals with nonce protection
+router.post(
+    '/telemetry-batch',
+    authorize(...SHIELD_ROLES),
+    ingestTelemetryBatch
+);
+
+// 4. POST /api/ai-shield/degraded/:sessionId — Record degraded mode gracefully
+router.post(
+    '/degraded/:sessionId',
+    authorize(...SHIELD_ROLES),
+    logDegradedMode
+);
+
+// 5. POST /api/ai-shield/analyze-frame — Stream visual / telemetry frame metrics (Single frame)
 router.post(
     '/analyze-frame',
     authorize(...SHIELD_ROLES),
     analyzeFrame
 );
 
-// 3. POST /api/ai-shield/analyze-audio — Stream acoustic anomaly telemetry
+// 6. POST /api/ai-shield/analyze-audio — Stream acoustic anomaly telemetry (Single audio)
 router.post(
     '/analyze-audio',
     authorize(...SHIELD_ROLES),
     analyzeAudio
 );
 
-// 4. POST /api/ai-shield/analyze-answers — Extract answer integrity & recitation signals
+// 7. POST /api/ai-shield/analyze-answers — Extract answer integrity & recitation signals
 router.post(
     '/analyze-answers',
     authorize(...SHIELD_ROLES),
@@ -65,21 +89,21 @@ router.post(
     analyzeAnswers
 );
 
-// 5. POST /api/ai-shield/complete/:sessionId — Complete session & run deterministic scoring
+// 8. POST /api/ai-shield/complete/:sessionId — Complete session & run deterministic scoring
 router.post(
     '/complete/:sessionId',
     authorize(...SHIELD_ROLES),
     completeShieldSession
 );
 
-// 6. GET /api/ai-shield/report/:interviewId — Fetch full report & events timeline
+// 9. GET /api/ai-shield/report/:interviewId — Fetch full report & events timeline
 router.get(
     '/report/:interviewId',
     authorize(...SHIELD_ROLES),
     getShieldReport
 );
 
-// 7. POST /api/ai-shield/review/:sessionId — Record Human Review decision & notes
+// 10. POST /api/ai-shield/review/:sessionId — Record Human Review decision & notes
 router.post(
     '/review/:sessionId',
     authorize(...SHIELD_ROLES),

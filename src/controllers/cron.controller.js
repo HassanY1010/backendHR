@@ -1,5 +1,6 @@
 import { slaService } from '../services/sla.service.js';
 import { runDeadlineChecker } from '../jobs/deadlineChecker.js';
+import { purgeExpiredRetentionData } from './ai-shield.controller.js';
 import logger from '../utils/logger.js';
 
 export const handleCronTrigger = async (req, res) => {
@@ -8,9 +9,10 @@ export const handleCronTrigger = async (req, res) => {
 
     try {
         // Execute background tasks safely
-        const [slaResult, deadlineResult] = await Promise.allSettled([
+        const [slaResult, deadlineResult, aiShieldRetentionResult] = await Promise.allSettled([
             slaService.checkSLABreaches(),
-            runDeadlineChecker()
+            runDeadlineChecker(),
+            purgeExpiredRetentionData()
         ]);
 
         const duration = Date.now() - startTime;
@@ -22,7 +24,8 @@ export const handleCronTrigger = async (req, res) => {
             executionTimeMs: duration,
             results: {
                 sla: slaResult.status === 'fulfilled' ? slaResult.value : { error: slaResult.reason?.message },
-                deadlines: deadlineResult.status === 'fulfilled' ? deadlineResult.value : { error: deadlineResult.reason?.message }
+                deadlines: deadlineResult.status === 'fulfilled' ? deadlineResult.value : { error: deadlineResult.reason?.message },
+                aiShieldRetention: aiShieldRetentionResult.status === 'fulfilled' ? aiShieldRetentionResult.value : { error: aiShieldRetentionResult.reason?.message }
             },
             timestamp: new Date().toISOString()
         });
