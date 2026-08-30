@@ -118,6 +118,7 @@ model Candidate {
   candidateNotes        CandidateNote[]
   schedulingSessions    SchedulingSession[]
   practiceSessions      PracticeSession[]
+  aiShieldSessions      AIShieldSession[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
@@ -296,6 +297,7 @@ model Company {
   interviewSlots     InterviewSlot[]
   schedulingSessions SchedulingSession[]
   calendarIntegrations CalendarIntegration[]
+  aiShieldSessions   AIShieldSession[]
 
   status             String            @default("active")
   @@map("company")
@@ -464,6 +466,7 @@ model Interview {
   company           Company?           @relation(fields: [companyId], references: [id], onDelete: Cascade, map: "Interview_companyId_fkey")
   interviewer       User?              @relation(fields: [interviewerId], references: [id], onDelete: SetNull, map: "Interview_interviewerId_fkey")
   evaluations       InterviewEvaluation[]
+  aiShieldSessions  AIShieldSession[]
 
   @@index([companyId], map: "Interview_companyId_idx")
   @@index([candidateId], map: "Interview_candidateId_idx")
@@ -569,6 +572,107 @@ model InterviewEvaluationVersion {
   @@index([interviewId])
   @@index([companyId])
   @@map("interviewevaluationversion")
+}
+
+// ============================================================
+// AI SHIELD — Anti-Cheating & Interview Security Proctoring
+// ============================================================
+
+model AIShieldSession {
+  id                    String    @id @default(uuid())
+  interviewId           String
+  companyId             String
+  candidateId           String
+  
+  // Lifecycle: CREATED -> CONSENTED -> ACTIVE -> COMPLETING -> COMPLETED (or FLAGGED/CANCELLED/EXPIRED)
+  status                String    @default("CREATED") 
+  
+  // Privacy & Consent
+  consentGiven          Boolean   @default(false)
+  consentTimestamp      DateTime?
+  consentVersion        String?   @default("v1.0")
+  consentPurpose        String?   @default("ANTI_CHEATING_PROCTORING")
+  consentMethod         String?   @default("DIGITAL_SIGNATURE_OPT_IN")
+  retentionPolicy       String?   @default("PURGE_AFTER_90_DAYS")
+  dataPurgedAt          DateTime?
+
+  // Scores (0-100 deterministic)
+  identityScore         Float?    // Baseline comparison
+  behaviorScore         Float?    // Face presence, gaze stability, attention
+  audioScore            Float?    // Voice continuity, anomaly check
+  answerIntegrityScore  Float?    // Recitation vs CV variance
+  overallScore          Float?    // Weighted composite
+  riskLevel             String    @default("LOW") // LOW, MEDIUM, HIGH
+
+  // Hard Rule Flagging
+  isHardRuleTriggered   Boolean   @default(false)
+  hardRuleReasons       String?   @db.Text // JSON array of critical rules triggered
+
+  // Identity Reference (Encrypted/Hashed vector representation or reference flag - No raw biometric storage)
+  identityVerified      Boolean   @default(false)
+  identityConfidence    Float?
+  identityDetails       String?   @db.Text // JSON: face count, liveness flag, similarity index
+  
+  // Human Review
+  humanReviewStatus     String    @default("NOT_REVIEWED") // NOT_REVIEWED, UNDER_REVIEW, REVIEWED
+  reviewedById          String?
+  reviewedAt            DateTime?
+  reviewNotes           String?   @db.Text
+  reviewerDecision      String?   // APPROVED, REJECTED, INCONCLUSIVE
+
+  // Metrics Snapshot
+  totalFramesAnalyzed   Int       @default(0)
+  totalAudioSlicesAnalyzed Int    @default(0)
+  suspiciousEventsCount Int       @default(0)
+  summary               String?   @db.Text
+  recommendations       String?   @db.Text // JSON array
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  completedAt           DateTime?
+  expiresAt             DateTime?
+
+  interview             Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  company               Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidate             Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  events                AIShieldEvent[]
+
+  @@index([interviewId])
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([status])
+  @@index([riskLevel])
+  @@index([humanReviewStatus])
+  @@map("aishieldsession")
+}
+
+model AIShieldEvent {
+  id              String          @id @default(uuid())
+  sessionId       String
+  companyId       String
+  
+  // Event Classification: MULTIPLE_FACES, NO_FACE, FACE_CHANGED, GAZE_AWAY, MULTIPLE_SPEAKERS, AUDIO_ANOMALY, AI_RECITATION, CV_COMPLEXITY_VARIANCE
+  eventType       String
+  timestamp       Float           // Offset in seconds from interview start
+  duration        Float?          // Duration in seconds if continuous (e.g. gaze away for 12s)
+  occurrences     Int             @default(1)
+  
+  // Severity: LOW, MEDIUM, HIGH, CRITICAL
+  severity        String          @default("LOW")
+  confidence      Float           @default(0.8) // 0.0 to 1.0 confidence score of signal
+  
+  description     String
+  metadata        String?         @db.Text // JSON with structured signal metrics (e.g., yaw/pitch, speaker count, word variance)
+  
+  createdAt       DateTime        @default(now())
+
+  session         AIShieldSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([companyId])
+  @@index([eventType])
+  @@index([severity])
+  @@map("aishieldevent")
 }
 
 model InterviewSlot {
