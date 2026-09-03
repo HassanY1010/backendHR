@@ -16,7 +16,7 @@ import logger from '../utils/logger.js';
 
 // Feature to Plan entitlement mapping
 const FEATURE_PLAN_MAP = {
-    AI_SHIELD: ['PRO', 'ENTERPRISE', 'ADVANCED', 'TRIAL'],
+    AI_SHIELD: ['PRO', 'ENTERPRISE', 'ADVANCED', 'TRIAL', 'BASIC', 'STARTER', 'FREE'],
     DEEP_ANALYTICS: ['PRO', 'ENTERPRISE'],
     CUSTOM_WORKFLOWS: ['PRO', 'ENTERPRISE']
 };

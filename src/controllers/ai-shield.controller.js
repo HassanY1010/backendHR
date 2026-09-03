@@ -83,11 +83,10 @@ const validateNonceAndSequence = (sessionId, nonce, sequenceNumber = 0) => {
  */
 export const getChallengeNonce = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const { sessionId } = req.params;
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId }
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId }
         });
 
         if (!session) {
@@ -129,7 +128,6 @@ export const getChallengeNonce = async (req, res, next) => {
  */
 export const startShieldSession = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const {
             interviewId,
             candidateId,
@@ -148,16 +146,25 @@ export const startShieldSession = async (req, res, next) => {
             });
         }
 
-        // Validate Interview exists and belongs to Company (Multi-tenant check)
+        let userCompanyId = null;
+        try {
+            userCompanyId = resolveCompanyId(req);
+        } catch {
+            // Unauthenticated candidate proctoring session
+        }
+
+        // Validate Interview exists and resolve company context (direct or candidate job company)
         const interview = await prisma.interview.findFirst({
             where: {
                 id: interviewId,
-                OR: [
-                    { companyId },
-                    { candidate: { recruitmentjob: { companyId } } }
-                ]
+                ...(userCompanyId ? {
+                    OR: [
+                        { companyId: userCompanyId },
+                        { candidate: { recruitmentjob: { companyId: userCompanyId } } }
+                    ]
+                } : {})
             },
-            include: { candidate: true }
+            include: { candidate: { include: { recruitmentjob: true } } }
         });
 
         if (!interview) {
@@ -165,6 +172,15 @@ export const startShieldSession = async (req, res, next) => {
                 status: 'error',
                 code: 'INTERVIEW_NOT_FOUND',
                 message: 'Interview not found or does not belong to your company.'
+            });
+        }
+
+        const companyId = userCompanyId || interview.companyId || interview.candidate?.recruitmentjob?.companyId;
+        if (!companyId) {
+            return res.status(400).json({
+                status: 'error',
+                code: 'MISSING_COMPANY_CONTEXT',
+                message: 'Could not resolve company context for this interview.'
             });
         }
 
@@ -181,7 +197,6 @@ export const startShieldSession = async (req, res, next) => {
         const existingActiveSession = await prisma.aIShieldSession.findFirst({
             where: {
                 interviewId,
-                companyId,
                 status: { in: [SESSION_STATUS.CREATED, SESSION_STATUS.CONSENTED, SESSION_STATUS.ACTIVE] }
             }
         });
@@ -284,7 +299,6 @@ export const startShieldSession = async (req, res, next) => {
  */
 export const ingestTelemetryBatch = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const {
             sessionId,
             challengeNonce,
@@ -301,8 +315,8 @@ export const ingestTelemetryBatch = async (req, res, next) => {
             });
         }
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId }
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId }
         });
 
         if (!session) {
@@ -312,6 +326,8 @@ export const ingestTelemetryBatch = async (req, res, next) => {
                 message: 'AI Shield session not found or unauthorized.'
             });
         }
+
+        const companyId = session.companyId;
 
         if (session.status !== SESSION_STATUS.ACTIVE) {
             return res.status(409).json({
@@ -408,12 +424,11 @@ export const ingestTelemetryBatch = async (req, res, next) => {
  */
 export const logDegradedMode = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const { sessionId } = req.params;
         const { reason = 'BROWSER_CV_NOT_SUPPORTED', details = '' } = req.body || {};
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId }
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId }
         });
 
         if (!session) {
@@ -427,7 +442,7 @@ export const logDegradedMode = async (req, res, next) => {
         await prisma.aIShieldEvent.create({
             data: {
                 sessionId,
-                companyId,
+                companyId: session.companyId,
                 eventType: 'CV_DEGRADED',
                 timestamp: 0,
                 duration: 0,
@@ -451,7 +466,6 @@ export const logDegradedMode = async (req, res, next) => {
 
 export const analyzeFrame = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const { sessionId, timestamp = 0, frameMetrics = {} } = req.body || {};
 
         if (!sessionId) {
@@ -462,8 +476,8 @@ export const analyzeFrame = async (req, res, next) => {
             });
         }
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId }
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId }
         });
 
         if (!session) {
@@ -489,7 +503,7 @@ export const analyzeFrame = async (req, res, next) => {
                 await prisma.aIShieldEvent.create({
                     data: {
                         sessionId,
-                        companyId,
+                        companyId: session.companyId,
                         eventType: ev.eventType,
                         timestamp: Number(ev.timestamp || 0),
                         duration: ev.duration || 1,
@@ -523,7 +537,6 @@ export const analyzeFrame = async (req, res, next) => {
 
 export const analyzeAudio = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const { sessionId, timestamp = 0, audioMetrics = {} } = req.body || {};
 
         if (!sessionId) {
@@ -534,8 +547,8 @@ export const analyzeAudio = async (req, res, next) => {
             });
         }
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId }
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId }
         });
 
         if (!session) {
@@ -561,7 +574,7 @@ export const analyzeAudio = async (req, res, next) => {
                 await prisma.aIShieldEvent.create({
                     data: {
                         sessionId,
-                        companyId,
+                        companyId: session.companyId,
                         eventType: ev.eventType,
                         timestamp: Number(ev.timestamp || 0),
                         duration: ev.duration || 1,
@@ -663,11 +676,10 @@ export const analyzeAnswers = async (req, res, next) => {
 
 export const completeShieldSession = async (req, res, next) => {
     try {
-        const companyId = resolveCompanyId(req);
         const { sessionId } = req.params;
 
-        const session = await prisma.aIShieldSession.findFirst({
-            where: { id: sessionId, companyId },
+        const session = await prisma.aIShieldSession.findUnique({
+            where: { id: sessionId },
             include: { events: true }
         });
 
@@ -715,7 +727,7 @@ export const completeShieldSession = async (req, res, next) => {
 
         auditService.log({
             userId: req.user?.id,
-            companyId,
+            companyId: session.companyId,
             action: 'COMPLETE_AI_SHIELD_SESSION',
             actionType: 'SECURITY',
             severity: computed.riskLevel === 'HIGH' ? 'HIGH' : 'low',
@@ -745,7 +757,14 @@ export const getShieldReport = async (req, res, next) => {
         const { interviewId } = req.params;
 
         const session = await prisma.aIShieldSession.findFirst({
-            where: { interviewId, companyId },
+            where: {
+                interviewId,
+                OR: [
+                    { companyId },
+                    { interview: { companyId } },
+                    { interview: { candidate: { recruitmentjob: { companyId } } } }
+                ]
+            },
             orderBy: { createdAt: 'desc' },
             include: {
                 events: { orderBy: { timestamp: 'asc' } },
