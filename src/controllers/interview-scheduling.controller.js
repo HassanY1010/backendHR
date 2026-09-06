@@ -323,8 +323,8 @@ export const bookInterview = async (req, res, next) => {
                     endTime: slotEnd,
                     duration: session.duration,
                     timezone,
-                    location: session.location,
-                    meetingUrl: session.meetingUrl || `https://meet.google.com/${crypto.randomBytes(4).toString('hex')}-${crypto.randomBytes(3).toString('hex')}`,
+                    // If custom meetingUrl provided by recruiter, use it. Otherwise, create a instant zero-setup secure room via Jitsi Meet or Meet compatible room
+                    meetingUrl: session.meetingUrl || `https://meet.jit.si/Interview-${session.candidateId.substring(0, 8)}-${crypto.randomBytes(3).toString('hex')}`,
                     schedulingSessionId: session.id,
                     notes: notes || null
                 }
