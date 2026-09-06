@@ -663,50 +663,61 @@ ${cleanAnswers}
 
     evaluatePracticeSession: async ({ answers, audioMetrics, videoMetrics, durationSeconds, companyId }) => {
         try {
-            // Calculate baseline voice and visual scores dynamically from telemetry
-            let dynamicVoiceScore = 75;
-            let dynamicVisualScore = 75;
+            const hasRealCamera = videoMetrics?.hasCamera !== false && videoMetrics?.lightingQuality !== 'NONE';
+            const avgVolume = audioMetrics?.avgVolume ?? 0;
+            const speakingSpeedWpm = audioMetrics?.speakingSpeedWpm ?? 0;
+            const pauseCount = audioMetrics?.pauseCount ?? 0;
+            const hasRealAnswers = Array.isArray(answers) && answers.some(a => a.transcript && a.transcript.trim().length > 5 && a.transcript !== 'إجابة تدريبية صوتية مسجلة.');
 
-            // Audio telemetry analysis
-            const avgVolume = audioMetrics?.avgVolume ?? 50;
-            const speakingSpeedWpm = audioMetrics?.speakingSpeedWpm ?? 120;
-            const pauseCount = audioMetrics?.pauseCount ?? 3;
+            // Real voice telemetry scoring
+            let dynamicVoiceScore = 0;
+            if (avgVolume > 10 || hasRealAnswers) {
+                dynamicVoiceScore = 75;
+                if (avgVolume < 20 || avgVolume > 90) dynamicVoiceScore -= 15;
+                if (speakingSpeedWpm < 60 || speakingSpeedWpm > 190) dynamicVoiceScore -= 15;
+                if (pauseCount > 8) dynamicVoiceScore -= 10;
+                dynamicVoiceScore = Math.max(25, Math.min(100, dynamicVoiceScore));
+            } else {
+                dynamicVoiceScore = 15; // Silence or muted mic
+            }
 
-            if (avgVolume < 20 || avgVolume > 90) dynamicVoiceScore -= 15;
-            if (speakingSpeedWpm < 90 || speakingSpeedWpm > 180) dynamicVoiceScore -= 10;
-            if (pauseCount > 8) dynamicVoiceScore -= 10;
-            dynamicVoiceScore = Math.max(30, Math.min(100, dynamicVoiceScore));
+            // Real visual telemetry scoring
+            let dynamicVisualScore = 0;
+            const lightingQuality = videoMetrics?.lightingQuality ?? (hasRealCamera ? 'GOOD' : 'NONE');
+            const eyeContactPct = videoMetrics?.eyeContactPct ?? (hasRealCamera ? 75 : 0);
+            const faceVisibilityPct = videoMetrics?.faceVisibilityPct ?? (hasRealCamera ? 80 : 0);
 
-            // Visual telemetry analysis
-            const faceVisibilityPct = videoMetrics?.faceVisibilityPct ?? 85;
-            const lightingQuality = videoMetrics?.lightingQuality ?? 'GOOD';
-            const eyeContactPct = videoMetrics?.eyeContactPct ?? 75;
-
-            if (lightingQuality === 'POOR') dynamicVisualScore -= 20;
-            else if (lightingQuality === 'FAIR') dynamicVisualScore -= 10;
-            if (faceVisibilityPct < 70) dynamicVisualScore -= 20;
-            if (eyeContactPct < 50) dynamicVisualScore -= 15;
-            dynamicVisualScore = Math.max(30, Math.min(100, dynamicVisualScore));
-
-            const hasRealAnswers = Array.isArray(answers) && answers.some(a => a.transcript && a.transcript.trim().length > 10);
+            if (hasRealCamera && lightingQuality !== 'NONE') {
+                dynamicVisualScore = 80;
+                if (lightingQuality === 'POOR') dynamicVisualScore -= 25;
+                else if (lightingQuality === 'FAIR') dynamicVisualScore -= 10;
+                if (faceVisibilityPct < 60) dynamicVisualScore -= 20;
+                dynamicVisualScore = Math.max(30, Math.min(100, dynamicVisualScore));
+            } else {
+                dynamicVisualScore = 10; // No camera / disabled
+            }
 
             if (!hasRealAnswers) {
+                const calculatedOverall = Math.round((dynamicVoiceScore + dynamicVisualScore + 20) / 3);
                 return {
-                    overallScore: Math.round((dynamicVoiceScore + dynamicVisualScore + 40) / 3),
-                    communicationScore: Math.round(dynamicVoiceScore),
-                    answerScore: 40,
+                    overallScore: calculatedOverall,
+                    communicationScore: dynamicVoiceScore,
+                    answerScore: 15,
                     voiceScore: dynamicVoiceScore,
                     visualScore: dynamicVisualScore,
                     confidenceIndicators: {
-                        speakingPacing: speakingSpeedWpm > 150 ? 'FAST' : speakingSpeedWpm < 100 ? 'SLOW' : 'OPTIMAL',
-                        audioClarity: avgVolume > 30 ? 'CLEAR' : 'LOW_VOLUME',
-                        eyeContactLevel: eyeContactPct > 70 ? 'GOOD' : 'NEEDS_FOCUS',
+                        speakingPacing: speakingSpeedWpm === 0 ? 'NO_SPEECH' : speakingSpeedWpm > 150 ? 'FAST' : speakingSpeedWpm < 80 ? 'SLOW' : 'OPTIMAL',
+                        audioClarity: avgVolume < 10 ? 'SILENT' : avgVolume < 25 ? 'LOW_VOLUME' : 'CLEAR',
+                        eyeContactLevel: dynamicVisualScore < 30 ? 'CAMERA_OFF' : eyeContactPct > 70 ? 'GOOD' : 'NEEDS_FOCUS',
                         lightingStatus: lightingQuality
                     },
                     feedback: {
-                        strengths: ['تم إعداد الكاميرا والميكروفون بنجاح.'],
-                        improvements: ['حاول تقديم إجابات مفصلة وكاملة أثناء الحديث مع المدرب الذكي.'],
-                        coachTip: 'تحدث بصوت واضح واشرح أفكارك بتسلسل منظم لبناء انطباع أولي قوي.'
+                        strengths: dynamicVisualScore > 40 ? ['تم فتح الكاميرا بنجاح وتجهيز بيئة اللقاء.'] : ['تم بدء الجلسة التدريبية بنجاح.'],
+                        improvements: [
+                            'لم يتم تسجيل صوت أو إجابة كافية للأسئلة التدريبية.',
+                            dynamicVisualScore < 30 ? 'تأكد من تفعيل الكاميرا والجلوس في مكان بإضاءة واضحة.' : 'تحدث بصوت مسموع وواضح واشرح إجاباتك بالتفصيل.'
+                        ],
+                        coachTip: 'التدريب الحقيقي يتطلب التحدث بصوتك أمام الكاميرا لكي يتمكن الذكاء الاصطناعي من تحليل نبرتك ووضوح أفكارك بدقة.'
                     },
                     isEvaluated: true
                 };
