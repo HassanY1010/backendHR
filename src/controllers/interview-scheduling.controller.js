@@ -37,10 +37,27 @@ export const createSchedulingSession = async (req, res, next) => {
             return res.status(404).json({ status: 'error', message: 'Candidate not found in company.' });
         }
 
-        // Verify Interviewer is an active user in the same company
-        const interviewer = await prisma.user.findFirst({
-            where: { id: interviewerId, companyId, status: 'ACTIVE', deletedAt: null }
-        });
+        // Verify Interviewer is an active user in the same company (or fallback to current user/active company admin)
+        let interviewer = null;
+        if (interviewerId && interviewerId !== 'system') {
+            interviewer = await prisma.user.findFirst({
+                where: { id: interviewerId, companyId, status: 'ACTIVE', deletedAt: null }
+            });
+        }
+
+        if (!interviewer) {
+            // Fallback to current authenticated user
+            interviewer = await prisma.user.findFirst({
+                where: { id: req.user.id, companyId, status: 'ACTIVE', deletedAt: null }
+            });
+        }
+
+        if (!interviewer) {
+            // Fallback to any active user in company
+            interviewer = await prisma.user.findFirst({
+                where: { companyId, status: 'ACTIVE', deletedAt: null }
+            });
+        }
 
         if (!interviewer) {
             return res.status(404).json({ status: 'error', message: 'Interviewer not found or not active in this company.' });
