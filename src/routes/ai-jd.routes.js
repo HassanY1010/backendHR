@@ -9,7 +9,8 @@ import {
     generateRecruitmentDescription,
     generateRecruitmentRequirements,
     improveJobDescription,
-    getJobDescriptionHistory
+    getJobDescriptionHistory,
+    suggestSkills
 } from '../controllers/ai-jd.controller.js';
 
 const router = express.Router();
@@ -28,6 +29,9 @@ router.get('/history', getJobDescriptionHistory);
 
 // Generate AI Job Summary Only for job request forms
 router.post('/generate-summary', generateSummaryOnly);
+
+// Suggest AI Skills strictly tailored to Job Title & Department
+router.post('/suggest-skills', suggestSkills);
 
 // Generate Recruitment Job Description (150-300 words)
 router.post('/generate-recruitment-description', generateRecruitmentDescription);

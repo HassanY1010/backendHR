@@ -112,51 +112,164 @@ export const validateAndEnforceOutputSchema = (raw, fallbackDomain) => {
 };
 
 // Helper: Domain tailored fallback
+// Domain knowledge dictionary for high-precision fallbacks and smart recommendations
+const DOMAIN_PROFILES = {
+    HR: {
+        keywords: ['موارد بشرية', 'human resources', 'hr', 'توظيف', 'استقطاب', 'شؤون موظفين', 'رواتب', 'تدريب', 'talent', 'payroll', 'personnel', 'recruitment', 'od', 'l&d'],
+        defaultSkills: ['نظام العمل السعودي', 'استقطاب الكفاءات (Talent Acquisition)', 'إدارة الأداء والتقييم', 'منصات قوى ومقيم ومدد والتأمينات', 'إعداد مسيرات الرواتب (Payroll)', 'تطوير وتدريب الموظفين (L&D)', 'أنظمة إدارة الموارد البشرية (HRIS/Oracle)'],
+        preferredSkills: ['شهادات احترافية (SHRM / CIPD)', 'تخطيط القوى العاملة (Manpower Planning)', 'حل النزاعات العمالية'],
+        responsibilities: [
+            'إدارة وتطبيق استراتيجيات وسياسات الموارد البشرية وفقاً لنظام العمل السعودي.',
+            'قيادة عمليات استقطاب واختيار أفضل الكفاءات والمواهب للمنظمة.',
+            'متابعة وتحديث سجلات الموظفين وإدارة منصات قوى ومدد والتأمينات الاجتماعية.',
+            'إعداد ومتابعة مسيرات الرواتب والمزايا وتقييم الأداء السنوي.',
+            'تصميم وتنفيذ برامج التدريب والتطوير الوظيفي لرفع كفاءة رأس المال البشري.'
+        ],
+        requirements: [
+            'إتقان شامل لنظام العمل واللوائح التنظيمية في المملكة العربية السعودية.',
+            'خبرة عملية مثبتة في ممارسات الموارد البشرية وإدارة شؤون الموظفين.',
+            'إجادة استخدام أنظمة الـ HRIS ومنصات وزارة الموارد البشرية (قوى، مقيم، التأمينات).',
+            'مهارات تواصل وتفاوض قيادية وبناء علاقات عمل إيجابية.'
+        ],
+        interviewQuestions: [
+            { question: 'كيف تضمن توافق سياسات التوظيف مع أحدث لوائح وتحديثات نظام العمل السعودي؟', category: 'تخصصي' },
+            { question: 'صف استراتيجيتك في استقطاب الكفاءات النادرة وتقليل معدل دوران الموظفين؟', category: 'استراتيجي' },
+            { question: 'كيف تتعامل مع الخلافات العمالية أو حالات تدني أداء الموظفين؟', category: 'سلوكي' }
+        ]
+    },
+    FINANCE: {
+        keywords: ['مالية', 'محاسب', 'finance', 'accounting', 'تدقيق', 'ميزانية', 'ضرائب', 'زكاة', 'audit', 'tax', 'vat', 'zatca', 'socpa', 'cfo'],
+        defaultSkills: ['معايير المحاسبة الدولية (IFRS)', 'أنظمة هيئة الزكاة والضريبة (ZATCA & VAT)', 'إعداد الموازنات والتقارير المالية', 'التحليل المالي والنمذجة المالية', 'برامج ERP المحاسبية (Oracle / SAP / Odoo)', 'التدقيق والرقابة الداخلية'],
+        preferredSkills: ['شهادة SOCPA / CPA / CMA', 'إدارة التدفقات النقدية والسيولة', 'التخطيط المالي الاستراتيجي'],
+        responsibilities: [
+            'إعداد القوائم والتقارير المالية الدورية بدقة وفق معايير المحاسبة الدولية IFRS.',
+            'متابعة وتقديم الإقرارات الضريبية والزكوية والامتثال لمتطلبات هيئة الزكاة والضريبة والجمارك (ZATCA).',
+            'إعداد وتدقيق الموازنات التقديرية ومراقبة انحرافات التكاليف والنفقات.',
+            'إدارة الحسابات الدائنة والمدينة والتسويات البنكية ومراقبة السيولة النقدية.'
+        ],
+        requirements: [
+            'مؤهل بكالوريوس في المحاسبة أو المالية مع الاعتماد المهني المناسب.',
+            'إتقان الأنظمة الضريبية والزكوية والفواتير الإلكترونية في المملكة.',
+            'خبرة متقدمة في التعامل مع البرامج المحاسبية وقواعد البيانات المالية.'
+        ],
+        interviewQuestions: [
+            { question: 'كيف تضمن الامتثال الكامل لمتطلبات الفوترة الإلكترونية ومعايير ZATCA؟', category: 'تخصصي' },
+            { question: 'ما الخطوات المتبعة لإعداد موازنة تقديرية ومراقبة ترشيد التكاليف؟', category: 'استراتيجي' }
+        ]
+    },
+    MARKETING: {
+        keywords: ['تسويق', 'مبيعات', 'marketing', 'sales', 'إعلان', 'سوشيال ميديا', 'seo', 'growth', 'brand', 'content', 'علاقات عامة', 'pr'],
+        defaultSkills: ['التسويق الرقمي وإدارة الحملات الإعلانية', 'إدارة منصات التواصل الاجتماعي', 'تحسين محركات البحث (SEO/SEM)', 'تحليل السوق وسلوك المستهلك', 'كتابة وصناعة المحتوى الإبداعي', 'إدارة علاقات العملاء (CRM)'],
+        preferredSkills: ['Google Analytics & Ads Certification', 'إدارة ميزانيات الحملات الإعلانية', 'التسويق عبر المؤثرين'],
+        responsibilities: [
+            'تخطيط وتنفيذ الحملات التسويقية المتكاملة لتعزيز الوعي بالعلامة التجارية وزيادة المبيعات.',
+            'إدارة المحتوى الرقمي عبر المنصات وتحسين تجربة العميل الرقمية.',
+            'تحليل مؤشرات أداء الحملات التسويقية (ROI & KPIs) وتحسين معدلات التحويل.'
+        ],
+        requirements: [
+            'خبرة مثبتة في قيادة الحملات التسويقية الرقمية وتحقيق مستهدفات النمو.',
+            'قدرة عالية على التفكير الإبداعي وتحليل البيانات التسويقية.'
+        ],
+        interviewQuestions: [
+            { question: 'كيف تبني حملة تسويقية تستهدف السوق السعودي وتحقق أعلى عائد استثمار (ROI)؟', category: 'استراتيجي' }
+        ]
+    },
+    OPERATIONS: {
+        keywords: ['عمليات', 'تشغيل', 'operations', 'لوجستيات', 'سلاسل إمداد', 'supply chain', 'مشتريات', 'procurement', 'مستودعات', 'جودة', 'quality'],
+        defaultSkills: ['إدارة العمليات وسلاسل الإمداد', 'إدارة المشتريات والتفاوض مع الموردين', 'ضبط الجودة وتحسين العمليات (Lean / Six Sigma)', 'إدارة المخزون والخدمات اللوجستية', 'تخطيط الموارد والجدولة التشغيلية'],
+        preferredSkills: ['شهادات PMP / CSCP', 'أتمتة العمليات التشغيلية', 'إدارة المخاطر التشغيلية'],
+        responsibilities: [
+            'الإشراف على سير العمليات اليومية وضمان أعلى مستويات الكفاءة والإنتاجية.',
+            'تحسين سلاسل الإمداد وإدارة عقود الموردين وتخفيض التكاليف التشغيلية.',
+            'متابعة تطبيق معايير الجودة والسلامة المهنية.'
+        ],
+        requirements: [
+            'خبرة عملية في إدارة العمليات التشغيلية وتحسين الكفاءة.',
+            'مهارات حل مشكلات استثنائية وقدرة على إدارة الأزمات.'
+        ],
+        interviewQuestions: [
+            { question: 'كيف تحدد نقاط الاختناق في العمليات التشغيلية وتقوم بمعالجتها؟', category: 'تخصصي' }
+        ]
+    },
+    TECH: {
+        keywords: ['تقنية', 'برمجة', 'برمجيات', 'software', 'developer', 'engineer', 'frontend', 'backend', 'devops', 'it', 'cloud', 'ai', 'data', 'security', 'نظم', 'شبكات'],
+        defaultSkills: ['هندسة البرمجيات والأنظمة الحديثة', 'كتابة الكود النظيف والتطوير المستمر (Clean Code & CI/CD)', 'إدارة قواعد البيانات وتصميم واجهات البرمجة (APIs)', 'حل المشكلات البرمجية المعقدة', 'الأمان السيبراني وجودة البرمجيات'],
+        preferredSkills: ['Cloud Services (AWS / Azure / GCP)', 'Microservices Architecture', 'DevOps & Containerization'],
+        responsibilities: [
+            'تصميم وبناء الأنظمة والتطبيقات البرمجية بجودة وكفاءة عالية وقابلة للتوسع.',
+            'تطبيق أفضل الممارسات في كتابة الكود وإجراء المراجعات والاختبارات الدورية.',
+            'التعاون مع الفرق التقنية لتطوير المعمارية البرمجية وحل المشكلات المعقدة.'
+        ],
+        requirements: [
+            'مؤهل علمي في علوم الحاسب أو هندسة البرمجيات أو مجال تقني ذي صلة.',
+            'خبرة برمجية عملية مثبتة ومعرفة عميقة بالتقنيات المستخدمة.',
+            'قدرة عالية على التحليل والابتكار ومواكبة أحدث التطورات التقنية.'
+        ],
+        interviewQuestions: [
+            { question: 'كيف تضمن جودة وقابلية توسع الأنظمة التي تقوم بتصميمها وتطويرها؟', category: 'تقني' },
+            { question: 'اشرح تحدياً هندسياً معقداً واجهته وكيف قمت بحله بنجاح؟', category: 'تقني' }
+        ]
+    }
+};
+
+// Helper: Detect domain strictly based on title and department
+export const detectJobDomain = (title = '', department = '') => {
+    const combined = `${title} ${department}`.toLowerCase();
+    
+    // Check HR first to prevent false IT assignment
+    if (DOMAIN_PROFILES.HR.keywords.some(k => combined.includes(k))) return 'HR';
+    if (DOMAIN_PROFILES.FINANCE.keywords.some(k => combined.includes(k))) return 'FINANCE';
+    if (DOMAIN_PROFILES.MARKETING.keywords.some(k => combined.includes(k))) return 'MARKETING';
+    if (DOMAIN_PROFILES.OPERATIONS.keywords.some(k => combined.includes(k))) return 'OPERATIONS';
+    if (DOMAIN_PROFILES.TECH.keywords.some(k => combined.includes(k))) return 'TECH';
+    
+    // Default fallback based on department context
+    if (combined.includes('موارد') || combined.includes('بشرية')) return 'HR';
+    if (combined.includes('مالي') || combined.includes('محاسب')) return 'FINANCE';
+    if (combined.includes('تسويق') || combined.includes('مبيعات')) return 'MARKETING';
+    return 'TECH';
+};
+
+// Helper: Domain tailored fallback
 const getDomainTailoredJD = (data) => {
-    const title = data?.jobTitle || 'مهندس برمجيات';
-    const dept = data?.department || 'تكنولوجيا المعلومات';
+    const title = data?.jobTitle || 'أخصائي مهني';
+    const dept = data?.department || 'القسم المعني';
     const exp = data?.experience || '3-5 سنوات';
     const loc = data?.location || 'الرياض';
     const edu = data?.educationLevel || 'بكالوريوس في التخصص المطلوب';
+    
+    const domainKey = detectJobDomain(title, dept);
+    const domainProfile = DOMAIN_PROFILES[domainKey] || DOMAIN_PROFILES.TECH;
+
     const skillsList = Array.isArray(data?.skills) && data.skills.length > 0
         ? data.skills
-        : ['المهارات التخصصية', 'حل المشكلات', 'العمل الجماعي'];
+        : domainProfile.defaultSkills.slice(0, 5);
 
     return {
         jobTitle: title,
         department: dept,
-        summary: `نبحث عن ${title} متميز ومحترف ذو خبرة (${exp}) للانضمام إلى فريق ${dept} في (${loc}). سيكون المرشح المثالي مسؤولاً عن تصميم وتطوير المهام وتحقيق أعلى معايير الجودة الأكاديمية والمهنية.`,
-        responsibilities: [
-            'تصميم وتطوير التطبيقات والأنظمة عالية الكفاءة والقابلة للتوسع.',
-            'كتابة كود برمجي نظيف (Clean Code)، موثق، وقابل للصيانة والتحسين المستمر.',
-            'تصميم وبناء واجهات البرمجة التطبيقية وقواعد البيانات وإدارة الاستعلامات.',
-            'إجراء مراجعات الكود واختبار البرمجيات وتصحيح الأخطاء.',
-            'التعاون الفعال مع فرق العمل لتنفيذ وتحديث المهام بسلاسة.'
-        ],
+        summary: `نبحث عن كفاءة مهنية متميزة ومحترفة لشغل وظيفة "${title}" للانضمام إلى فريق "${dept}" في (${loc}). سيتولى شاغل هذا الدور قيادة وتنفيذ المبادرات التخصصية، والمساهمة الفعالة في تحقيق مستهدفات الإدارة وتطوير منظومة العمل بأعلى معايير الجودة والاحترافية.`,
+        responsibilities: domainProfile.responsibilities,
         requirements: [
             `مؤهل علمي: ${edu}.`,
-            `خبرة عملية مثبتة لا تقل عن (${exp}) في التخصص.`,
-            `إجادة المهارات الأساسية: ${skillsList.join('، ')}.`,
-            'معرفة قوية بأنظمة العمل الحديثة وأنماط المعمارية والأمان المهني.'
+            `خبرة عملية مثبتة لا تقل عن (${exp}) في مجال ${title} أو تخصص وثيق الصلة.`,
+            `إتقان المهارات التخصصية: ${skillsList.join('، ')}.`,
+            ...domainProfile.requirements
         ],
         requiredSkills: skillsList,
-        preferredSkills: ['Cloud Architecture (AWS/GCP)', 'CI/CD Pipelines', 'Docker & Kubernetes'],
-        interviewQuestions: [
-            { question: 'كيف تقوم بتحسين أداء الأنظمة وإدارة الذاكرة والـ Caching في التطبيقات الكبيرة؟', category: 'تقني' },
-            { question: 'اشرح تحدياً تقنياً معقداً قمت بحله في مشروعك السابق وكيف أثر على العمل؟', category: 'تقني' },
-            { question: 'صف موقفاً واجهت فيه اختلافاً في الآراء الفنية مع الفريق وكيف تعاملت معه؟', category: 'سلوكي' }
-        ],
+        preferredSkills: domainProfile.preferredSkills,
+        interviewQuestions: domainProfile.interviewQuestions,
         searchKeywords: [title, dept, ...skillsList.slice(0, 3)],
         marketAnalysis: {
-            marketTip: 'توصية الذكاء الاصطناعي (AI Recommendation): الوظيفة ذات طلب عالي في سوق العمل.',
-            recommendedSkillsToAdd: ['Cloud Architecture', 'Microservices', 'Kubernetes'],
-            salarySuggestion: '18,000 - 28,000 ريال (AI Estimate)'
+            marketTip: `توصية الذكاء الاصطناعي (AI Insight): الوظيفة ذات أهمية استراتيجية وطلب نشط في سوق العمل لقطاع (${dept}).`,
+            recommendedSkillsToAdd: domainProfile.defaultSkills.slice(0, 3),
+            salarySuggestion: 'تقدير الراتب مخصص ومناسب وفق متوسطات السوق السعودي (AI Estimate)'
         },
         employmentType: 'FULL_TIME',
-        workMode: 'HYBRID',
+        workMode: 'ONSITE',
         seniorityLevel: 'MID',
         educationLevel: edu,
-        salaryInsight: 'تقدير الراتب مخصص ومناسب وفق متوسطات السوق التقني السعودي (AI Estimate).',
+        salaryInsight: 'تقدير الراتب مخصص ومناسب وفق معايير السوق السعودي لهذا الدور (AI Estimate).',
         confidence_score: 0.95
     };
 };
@@ -1092,7 +1205,9 @@ export const generateSummaryOnly = async (req, res) => {
             requiredExperience,
             skills,
             educationLevel,
-            hiringReason
+            hiringReason,
+            instructions,
+            currentSummary
         } = req.body;
 
         if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
@@ -1100,51 +1215,68 @@ export const generateSummaryOnly = async (req, res) => {
         }
 
         const cleanTitle = normalizeInput(String(jobTitle));
-        const cleanDept = department ? normalizeInput(String(department)) : 'تكنولوجيا المعلومات';
+        const cleanDept = department ? normalizeInput(String(department)) : 'القسم المعني';
         const cleanLoc = location ? normalizeInput(String(location)) : 'الرياض، المملكة العربية السعودية';
         const cleanExp = requiredExperience ? normalizeInput(String(requiredExperience)) : '3-5 سنوات';
         const cleanEdu = educationLevel ? normalizeInput(String(educationLevel)) : 'درجة البكالوريوس في التخصص ذي الصلة';
         const skillsList = Array.isArray(skills) ? skills.map(s => normalizeInput(String(s))).filter(Boolean) : [];
+        const cleanInstructions = instructions ? normalizeInput(String(instructions)) : '';
 
         // Prompt Injection Check
-        const combined = `${cleanTitle} ${cleanDept} ${skillsList.join(' ')}`;
+        const combined = `${cleanTitle} ${cleanDept} ${skillsList.join(' ')} ${cleanInstructions}`;
         if (detectPromptInjection(combined)) {
             return res.status(400).json({ error: 'تم اكتشاف مدخلات غير آمنة (Security Violation)' });
         }
 
-        const prompt = `أنت خبير واستشاري موارد بشرية واستقطاب كفاءات محترف في السوق السعودي والخليجي.
+        const domain = detectJobDomain(cleanTitle, cleanDept);
+        const domainProfile = DOMAIN_PROFILES[domain] || DOMAIN_PROFILES.TECH;
+
+        let prompt = `أنت خبير واستشاري موارد بشرية واستقطاب كفاءات محترف في السوق السعودي والخليجي.
 المطلوب: قم بصياغة "ملخص وظيفي احترافي وجذاب ومباشر" (Job Summary) من فقرتين متماسكتين ومكتوبتين بلغة عربية فصحى رفيعة المستوى للدور التالي:
 - المسمى الوظيفي: ${cleanTitle}
 - الإدارة / القسم: ${cleanDept}
 - موقع العمل: ${cleanLoc}
 - مستوى الخبرة المطلوبة: ${cleanExp}
 - المؤهل العلمي: ${cleanEdu}
-- المهارات التقنية والأساسية: ${skillsList.length > 0 ? skillsList.join('، ') : 'المهارات التخصصية والقيادية'}
+- المهارات التقنية والتخصصية: ${skillsList.length > 0 ? skillsList.join('، ') : domainProfile.defaultSkills.slice(0, 4).join('، ')}
 - طبيعة الدوام: ${employmentType || 'دوام كامل'}
-${hiringReason ? `- سياق التوظيف: ${normalizeInput(String(hiringReason))}` : ''}
+${hiringReason ? `- سياق التوظيف: ${normalizeInput(String(hiringReason))}` : ''}`;
 
-الضوابط الصارمة:
-1. اذكر القيمة المضافة لهذا الدور داخل قسم ${cleanDept} وكيف يسهم في تحقيق أهداف المنظمة.
-2. اذكر باختصار المسؤولية المحورية ونوع الكفاءة المطلوبة للنجاح في هذا الدور.
-3. لا ترجع أي JSON أو مقدمات أو خاتمة أو عناوين فرعية. أرجع نص الملخص الوظيفي فقط مباشرة.`;
+        if (currentSummary && typeof currentSummary === 'string' && currentSummary.trim().length > 10) {
+            prompt += `\n- النص الحالي للملخص المراد تعديله وتحسينه:\n"""${normalizeInput(currentSummary.trim())}"""`;
+        }
+
+        if (cleanInstructions) {
+            prompt += `\n- توجيهات وتعديلات إضافية مطلوبة من المستخدم:\n"""${cleanInstructions}"""`;
+        }
+
+        prompt += `\n\nالضوابط الصارمة:
+1. حافظ على التوافق التام مع مجال ${cleanDept} والمسمى ${cleanTitle}. لا تذكر تقنيات برمجة أو مصطلحات خارج نطاق هذا التخصص إطلاقاً إلا إذا طُلبت صراحة.
+2. اذكر القيمة المضافة لهذا الدور داخل قسم ${cleanDept} وكيف يسهم في تحقيق أهداف المنظمة.
+3. ${cleanInstructions ? 'نفذ التعليمات الإضافية بدقة مع دمجها بشكل متناسق في نص الملخص.' : 'اذكر باختصار المسؤولية المحورية ونوع الكفاءة المطلوبة للنجاح في هذا الدور.'}
+4. لا ترجع أي JSON أو مقدمات أو خاتمة أو عناوين فرعية. أرجع نص الملخص الوظيفي فقط مباشرة باللغة العربية الفصحى.`;
 
         let summaryText = '';
         try {
-            const aiResponse = await aiService.generateJobDescription(prompt, companyId);
-            if (typeof aiResponse === 'string') {
-                summaryText = aiResponse.trim();
-            } else if (aiResponse?.summary) {
-                summaryText = aiResponse.summary.trim();
-            } else if (aiResponse?.job_summary) {
-                summaryText = aiResponse.job_summary.trim();
+            // Use generateText directly for plain text output
+            const rawResponse = await aiService.generateText(prompt, companyId);
+            if (rawResponse && typeof rawResponse === 'string') {
+                summaryText = rawResponse.trim();
             }
         } catch (aiErr) {
-            logger.warn('[AI-JD] OpenAI generation fallback triggered for summary:', aiErr.message);
+            logger.warn('[AI-JD] OpenAI generationText failed for summary, trying structured:', aiErr.message);
+            try {
+                const structuredRes = await aiService.generateJobDescription(prompt, companyId);
+                summaryText = typeof structuredRes === 'string' ? structuredRes : (structuredRes?.summary || structuredRes?.job_summary || '');
+            } catch (e) {
+                logger.warn('[AI-JD] Structured fallback failed too:', e.message);
+            }
         }
 
-        // High Quality Dynamic Fallback if AI fails or returns empty
+        // High Quality Domain-Aware Dynamic Fallback if AI fails or returns empty
         if (!summaryText || summaryText.length < 20) {
-            const skillsSnippet = skillsList.length > 0 ? ` مع إتقان متقدم لـ (${skillsList.slice(0, 4).join('، ')})` : '';
+            const activeSkills = skillsList.length > 0 ? skillsList : domainProfile.defaultSkills.slice(0, 4);
+            const skillsSnippet = activeSkills.length > 0 ? ` مع إتقان متقدم لـ (${activeSkills.slice(0, 4).join('، ')})` : '';
             summaryText = `نبحث عن كفاءة مهنية متميزة لشغل وظيفة "${cleanTitle}" للانضمام إلى فريق "${cleanDept}". سيتولى شاغل هذا الدور قيادة وتنفيذ المبادرات المحورية، والمساهمة الفعالة في رفع جودة المخرجات التشغيلية وتطوير منظومة العمل وفق أعلى المعايير المهنية.\n\nيتطلب هذا الدور خبرة عملية مثبتة (${cleanExp}) ومؤهل علمي (${cleanEdu})${skillsSnippet}، بالإضافة إلى مهارات تواصل قيادية وقدرة عالية على التحليل وحل المشكلات المعقدة والعمل بكفاءة في بيئة عمل ديناميكية وسريعة النمو.`;
         }
 
@@ -1152,6 +1284,78 @@ ${hiringReason ? `- سياق التوظيف: ${normalizeInput(String(hiringReaso
     } catch (err) {
         logger.error('[AI-JD] Error in generateSummaryOnly:', err);
         return res.status(500).json({ error: 'حدث خطأ أثناء توليد ملخص الوظيفة' });
+    }
+};
+
+/**
+ * Suggest specialized skills tailored strictly to Job Title & Department
+ * POST /api/ai-jd/suggest-skills
+ */
+export const suggestSkills = async (req, res) => {
+    try {
+        const companyId = req.user?.companyId;
+        const { jobTitle, department, experience, jobSummary, instructions } = req.body;
+
+        if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
+            return res.status(400).json({ error: 'المسمى الوظيفي مطلوب لاقتراح المهارات' });
+        }
+
+        const cleanTitle = normalizeInput(String(jobTitle));
+        const cleanDept = department ? normalizeInput(String(department)) : 'القسم المعني';
+        const cleanExp = experience ? normalizeInput(String(experience)) : '3-5 سنوات';
+        const cleanSummary = jobSummary ? normalizeInput(String(jobSummary)) : '';
+        const cleanInstructions = instructions ? normalizeInput(String(instructions)) : '';
+
+        // Security check
+        const combined = `${cleanTitle} ${cleanDept} ${cleanSummary} ${cleanInstructions}`;
+        if (detectPromptInjection(combined)) {
+            return res.status(400).json({ error: 'تم اكتشاف مدخلات غير آمنة' });
+        }
+
+        const domain = detectJobDomain(cleanTitle, cleanDept);
+        const domainProfile = DOMAIN_PROFILES[domain] || DOMAIN_PROFILES.TECH;
+
+        const prompt = `أنت خبير واستشاري موارد بشرية واستقطاب مواهب أول في السوق السعودي.
+المطلوب: اقترح قائمة مهارات تخصصية دقيقة ومطلوبة في سوق العمل (بين 6 إلى 10 مهارات) للوظيفة التالية:
+- المسمى الوظيفي: ${cleanTitle}
+- الإدارة / القسم: ${cleanDept}
+- الخبرة: ${cleanExp}
+${cleanSummary ? `- ملخص الدور الوظيفي: ${cleanSummary.slice(0, 300)}` : ''}
+${cleanInstructions ? `- توجيهات إضافية: ${cleanInstructions}` : ''}
+
+الضوابط الصارمة:
+1. يجب أن تكون المهارات متطابقة 100% مع مجال ${cleanDept} والمسمى ${cleanTitle}.
+2. إذا كانت الوظيفة في الموارد البشرية، ركز على: أنظمة العمل السعودية، التأمينات، قوى، مسيرات الرواتب، استقطاب المواهب، تقييم الأداء، منصات HRIS مثل Oracle HCM/SAP SuccessFactors، إلخ. لا تقترح مهارات برمجة إطلاقاً!
+3. أرجع JSON فقط بالشكل التالي:
+{
+  "skills": ["مهارة 1", "مهارة 2", "مهارة 3", "مهارة 4", "مهارة 5", "مهارة 6"]
+}`;
+
+        let suggestedSkills = [];
+        try {
+            const aiRes = await aiService.generateJobDescription(prompt, companyId);
+            if (aiRes && Array.isArray(aiRes.skills) && aiRes.skills.length > 0) {
+                suggestedSkills = aiRes.skills.map(s => String(s).trim()).filter(Boolean);
+            } else if (aiRes?.requiredSkills && Array.isArray(aiRes.requiredSkills) && aiRes.requiredSkills.length > 0) {
+                suggestedSkills = aiRes.requiredSkills.map(s => String(s).trim()).filter(Boolean);
+            }
+        } catch (aiErr) {
+            logger.warn('[AI-JD] Skills suggestion AI fallback triggered:', aiErr.message);
+        }
+
+        // Domain-specific fallback
+        if (suggestedSkills.length === 0) {
+            suggestedSkills = [...domainProfile.defaultSkills];
+        }
+
+        return res.json({
+            status: 'success',
+            domain,
+            skills: suggestedSkills
+        });
+    } catch (err) {
+        logger.error('[AI-JD] Error in suggestSkills:', err);
+        return res.status(500).json({ error: 'حدث خطأ أثناء اقتراح المهارات' });
     }
 };
 
