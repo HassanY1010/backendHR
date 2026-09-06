@@ -349,6 +349,34 @@ export const bookInterview = async (req, res, next) => {
                 }
             });
 
+            // Create In-App Notification for Interviewer/Recruiter
+            const formattedDate = new Intl.DateTimeFormat('ar-SA', { 
+                weekday: 'long', 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+            }).format(slotStart);
+
+            await tx.notification.create({
+                data: {
+                    userId: session.interviewerId,
+                    title: 'تم تأكيد حجز موعد مقابلة جديد 📅',
+                    message: `قام المرشح ${session.candidate.fullName} بحجز موعد المقابلة لوظيفة (${session.candidate.recruitmentjob?.title || 'عام'}) في تاريخ (${formattedDate}).`,
+                    type: 'INTERVIEW_BOOKED',
+                    metadata: JSON.stringify({
+                        candidateId: session.candidateId,
+                        jobId: session.candidate.jobId,
+                        interviewId: interview.id,
+                        meetingUrl: interview.meetingUrl,
+                        startTime: slotStart
+                    }),
+                    updatedAt: new Date()
+                }
+            });
+
             return interview;
         }, {
             maxWait: 10000, // Wait up to 10s to acquire transaction slot
