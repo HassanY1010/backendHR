@@ -152,7 +152,7 @@ export const getPracticeSessionDetails = async (req, res, next) => {
         }
 
         const tokenHash = hashToken(token);
-        const session = await prisma.practiceSession.findUnique({
+        let session = await prisma.practiceSession.findUnique({
             where: { tokenHash },
             include: {
                 candidate: {
@@ -167,6 +167,61 @@ export const getPracticeSessionDetails = async (req, res, next) => {
                 }
             }
         });
+
+        // If not found by direct practice token, check if user passed the schedulingSession token
+        if (!session) {
+            const schedulingSession = await prisma.schedulingSession.findUnique({
+                where: { tokenHash },
+                include: { candidate: true }
+            });
+
+            if (schedulingSession) {
+                // Find or create practice session for this candidate
+                let candidatePractice = await prisma.practiceSession.findFirst({
+                    where: { candidateId: schedulingSession.candidateId },
+                    include: {
+                        candidate: {
+                            select: {
+                                id: true,
+                                fullName: true,
+                                email: true,
+                                recruitmentjob: {
+                                    select: { title: true, department: true }
+                                }
+                            }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                if (!candidatePractice) {
+                    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                    candidatePractice = await prisma.practiceSession.create({
+                        data: {
+                            candidateId: schedulingSession.candidateId,
+                            schedulingSessionId: schedulingSession.id,
+                            tokenHash,
+                            status: 'ACTIVE',
+                            expiresAt,
+                            startedAt: new Date()
+                        },
+                        include: {
+                            candidate: {
+                                select: {
+                                    id: true,
+                                    fullName: true,
+                                    email: true,
+                                    recruitmentjob: {
+                                        select: { title: true, department: true }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+                session = candidatePractice;
+            }
+        }
 
         if (!session) {
             return res.status(404).json({
@@ -239,7 +294,7 @@ export const analyzePracticeSession = async (req, res, next) => {
         }
 
         const tokenHash = hashToken(token);
-        const session = await prisma.practiceSession.findUnique({
+        let session = await prisma.practiceSession.findUnique({
             where: { tokenHash },
             include: {
                 candidate: {
@@ -247,6 +302,25 @@ export const analyzePracticeSession = async (req, res, next) => {
                 }
             }
         });
+
+        if (!session) {
+            const schedulingSession = await prisma.schedulingSession.findUnique({
+                where: { tokenHash },
+                include: { candidate: true }
+            });
+
+            if (schedulingSession) {
+                session = await prisma.practiceSession.findFirst({
+                    where: { candidateId: schedulingSession.candidateId },
+                    include: {
+                        candidate: {
+                            include: { recruitmentjob: true }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
+        }
 
         if (!session) {
             return res.status(404).json({ status: 'error', code: 'INVALID_TOKEN', message: 'جلسة التدريب غير صالحة.' });
