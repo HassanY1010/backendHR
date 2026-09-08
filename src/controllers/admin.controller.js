@@ -304,7 +304,6 @@ export const updateCompanyPlan = async (req, res, next) => {
                 where: { id: existingSub.id },
                 data: {
                     plan: normalizedPlan,
-                    seats: seatsCount,
                     status: 'ACTIVE',
                     endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
                 }
@@ -314,7 +313,6 @@ export const updateCompanyPlan = async (req, res, next) => {
                 data: {
                     companyId: id,
                     plan: normalizedPlan,
-                    seats: seatsCount,
                     status: 'ACTIVE',
                     startDate: new Date(),
                     endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
@@ -325,7 +323,8 @@ export const updateCompanyPlan = async (req, res, next) => {
         const company = await prisma.company.update({
             where: { id },
             data: {
-                subscriptionStatus: 'ACTIVE',
+                subscriptionStatus: normalizedPlan,
+                employeeLimit: seatsCount,
                 updatedAt: new Date()
             },
             include: {
@@ -339,6 +338,7 @@ export const updateCompanyPlan = async (req, res, next) => {
 
         res.status(200).json({ status: 'success', data: company });
     } catch (error) {
+        console.error('[ADMIN-UPDATE-PLAN-ERROR]', error);
         next(error);
     }
 };
