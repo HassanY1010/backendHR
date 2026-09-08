@@ -74,39 +74,22 @@ export const createPracticeSession = async (req, res, next) => {
             });
         }
 
-        // Check if candidate already has a practice session (Enforce One-Time Policy)
+        // Check if candidate already has a practice session - allow re-training seamlessly
         const existingSession = await prisma.practiceSession.findFirst({
-            where: { candidateId: targetCandidateId },
+            where: { candidateId: targetCandidateId, status: 'ACTIVE' },
             orderBy: { createdAt: 'desc' }
         });
 
-        if (existingSession) {
-            if (existingSession.status === 'COMPLETED') {
-                return res.status(403).json({
-                    status: 'error',
-                    code: 'PRACTICE_ALREADY_COMPLETED',
-                    message: 'لقد قمت بإجراء الجلسة التدريبية المخصصة لك مسبقاً. التدريب متاح لمرة واحدة فقط.',
-                    data: {
-                        sessionId: existingSession.id,
-                        status: existingSession.status,
-                        completedAt: existingSession.completedAt,
-                        overallScore: existingSession.overallScore
-                    }
-                });
-            }
-
-            if (new Date() < new Date(existingSession.expiresAt)) {
-                // If existing session is still active and not completed, return it
-                return res.status(200).json({
-                    status: 'success',
-                    message: 'استئناف الجلسة التدريبية الحالية.',
-                    data: {
-                        sessionId: existingSession.id,
-                        status: existingSession.status,
-                        expiresAt: existingSession.expiresAt
-                    }
-                });
-            }
+        if (existingSession && new Date() < new Date(existingSession.expiresAt)) {
+            return res.status(200).json({
+                status: 'success',
+                message: 'استئناف الجلسة التدريبية الحالية.',
+                data: {
+                    sessionId: existingSession.id,
+                    status: existingSession.status,
+                    expiresAt: existingSession.expiresAt
+                }
+            });
         }
 
         // Generate strong unguessable raw token
