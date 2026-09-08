@@ -168,6 +168,35 @@ export const getSessionDetails = async (req, res, next) => {
         }
 
         if (session.status !== 'ACTIVE') {
+            if (session.status === 'USED') {
+                // Find booked interview details to display confirmation card
+                const bookedInterview = await prisma.interview.findFirst({
+                    where: { schedulingSessionId: session.id },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                return res.status(200).json({
+                    status: 'success',
+                    data: {
+                        isAlreadyBooked: true,
+                        candidateName: session.candidate.fullName,
+                        jobTitle: session.candidate.recruitmentjob?.title,
+                        interviewerName: session.interviewer.name,
+                        interviewType: session.interviewType,
+                        duration: session.duration,
+                        expiresAt: session.expiresAt,
+                        location: session.location,
+                        bookedInterview: bookedInterview ? {
+                            id: bookedInterview.id,
+                            startTime: bookedInterview.startTime,
+                            endTime: bookedInterview.endTime,
+                            meetingUrl: bookedInterview.meetingUrl,
+                            timezone: bookedInterview.timezone
+                        } : null
+                    }
+                });
+            }
+
             return res.status(400).json({ status: 'error', code: `SESSION_${session.status}`, message: 'رابط الحجز هذا تم استخدامه بالفعل أو ملغى' });
         }
 
