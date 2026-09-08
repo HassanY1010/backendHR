@@ -6,6 +6,7 @@ import {
     getPortfolioAnalytics,
     analyzeCompany,
     updateCompanyStatus,
+    updateCompanyPlan,
     getAIUsage,
     getAuditLogs,
     toggleFeature,
@@ -33,6 +34,7 @@ router.get('/companies', getAllCompanies);
 router.get('/companies/portfolio-analytics', getPortfolioAnalytics);
 router.post('/companies/:id/analyze', analyzeCompany);
 router.patch('/companies/:id/status', updateCompanyStatus);
+router.patch('/companies/:id/plan', updateCompanyPlan);
 
 // Governance & Monitoring
 router.get('/ai-usage', getAIUsage);

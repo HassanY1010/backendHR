@@ -285,6 +285,64 @@ export const getFeatureFlags = async (req, res, next) => {
     }
 };
 
+export const updateCompanyPlan = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { plan, seats } = req.body;
+
+        const normalizedPlan = (plan || 'PRO').toUpperCase();
+        const seatsCount = Number(seats) || 100;
+
+        // Upsert subscription
+        const existingSub = await prisma.subscription.findFirst({
+            where: { companyId: id },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (existingSub) {
+            await prisma.subscription.update({
+                where: { id: existingSub.id },
+                data: {
+                    plan: normalizedPlan,
+                    seats: seatsCount,
+                    status: 'ACTIVE',
+                    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+                }
+            });
+        } else {
+            await prisma.subscription.create({
+                data: {
+                    companyId: id,
+                    plan: normalizedPlan,
+                    seats: seatsCount,
+                    status: 'ACTIVE',
+                    startDate: new Date(),
+                    endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+                }
+            });
+        }
+
+        const company = await prisma.company.update({
+            where: { id },
+            data: {
+                subscriptionStatus: 'ACTIVE',
+                updatedAt: new Date()
+            },
+            include: {
+                subscriptions: {
+                    where: { status: 'ACTIVE' },
+                    orderBy: { endDate: 'desc' },
+                    take: 1
+                }
+            }
+        });
+
+        res.status(200).json({ status: 'success', data: company });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const toggleFeature = async (req, res, next) => {
     try {
         const { featureName, enabled } = req.body;
