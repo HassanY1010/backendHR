@@ -162,7 +162,6 @@ ${currentExtractedData ? JSON.stringify(currentExtractedData, null, 2) : 'لا �
      * Deterministic + Qualitative Candidate Matcher
      */
     evaluateCandidateMatch: ({ candidate, jobSpec }) => {
-        let score = 50; // base score
         let breakdown = {
             titleMatch: 0,
             skillsMatch: 0,
@@ -175,81 +174,88 @@ ${currentExtractedData ? JSON.stringify(currentExtractedData, null, 2) : 'لا �
         const cTitle = (candidate.currentTitle || candidate.fullName || '').toLowerCase();
         const jTitle = (jobSpec.jobTitle || '').toLowerCase();
 
-        // 1. Title matching
+        // 1. Exact or Partial Title & Domain Matching (Up to 35 points)
+        const jobWords = jTitle.split(/[\s,/-]+/).filter(w => w.length > 2);
+        const matchesJobWords = jobWords.some(w => cTitle.includes(w));
+
         if (jTitle && cTitle.includes(jTitle)) {
-            breakdown.titleMatch = 25;
-            score += 25;
-            strengths.push('المسمى الوظيفي السابق يطابق تماماً المنصب المطلوب');
+            breakdown.titleMatch = 35;
+            strengths.push(`المسمى الوظيفي السابق (${candidate.currentTitle || 'المطابق'}) يتطابق تماماً مع المنصب المستهدف`);
+        } else if (matchesJobWords) {
+            breakdown.titleMatch = 20;
+            strengths.push(`الخلفية المهنية للمرشح قريبة من مجال المنصب (${jobSpec.jobTitle})`);
         } else {
-            breakdown.titleMatch = 15;
-            score += 15;
+            breakdown.titleMatch = 5;
+            risks.push(`المسمى الوظيفي السابق للمرشح (${candidate.currentTitle || 'غير محدد'}) يختلف عن المنصب المطلوب`);
         }
 
-        // 2. Experience matching
-        const cExp = candidate.yearsOfExperience || 0;
-        const jExp = jobSpec.experienceYears || 0;
-        if (jExp > 0) {
-            if (cExp >= jExp) {
-                breakdown.experienceMatch = 25;
-                score += 25;
-                strengths.push(`سنوات الخبرة (${cExp} سنوات) تلبي وتفوق الحد الأدنى المطلوب (${jExp} سنوات)`);
-            } else if (cExp >= jExp - 2) {
-                breakdown.experienceMatch = 15;
-                score += 15;
-                risks.push(`الخبرة العملية (${cExp} سنوات) أقل بقليل من المستهدف (${jExp} سنوات)`);
-            } else {
-                breakdown.experienceMatch = 5;
-                score += 5;
-                risks.push(`فارق في سنوات الخبرة المطلوبة (${cExp} سنوات مقابل ${jExp} سنوات مطلوبة)`);
-            }
-        } else {
-            breakdown.experienceMatch = 20;
-            score += 20;
-        }
-
-        // 3. Location matching
-        const cLoc = (candidate.location || '').toLowerCase();
-        const jLoc = (jobSpec.location || '').toLowerCase();
-        if (jLoc && cLoc.includes(jLoc)) {
-            breakdown.locationMatch = 20;
-            score += 20;
-            strengths.push(`موقع المرشح متوافق مع مقر العمل في (${jobSpec.location})`);
-        } else {
-            breakdown.locationMatch = 10;
-            score += 10;
-            if (jLoc) risks.push(`قد يحتاج المرشح إلى انتقال لمقر العمل في (${jobSpec.location})`);
-        }
-
-        // 4. Skills matching (if skills array exists)
-        const cSkills = (candidate.candidateSkills || []).map(s => s.skillName.toLowerCase());
+        // 2. Skills Matching against candidate skills in database (Up to 35 points)
+        const cSkills = (candidate.candidateSkills || []).map(s => (s.skillName || '').toLowerCase());
         const jSkills = (jobSpec.requiredSkills || []).map(s => s.toLowerCase());
         let matchedSkillsCount = 0;
+        let matchedSkillNames = [];
+
         jSkills.forEach(s => {
-            if (cSkills.some(cs => cs.includes(s) || s.includes(cs))) {
+            const matched = cSkills.find(cs => cs.includes(s) || s.includes(cs));
+            if (matched) {
                 matchedSkillsCount++;
+                matchedSkillNames.push(matched);
             }
         });
 
         if (jSkills.length > 0) {
             const ratio = matchedSkillsCount / jSkills.length;
-            const skillScore = Math.round(ratio * 30);
-            breakdown.skillsMatch = skillScore;
-            score = Math.min(98, score + skillScore - 15);
-            if (ratio >= 0.7) {
-                strengths.push(`تطابق ممتاز في المهارات الأساسية المطلوبة (${matchedSkillsCount}/${jSkills.length})`);
+            breakdown.skillsMatch = Math.round(ratio * 35);
+            if (ratio >= 0.6) {
+                strengths.push(`يمتلك المهارات التقنية الأساسية المطلوبة: ${matchedSkillNames.slice(0, 3).join(', ')}`);
+            } else if (matchedSkillsCount > 0) {
+                risks.push(`يمتلك جزءاً من المهارات المطلوبة فقط (${matchedSkillsCount}/${jSkills.length})`);
             } else {
-                risks.push(`قد يحتاج تدريباً تمهيدياً في بعض المهارات المطلوبة`);
+                risks.push(`لا تتوفر مهارات مطابقة مسجلة في ملف المرشح`);
             }
         } else {
-            breakdown.skillsMatch = 20;
+            breakdown.skillsMatch = 15;
         }
 
-        const finalScore = Math.min(96, Math.max(45, score));
-        let recommendation = 'HIRE';
-        if (finalScore >= 85) recommendation = 'STRONG_HIRE';
-        else if (finalScore >= 70) recommendation = 'HIRE';
-        else if (finalScore >= 55) recommendation = 'MAYBE';
+        // 3. Experience Matching against real candidate data (Up to 20 points)
+        const cExp = candidate.yearsOfExperience || (candidate.candidateExperiences?.length ? candidate.candidateExperiences.length * 1.5 : 0);
+        const jExp = jobSpec.experienceYears || 0;
+        if (jExp > 0) {
+            if (cExp >= jExp) {
+                breakdown.experienceMatch = 20;
+                strengths.push(`الخبرة العملية (${Math.round(cExp)} سنوات) تغطي وتفوق الحد الأدنى المطلوب (${jExp} سنوات)`);
+            } else if (cExp >= Math.max(1, jExp - 2)) {
+                breakdown.experienceMatch = 12;
+                risks.push(`سنوات الخبرة (${Math.round(cExp)} سنوات) أقل بقليل من المستهدف (${jExp} سنوات)`);
+            } else {
+                breakdown.experienceMatch = 4;
+                risks.push(`سنوات الخبرة العملية غير كافية للمنصب المطلوب (${Math.round(cExp)} سنوات مقابل ${jExp} سنوات)`);
+            }
+        } else {
+            breakdown.experienceMatch = 15;
+        }
+
+        // 4. Location Matching (Up to 10 points)
+        const cLoc = (candidate.location || '').toLowerCase();
+        const jLoc = (jobSpec.location || '').toLowerCase();
+        if (jLoc && (cLoc.includes(jLoc) || jLoc.includes(cLoc))) {
+            breakdown.locationMatch = 10;
+            strengths.push(`متواجد في نفس المدينة المستهدفة للعمل (${jobSpec.location})`);
+        } else {
+            breakdown.locationMatch = 3;
+            if (jLoc) risks.push(`قد يتطلب العمل نقلاً جغرافياً من مقر إقامة المرشح الحالية (${candidate.location || 'غير محدد'})`);
+        }
+
+        // Calculate Raw Deterministic Score (0 - 100)
+        const totalScore = breakdown.titleMatch + breakdown.skillsMatch + breakdown.experienceMatch + breakdown.locationMatch;
+        const finalScore = Math.min(99, Math.max(15, totalScore));
+
+        let recommendation = 'REJECT';
+        if (finalScore >= 80) recommendation = 'STRONG_HIRE';
+        else if (finalScore >= 65) recommendation = 'HIRE';
+        else if (finalScore >= 50) recommendation = 'MAYBE';
         else recommendation = 'REJECT';
+
 
         return {
             matchScore: finalScore,

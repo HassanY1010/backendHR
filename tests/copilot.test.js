@@ -83,9 +83,10 @@ describe('Recruitment Copilot Final Security, Functional & Production Audit Test
 
             expect(result.matchScore).toBeGreaterThanOrEqual(80);
             expect(result.scoringBreakdown).toBeDefined();
-            expect(result.scoringBreakdown.titleMatch).toBe(25);
-            expect(result.scoringBreakdown.experienceMatch).toBe(25);
-            expect(result.scoringBreakdown.locationMatch).toBe(20);
+            expect(result.scoringBreakdown.titleMatch).toBe(35);
+            expect(result.scoringBreakdown.skillsMatch).toBe(35);
+            expect(result.scoringBreakdown.experienceMatch).toBe(20);
+            expect(result.scoringBreakdown.locationMatch).toBe(10);
             expect(result.recommendation).toBe('STRONG_HIRE');
             expect(result.strengths.length).toBeGreaterThan(0);
         });
