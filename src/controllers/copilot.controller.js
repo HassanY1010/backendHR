@@ -175,32 +175,46 @@ export const createJobFromCopilot = async (req, res, next) => {
             return res.status(400).json({ status: 'error', message: 'المسمى الوظيفي مطلوب لإنشاء الطلب' });
         }
 
-        // Determine appropriate department dynamically based on job data or job title
-        const targetDeptName = jobData.departmentName || (
-            jobData.jobTitle.includes('مبرمج') || jobData.jobTitle.includes('مطور') || jobData.jobTitle.toLowerCase().includes('frontend') || jobData.jobTitle.toLowerCase().includes('backend') || jobData.jobTitle.toLowerCase().includes('developer') || jobData.jobTitle.includes('تقنية') ? 'تقنية المعلومات والبرمجيات' :
-            jobData.jobTitle.includes('مبيعات') || jobData.jobTitle.includes('تسويق') || jobData.jobTitle.toLowerCase().includes('sales') ? 'المبيعات والتسويق' :
-            jobData.jobTitle.includes('مالي') || jobData.jobTitle.includes('محاسب') ? 'الإدارة المالية' :
-            jobData.jobTitle.includes('موارد بشرية') || jobData.jobTitle.includes('توظيف') ? 'الموارد البشرية' : 'إدارة العمليات والتشغيل'
-        );
+        // 1. Determine appropriate department name intelligently based on AI extraction or job title keywords
+        const jTitle = (jobData.jobTitle || '').toLowerCase();
+        const rawDept = (jobData.departmentName || '').trim();
 
+        let resolvedDeptName = rawDept;
+        if (!resolvedDeptName || resolvedDeptName === 'غير محدد') {
+            if (jTitle.includes('مبرمج') || jTitle.includes('مطور') || jTitle.includes('frontend') || jTitle.includes('backend') || jTitle.includes('developer') || jTitle.includes('تقنية') || jTitle.includes('مهندس برمجيات') || jTitle.includes('ui') || jTitle.includes('ux')) {
+                resolvedDeptName = 'تقنية المعلومات والبرمجيات';
+            } else if (jTitle.includes('مبيعات') || jTitle.includes('تسويق') || jTitle.includes('sales') || jTitle.includes('marketing') || jTitle.includes('عملاء')) {
+                resolvedDeptName = 'المبيعات والتسويق';
+            } else if (jTitle.includes('مالي') || jTitle.includes('محاسب') || jTitle.includes('finance') || jTitle.includes('audit') || jTitle.includes('تدقيق')) {
+                resolvedDeptName = 'الإدارة المالية';
+            } else if (jTitle.includes('موارد بشرية') || jTitle.includes('توظيف') || jTitle.includes('hr') || jTitle.includes('recruiter') || jTitle.includes('شؤون الموظفين')) {
+                resolvedDeptName = 'الموارد البشرية';
+            } else if (jTitle.includes('قانوني') || jTitle.includes('محامي') || jTitle.includes('legal')) {
+                resolvedDeptName = 'الشؤون القانونية';
+            } else if (jTitle.includes('عمليات') || jTitle.includes('تشغيل') || jTitle.includes('operations')) {
+                resolvedDeptName = 'إدارة العمليات والتشغيل';
+            } else {
+                resolvedDeptName = 'الإدارة العامة';
+            }
+        }
 
+        // 2. Search for existing department matching any keyword of the resolved department
+        const searchWords = resolvedDeptName.split(/[\s/،,-]+/).filter(w => w.length > 2);
         let department = await prisma.department.findFirst({
             where: {
                 companyId,
-                name: { contains: targetDeptName, mode: 'insensitive' }
+                OR: [
+                    { name: { contains: resolvedDeptName, mode: 'insensitive' } },
+                    ...searchWords.map(w => ({ name: { contains: w, mode: 'insensitive' } }))
+                ]
             }
         });
 
-        if (!department) {
-            department = await prisma.department.findFirst({
-                where: { companyId }
-            });
-        }
-
+        // 3. If no matching department exists in the company, create the specific correct department (Do NOT grab an unrelated department!)
         if (!department) {
             department = await prisma.department.create({
                 data: {
-                    name: targetDeptName,
+                    name: resolvedDeptName,
                     companyId
                 }
             });
