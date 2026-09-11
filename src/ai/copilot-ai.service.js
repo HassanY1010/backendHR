@@ -48,12 +48,16 @@ export const COPILOT_TOOLS = [
                     location: { type: 'string', description: 'المدينة أو الدولة للعمل' },
                     nationality: { type: 'string', description: 'الجنسية المفضلة إن وجدت (مثل: سعودي)' },
                     experienceYears: { type: 'number', description: 'عدد سنوات الخبرة المطلوبة' },
+                    educationLevel: { type: 'string', description: 'المؤهل العلمي المطلوب (مثل: بكالوريوس في علوم الحاسب / تقنية المعلومات أو ما يعادله)' },
                     languages: { type: 'array', items: { type: 'string' }, description: 'اللغات المطلوبة' },
                     requiredSkills: { type: 'array', items: { type: 'string' }, description: 'المهارات التقنية والوظيفية الأساسية' },
                     recommendedSkills: { type: 'array', items: { type: 'string' }, description: 'مهارات إضافية يقترحها الذكاء الاصطناعي لرفع كفاءة الوظيفة' },
                     employmentType: { type: 'string', enum: ['FULL_TIME', 'PART_TIME', 'CONTRACT'], description: 'نوع التوظيف' },
                     suggestedSalaryMin: { type: 'number', description: 'الحد الأدنى المقترح للراتب' },
                     suggestedSalaryMax: { type: 'number', description: 'الحد الأقصى المقترح للراتب' },
+                    budgetCode: { type: 'string', description: 'كود الميزانية المخصص (مثل: BUD-IT-2027)' },
+                    costCenter: { type: 'string', description: 'مركز التكلفة (مثل: CC-TECH-01)' },
+                    hiringReason: { type: 'string', description: 'سبب الاحتياج الوظيفي (مثل: توسع الفريق / منصب جديد)' },
                     vacancies: { type: 'number', description: 'عدد الشواغر المطلوبة' },
                     jobSummary: { type: 'string', description: 'ملخص موجز وجذاب للوظيفة' }
                 },
@@ -61,6 +65,7 @@ export const COPILOT_TOOLS = [
             }
         }
     },
+
     {
         type: 'function',
         function: {

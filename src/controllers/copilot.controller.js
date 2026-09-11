@@ -214,8 +214,13 @@ export const createJobFromCopilot = async (req, res, next) => {
 
         const requestId = `REQ-${Date.now().toString().slice(-6)}`;
 
-        // Create Job Request
+        // Compute fallback salary range if only min is provided
+        const sMin = jobData.suggestedSalaryMin ? Number(jobData.suggestedSalaryMin) : 8000;
+        const sMax = jobData.suggestedSalaryMax ? Number(jobData.suggestedSalaryMax) : Math.round(sMin * 1.35);
+
+        // Create Job Request with complete and intelligent fields
         const jobRequest = await prisma.jobRequest.create({
+
             data: {
                 requestId,
                 companyId,
@@ -225,15 +230,19 @@ export const createJobFromCopilot = async (req, res, next) => {
                 location: jobData.location || 'الرياض, المملكة العربية السعودية',
                 employmentType: jobData.employmentType || 'FULL_TIME',
                 vacancies: Number(jobData.vacancies) || 1,
-                jobSummary: jobData.jobSummary || `طلب توظيف للمنصب: ${jobData.jobTitle}`,
+                jobSummary: jobData.jobSummary || `طلب توظيف معتمد للمنصب: ${jobData.jobTitle}`,
                 requiredExperience: `${jobData.experienceYears || 3} سنوات خبرة في المجال`,
-                salaryMin: jobData.suggestedSalaryMin ? Number(jobData.suggestedSalaryMin) : null,
-                salaryMax: jobData.suggestedSalaryMax ? Number(jobData.suggestedSalaryMax) : null,
+                educationLevel: jobData.educationLevel || 'بكالوريوس في التخصص ذو الصلة أو ما يعادله',
+                salaryMin: sMin,
+                salaryMax: sMax,
+                budgetCode: jobData.budgetCode || `BUD-HR-${new Date().getFullYear()}`,
+                costCenter: jobData.costCenter || 'CC-OPERATIONS-01',
+                hiringReason: jobData.hiringReason || 'NEW_POSITION',
                 status: 'SUBMITTED',
                 priority: 'HIGH',
                 hiringType: 'IMMEDIATE',
                 skills: {
-                    create: (jobData.requiredSkills || ['مهارات قيادية', 'حل المشكلات']).map(s => ({ skillName: s }))
+                    create: (jobData.requiredSkills || ['مهارات تقنية', 'حل المشكلات']).map(s => ({ skillName: s }))
                 }
             },
             include: {
@@ -241,6 +250,7 @@ export const createJobFromCopilot = async (req, res, next) => {
                 department: true
             }
         });
+
 
         // Audit log
         await logCopilotAudit({

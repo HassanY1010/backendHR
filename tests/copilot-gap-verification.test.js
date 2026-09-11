@@ -10,6 +10,8 @@ const generateToken = (payload) => {
 
 describe('Recruitment Copilot Final Gap Verification Suite', () => {
     let companyA, companyB;
+
+
     let managerA, managerB, employeeA;
     let tokenManagerA, tokenManagerB, tokenEmployeeA;
     let sessionA;
@@ -215,6 +217,7 @@ describe('Recruitment Copilot Final Gap Verification Suite', () => {
                         requiredSkills: ['Jest', 'Automation', 'QA']
                     }
                 });
+
 
             expect(res.status).toBe(201);
             expect(res.body.data.jobRequest.requestId).toMatch(/^REQ-/);
