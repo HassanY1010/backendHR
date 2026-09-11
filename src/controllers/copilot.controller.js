@@ -175,19 +175,36 @@ export const createJobFromCopilot = async (req, res, next) => {
             return res.status(400).json({ status: 'error', message: 'المسمى الوظيفي مطلوب لإنشاء الطلب' });
         }
 
-        // Get default department if not specified
+        // Determine appropriate department dynamically based on job data or job title
+        const targetDeptName = jobData.departmentName || (
+            jobData.jobTitle.includes('مبرمج') || jobData.jobTitle.includes('مطور') || jobData.jobTitle.toLowerCase().includes('frontend') || jobData.jobTitle.toLowerCase().includes('backend') || jobData.jobTitle.toLowerCase().includes('developer') || jobData.jobTitle.includes('تقنية') ? 'تقنية المعلومات والبرمجيات' :
+            jobData.jobTitle.includes('مبيعات') || jobData.jobTitle.includes('تسويق') || jobData.jobTitle.toLowerCase().includes('sales') ? 'المبيعات والتسويق' :
+            jobData.jobTitle.includes('مالي') || jobData.jobTitle.includes('محاسب') ? 'الإدارة المالية' :
+            jobData.jobTitle.includes('موارد بشرية') || jobData.jobTitle.includes('توظيف') ? 'الموارد البشرية' : 'إدارة العمليات والتشغيل'
+        );
+
         let department = await prisma.department.findFirst({
-            where: { companyId }
+            where: {
+                companyId,
+                name: { contains: targetDeptName, mode: 'insensitive' }
+            }
         });
+
+        if (!department) {
+            department = await prisma.department.findFirst({
+                where: { companyId }
+            });
+        }
 
         if (!department) {
             department = await prisma.department.create({
                 data: {
-                    name: 'الإدارة العامة / التوظيف',
+                    name: targetDeptName,
                     companyId
                 }
             });
         }
+
 
         // Idempotency / Duplicate Creation Check
         if (sessionId) {

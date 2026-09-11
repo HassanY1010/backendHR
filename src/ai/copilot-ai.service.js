@@ -45,7 +45,9 @@ export const COPILOT_TOOLS = [
                 type: 'object',
                 properties: {
                     jobTitle: { type: 'string', description: 'المسمى الوظيفي المستهدف' },
+                    departmentName: { type: 'string', description: 'القسم أو الإدارة المناسبة للمنصب (مثال: تقنية المعلومات / البرمجة / المبيعات / التسويق / المالية / الموارد البشرية)' },
                     location: { type: 'string', description: 'المدينة أو الدولة للعمل' },
+
                     nationality: { type: 'string', description: 'الجنسية المفضلة إن وجدت (مثل: سعودي)' },
                     experienceYears: { type: 'number', description: 'عدد سنوات الخبرة المطلوبة' },
                     educationLevel: { type: 'string', description: 'المؤهل العلمي المطلوب (مثل: بكالوريوس في علوم الحاسب / تقنية المعلومات أو ما يعادله)' },
