@@ -183,6 +183,7 @@ export const createJobFromCopilot = async (req, res, next) => {
             jobData.jobTitle.includes('موارد بشرية') || jobData.jobTitle.includes('توظيف') ? 'الموارد البشرية' : 'إدارة العمليات والتشغيل'
         );
 
+
         let department = await prisma.department.findFirst({
             where: {
                 companyId,
