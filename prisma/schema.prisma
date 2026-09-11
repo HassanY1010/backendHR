@@ -119,6 +119,7 @@ model Candidate {
   schedulingSessions    SchedulingSession[]
   practiceSessions      PracticeSession[]
   aiShieldSessions      AIShieldSession[]
+  aiRecommendations     AIRecommendation[]
 
   @@index([jobId], map: "Candidate_jobId_idx")
   @@index([jobId, deletedAt])
@@ -298,6 +299,8 @@ model Company {
   schedulingSessions SchedulingSession[]
   calendarIntegrations CalendarIntegration[]
   aiShieldSessions   AIShieldSession[]
+  copilotSessions    CopilotSession[]
+  aiRecommendations  AIRecommendation[]
 
   status             String            @default("active")
   @@map("company")
@@ -1131,7 +1134,7 @@ model User {
   interviewSlots          InterviewSlot[]
   schedulingSessions      SchedulingSession[]
   calendarIntegrations    CalendarIntegration[]
-
+  copilotSessions         CopilotSession[]
 
   @@index([companyId], map: "User_companyId_idx")
   @@index([companyId, deletedAt])
@@ -1667,3 +1670,52 @@ model WorkflowLog {
   @@index([createdAt])
   @@map("workflowlog")
 }
+
+model CopilotSession {
+  id               String              @id @default(uuid())
+  companyId        String
+  userId           String
+  title            String              @default("محادثة توظيف ذكية")
+  conversation     Json                @default("[]")
+  extractedData    Json?               // Structured extracted job requirements
+  marketInsights   Json?               // Grounded market insights & forecasts
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  company          Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recommendations  AIRecommendation[]
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([companyId, createdAt])
+  @@map("copilotsession")
+}
+
+model AIRecommendation {
+  id               String          @id @default(uuid())
+  companyId        String
+  sessionId        String?
+  candidateId      String
+  jobId            String?
+  matchScore       Float
+  interviewScore   Float?
+  salaryFit        String?
+  scoringBreakdown Json?           // Explainable criteria breakdown
+  strengths        Json            @default("[]")
+  risks            Json            @default("[]")
+  recommendation   String          @default("HIRE") // STRONG_HIRE, HIRE, MAYBE, REJECT
+  reason           String?         @db.Text
+  createdAt        DateTime        @default(now())
+
+  company          Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  session          CopilotSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  candidate        Candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([candidateId])
+  @@index([sessionId])
+  @@index([companyId, createdAt])
+  @@map("airecommendation")
+}
+
