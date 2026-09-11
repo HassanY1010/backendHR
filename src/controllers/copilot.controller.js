@@ -42,6 +42,10 @@ export const chatWithCopilot = async (req, res, next) => {
             return res.status(400).json({ status: 'error', message: 'نص الرسالة مطلوب' });
         }
 
+        if (message.trim().length > 3000) {
+            return res.status(400).json({ status: 'error', message: 'تجاوزت الرسالة الحد الأقصى المسموح به (3000 حرف)' });
+        }
+
         let session = null;
         let conversation = [];
         let currentExtractedData = null;
@@ -183,6 +187,29 @@ export const createJobFromCopilot = async (req, res, next) => {
                     companyId
                 }
             });
+        }
+
+        // Idempotency / Duplicate Creation Check
+        if (sessionId) {
+            const existingRecent = await prisma.jobRequest.findFirst({
+                where: {
+                    companyId,
+                    jobTitle: jobData.jobTitle,
+                    createdBy: userId,
+                    createdAt: {
+                        gte: new Date(Date.now() - 3 * 60 * 1000) // Within last 3 minutes
+                    }
+                },
+                include: { skills: true, department: true }
+            });
+
+            if (existingRecent) {
+                return res.status(200).json({
+                    status: 'success',
+                    message: 'تم استرجاع طلب التوظيف الموجود مسبقاً (Idempotent)',
+                    data: { jobRequest: existingRecent, isDuplicateRetried: true }
+                });
+            }
         }
 
         const requestId = `REQ-${Date.now().toString().slice(-6)}`;
@@ -392,3 +419,28 @@ export const getCopilotSessionDetails = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * 6. GET /api/copilot/recommendations
+ * Tenant-isolated candidate AI recommendations
+ */
+export const getAIRecommendations = async (req, res, next) => {
+    try {
+        const companyId = req.user?.companyId;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
+        const recommendations = await prisma.aIRecommendation.findMany({
+            where: { companyId },
+            include: { candidate: true },
+            orderBy: { createdAt: 'desc' },
+            take: 50
+        });
+
+        res.status(200).json({ status: 'success', data: { recommendations } });
+    } catch (error) {
+        next(error);
+    }
+};
+

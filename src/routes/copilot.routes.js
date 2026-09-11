@@ -1,11 +1,13 @@
 import express from 'express';
 import { protect, authorize } from '../middlewares/auth.middleware.js';
+import { copilotLimiter } from '../middlewares/rate-limit.middleware.js';
 import {
     chatWithCopilot,
     createJobFromCopilot,
     searchCandidatesWithCopilot,
     getCopilotSessions,
-    getCopilotSessionDetails
+    getCopilotSessionDetails,
+    getAIRecommendations
 } from '../controllers/copilot.controller.js';
 
 const router = express.Router();
@@ -14,10 +16,13 @@ const router = express.Router();
 router.use(protect);
 router.use(authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN'));
 
-router.post('/chat', chatWithCopilot);
+router.post('/chat', copilotLimiter, chatWithCopilot);
 router.post('/create-job', createJobFromCopilot);
-router.post('/search-candidates', searchCandidatesWithCopilot);
+router.post('/search-candidates', copilotLimiter, searchCandidatesWithCopilot);
 router.get('/sessions', getCopilotSessions);
 router.get('/sessions/:id', getCopilotSessionDetails);
+router.get('/recommendations', getAIRecommendations);
 
 export default router;
+
+

@@ -55,3 +55,16 @@ export const clientLogLimiter = rateLimit({
     }
 });
 
+// Copilot Rate Limiter (20 requests per minute to prevent AI abuse and cost exhaustion)
+export const copilotLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        status: 'error',
+        message: 'لقد تجاوزت الحد المسموح به لطلبات المساعد الذكي (20 طلب/دقيقة). يرجى الانتظار قليلاً.'
+    }
+});
+
+
