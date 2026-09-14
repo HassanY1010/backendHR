@@ -645,6 +645,8 @@ class RecruitmentAgentService {
                 });
 
                 if (currentJob) {
+                    const oldSalaryMin = currentJob.salaryMin || 0;
+                    const oldSalaryMax = currentJob.salaryMax || 0;
                     const newSalaryMin = currentJob.salaryMin ? Math.round(currentJob.salaryMin * 1.15) : 9000;
                     const newSalaryMax = currentJob.salaryMax ? Math.round(currentJob.salaryMax * 1.15) : Math.round(newSalaryMin * 1.35);
 
@@ -659,6 +661,8 @@ class RecruitmentAgentService {
                     executionOutput = {
                         jobUpdated: true,
                         jobId: currentJob.id,
+                        oldSalary: { min: oldSalaryMin, max: oldSalaryMax },
+                        newSalary: { min: newSalaryMin, max: newSalaryMax },
                         newSalaryRange: `${newSalaryMin} - ${newSalaryMax}`
                     };
                 }
