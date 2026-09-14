@@ -2,6 +2,7 @@ import 'dotenv/config';
 import app from './app.js';
 import { startDeadlineChecker } from './jobs/deadlineChecker.js';
 import { startSLACheckerJob } from './jobs/sla-checker.job.js';
+import { startRecruitmentAgentJob } from './jobs/recruitment-agent.job.js';
 import { QueueService } from './services/queue.service.js';
 import { initClamAV } from './utils/virusScanner.js';
 import logger from './utils/logger.js';
@@ -37,6 +38,7 @@ app.listen(PORT, HOST, () => {
     try {
         startDeadlineChecker();
         startSLACheckerJob();
+        startRecruitmentAgentJob();
     } catch (jErr) {
         logger.error('Job initialization error:', jErr.message);
     }

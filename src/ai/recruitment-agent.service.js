@@ -638,6 +638,30 @@ class RecruitmentAgentService {
                     }
                 });
                 executionOutput = { noteAdded: true, candidateId: log.input.candidateId };
+            } else if (log.action === 'RECOMMEND_STALLED_JOB_FIX' && log.input?.jobId) {
+                // Apply remedy to stalled job: increase salary range by 15% and mark job updated
+                const currentJob = await prisma.recruitmentJob.findUnique({
+                    where: { id: log.input.jobId }
+                });
+
+                if (currentJob) {
+                    const newSalaryMin = currentJob.salaryMin ? Math.round(currentJob.salaryMin * 1.15) : 9000;
+                    const newSalaryMax = currentJob.salaryMax ? Math.round(currentJob.salaryMax * 1.15) : Math.round(newSalaryMin * 1.35);
+
+                    await prisma.recruitmentJob.update({
+                        where: { id: currentJob.id },
+                        data: {
+                            salaryMin: newSalaryMin,
+                            salaryMax: newSalaryMax,
+                            updatedAt: new Date()
+                        }
+                    });
+                    executionOutput = {
+                        jobUpdated: true,
+                        jobId: currentJob.id,
+                        newSalaryRange: `${newSalaryMin} - ${newSalaryMax}`
+                    };
+                }
             } else {
                 executionOutput = { applied: true, timestamp: new Date().toISOString() };
             }

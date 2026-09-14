@@ -3,6 +3,7 @@ import app from '../src/app.js';
 import prisma from '../src/config/db.js';
 import jwt from 'jsonwebtoken';
 import { recruitmentAgentService } from '../src/ai/recruitment-agent.service.js';
+import { runAutonomousAgentSweep } from '../src/jobs/recruitment-agent.job.js';
 
 describe('Recruitment AI Agent (Autonomous Hiring Agent) Comprehensive Audit Tests', () => {
     let companyAId;
@@ -324,5 +325,66 @@ describe('Recruitment AI Agent (Autonomous Hiring Agent) Comprehensive Audit Tes
             expect(errorLog).toBeDefined();
             expect(errorLog.errorMessage).toBeDefined();
         });
+    });
+
+    describe('5. Autonomous Scheduler, Concurrency Lock & Cloud Cron Trigger', () => {
+        it('5.1 Scheduler triggers sweep across companies with tenant isolation', async () => {
+            const sweepReport = await runAutonomousAgentSweep({
+                requestedTaskType: 'STALLED_JOBS',
+                targetCompanyId: companyAId,
+                triggerSource: 'TEST_SCHEDULER'
+            });
+
+            expect(sweepReport.status).toBe('COMPLETED');
+            expect(sweepReport.companiesProcessed).toBeGreaterThanOrEqual(1);
+
+            // Verify company A task exists and is isolated
+            const companyATasks = await prisma.agentTask.findMany({
+                where: { companyId: companyAId, taskType: 'STALLED_JOBS' }
+            });
+            expect(companyATasks.length).toBeGreaterThanOrEqual(1);
+        }, 15000);
+
+        it('5.2 Multiple scheduler sweeps are idempotent and skip overlapping execution', async () => {
+            // First run
+            const run1 = await runAutonomousAgentSweep({
+                requestedTaskType: 'TOP_CANDIDATES',
+                targetCompanyId: companyAId,
+                triggerSource: 'TEST_IDEMPOTENT_1'
+            });
+            expect(run1.status).toBe('COMPLETED');
+
+            // Immediate second run for same task type
+            const run2 = await runAutonomousAgentSweep({
+                requestedTaskType: 'TOP_CANDIDATES',
+                targetCompanyId: companyAId,
+                triggerSource: 'TEST_IDEMPOTENT_2'
+            });
+            expect(run2.status).toBe('COMPLETED');
+
+            // Count tasks for company A to confirm no duplicate tasks were created on same day
+            const tasks = await prisma.agentTask.findMany({
+                where: { companyId: companyAId, taskType: 'TOP_CANDIDATES' }
+            });
+            expect(tasks.length).toBe(1);
+        }, 15000);
+
+        it('5.3 Cloud Cron Trigger: POST /api/cron/trigger triggers autonomous agent safely with secret check', async () => {
+            process.env.CRON_SECRET = 'test-cron-secret-123';
+
+            // Without secret -> 401
+            const unauthorizedRes = await request(app).post('/api/cron/trigger');
+            expect(unauthorizedRes.status).toBe(401);
+
+            // With secret -> 200 and recruitmentAgent is executed
+            const authorizedRes = await request(app)
+                .post('/api/cron/trigger')
+                .set('x-cron-secret', 'test-cron-secret-123')
+                .send({ targetCompanyId: companyAId });
+
+            expect(authorizedRes.status).toBe(200);
+            expect(authorizedRes.body.results).toBeDefined();
+            expect(authorizedRes.body.results.recruitmentAgent).toBeDefined();
+        }, 30000);
     });
 });
