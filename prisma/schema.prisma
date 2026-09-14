@@ -301,6 +301,8 @@ model Company {
   aiShieldSessions   AIShieldSession[]
   copilotSessions    CopilotSession[]
   aiRecommendations  AIRecommendation[]
+  agentTasks         AgentTask[]
+  agentLogs          AgentLog[]
 
   status             String            @default("active")
   @@map("company")
@@ -1718,4 +1720,71 @@ model AIRecommendation {
   @@index([companyId, createdAt])
   @@map("airecommendation")
 }
+
+enum agent_task_status {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum agent_action_status {
+  RECOMMENDED
+  APPROVED
+  EXECUTED
+  REJECTED
+  FAILED
+}
+
+model AgentTask {
+  id          String            @id @default(uuid())
+  companyId   String
+  agentType   String            @default("RECRUITMENT") // RECRUITMENT, SOURCING, EVALUATOR
+  taskType    String            // STALLED_JOBS, CANDIDATE_FOLLOWUP, WEEKLY_REPORT, TOP_CANDIDATES
+  title       String
+  description String?           @db.Text
+  status      agent_task_status @default(PENDING)
+  priority    String            @default("MEDIUM") // HIGH, MEDIUM, LOW
+  result      Json?             // Structured outputs, metrics, recommendations
+  errorReason String?           @db.Text
+  idempotencyKey String?        // For deduplication
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  completedAt DateTime?
+
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  logs        AgentLog[]
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId])
+  @@index([status])
+  @@index([taskType])
+  @@index([createdAt])
+  @@map("agenttask")
+}
+
+model AgentLog {
+  id           String              @id @default(uuid())
+  companyId    String
+  taskId       String?
+  action       String              // MONITOR_JOBS, FOLLOWUP_CANDIDATE, GENERATE_REPORT, PROPOSE_TOP_5, APPROVE_ACTION, EXECUTE_ACTION
+  actionStatus agent_action_status @default(RECOMMENDED)
+  input        Json?
+  output       Json?
+  evidence     Json?               // Explainable reasoning and data grounds
+  performedBy  String?             // User ID who approved/triggered, or 'SYSTEM_AGENT'
+  errorMessage String?             @db.Text
+  timestamp    DateTime            @default(now())
+
+  company      Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  task         AgentTask?          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([taskId])
+  @@index([action])
+  @@index([actionStatus])
+  @@index([timestamp])
+  @@map("agentlog")
+}
+
 
