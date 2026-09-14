@@ -12,7 +12,7 @@ import logger from '../utils/logger.js';
  */
 export const runAgentSweep = async (req, res, next) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const userId = req.user?.id;
         const { taskType } = req.body;
 
@@ -43,7 +43,7 @@ export const runAgentSweep = async (req, res, next) => {
  */
 export const getAgentTasks = async (req, res, next) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const { status, taskType, limit = 50 } = req.query;
 
         if (!companyId) {
@@ -85,7 +85,7 @@ export const getAgentTasks = async (req, res, next) => {
  */
 export const getAgentLogs = async (req, res, next) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const { actionStatus, limit = 100 } = req.query;
 
         if (!companyId) {
@@ -125,7 +125,7 @@ export const getAgentLogs = async (req, res, next) => {
  */
 export const executeAgentAction = async (req, res, next) => {
     try {
-        const companyId = req.user?.companyId;
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const userId = req.user?.id;
         const userRole = req.user?.role;
         const logId = req.params.id;
