@@ -255,23 +255,35 @@ class RecruitmentAgentService {
                     }
                 ];
 
-                const log = await prisma.agentLog.create({
-                    data: {
+                // Deduplication: check if an unresolved recommendation already exists for this job
+                let log = await prisma.agentLog.findFirst({
+                    where: {
                         companyId,
-                        taskId,
                         action: 'RECOMMEND_STALLED_JOB_FIX',
                         actionStatus: 'RECOMMENDED',
-                        input: { jobId: job.id, jobTitle: job.title, createdAt: job.createdAt, candidateCount: job.candidates.length },
-                        output: { recommendedActions },
-                        evidence: {
-                            reason,
-                            daysOpen: Math.round((Date.now() - job.createdAt.getTime()) / (1000 * 3600 * 24)),
-                            totalCandidates: job.candidates.length,
-                            lastCandidateDate: job.candidates.length ? job.candidates[0].createdAt : null
-                        },
-                        performedBy: userId || 'SYSTEM_AGENT'
+                        input: { path: ['jobId'], equals: job.id }
                     }
                 });
+
+                if (!log) {
+                    log = await prisma.agentLog.create({
+                        data: {
+                            companyId,
+                            taskId,
+                            action: 'RECOMMEND_STALLED_JOB_FIX',
+                            actionStatus: 'RECOMMENDED',
+                            input: { jobId: job.id, jobTitle: job.title, createdAt: job.createdAt, candidateCount: job.candidates.length },
+                            output: { recommendedActions },
+                            evidence: {
+                                reason,
+                                daysOpen: Math.round((Date.now() - job.createdAt.getTime()) / (1000 * 3600 * 24)),
+                                totalCandidates: job.candidates.length,
+                                lastCandidateDate: job.candidates.length ? job.candidates[0].createdAt : null
+                            },
+                            performedBy: userId || 'SYSTEM_AGENT'
+                        }
+                    });
+                }
 
                 stalledJobs.push({
                     jobId: job.id,
@@ -291,14 +303,14 @@ class RecruitmentAgentService {
             stalledJobsCount: stalledJobs.length,
             stalledJobs,
             summary: stalledJobs.length > 0
-                ? `تم رصد ${stalledJobs.length} وظيفة متوقفة أو متعثرة تحتاج إلى تدخل إداري فوري.`
-                : 'جميع الوظائف المفتوحة نشطة وتستقبل مرشحين بانتظام.'
+                ? `تم رصد ${stalledJobs.length} وظيفة متوقفة أو بدون متقدمين جدد لأكثر من 7 أيام.`
+                : 'جميع الوظائف المفتوحة نشطة وتستقبل طلبات توظيف بشكل دوري.'
         };
     }
 
     /**
-     * 4. TOOL 2: Candidate Follow-up
-     * Identifies candidates stuck in stage > 5 days or awaiting interview response.
+     * 4. TOOL 2: Candidate Bottleneck & Follow-up Tool
+     * Scans active candidates stuck in stages > 5 days.
      */
     async trackCandidateFollowupsTool(companyId, taskId, userId) {
         const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
@@ -333,22 +345,34 @@ class RecruitmentAgentService {
                 proposedAction = 'SCHEDULE_INTERVIEW_REMINDER';
             }
 
-            const log = await prisma.agentLog.create({
-                data: {
+            // Deduplication: check if an unresolved recommendation already exists for this candidate & action
+            let log = await prisma.agentLog.findFirst({
+                where: {
                     companyId,
-                    taskId,
                     action: 'RECOMMEND_CANDIDATE_FOLLOWUP',
                     actionStatus: 'RECOMMENDED',
-                    input: { candidateId: cand.id, candidateName: cand.fullName, currentStatus: cand.status },
-                    output: { proposedAction, suggestedMessage: `مرحباً ${cand.fullName}، نود إعلامك بأن طلبك لوظيفة ${cand.recruitmentjob?.title} قيد المتابعة والاهتمام.` },
-                    evidence: {
-                        daysStuck,
-                        lastUpdated: cand.updatedAt,
-                        reason: followupReason
-                    },
-                    performedBy: userId || 'SYSTEM_AGENT'
+                    input: { path: ['candidateId'], equals: cand.id }
                 }
             });
+
+            if (!log) {
+                log = await prisma.agentLog.create({
+                    data: {
+                        companyId,
+                        taskId,
+                        action: 'RECOMMEND_CANDIDATE_FOLLOWUP',
+                        actionStatus: 'RECOMMENDED',
+                        input: { candidateId: cand.id, candidateName: cand.fullName, currentStatus: cand.status },
+                        output: { proposedAction, suggestedMessage: `مرحباً ${cand.fullName}، نود إعلامك بأن طلبك لوظيفة ${cand.recruitmentjob?.title} قيد المتابعة والاهتمام.` },
+                        evidence: {
+                            daysStuck,
+                            lastUpdated: cand.updatedAt,
+                            reason: followupReason
+                        },
+                        performedBy: userId || 'SYSTEM_AGENT'
+                    }
+                });
+            }
 
             followups.push({
                 candidateId: cand.id,
@@ -379,80 +403,86 @@ class RecruitmentAgentService {
      * Applications, Interviews, Hires, Time-to-Hire + Strategic AI Analysis.
      */
     async generateWeeklyHiringReportTool(companyId, taskId, userId) {
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        // 1. Applications this week
-        const totalApplications = await prisma.candidate.count({
-            where: {
-                recruitmentjob: { companyId },
-                createdAt: { gte: sevenDaysAgo }
-            }
-        });
+        // Fetch metrics directly from DB for company
+        const [
+            openJobsCount,
+            weeklyApplicationsCount,
+            weeklyInterviewsCount,
+            weeklyHiresCount,
+            allCandidates
+        ] = await Promise.all([
+            prisma.recruitmentJob.count({
+                where: { companyId, status: 'OPEN', deletedAt: null }
+            }),
+            prisma.candidate.count({
+                where: {
+                    recruitmentjob: { companyId },
+                    createdAt: { gte: sevenDaysAgo },
+                    deletedAt: null
+                }
+            }),
+            prisma.interview.count({
+                where: {
+                    candidate: { recruitmentjob: { companyId } },
+                    createdAt: { gte: sevenDaysAgo }
+                }
+            }),
+            prisma.candidate.count({
+                where: {
+                    recruitmentjob: { companyId },
+                    status: 'HIRED',
+                    updatedAt: { gte: sevenDaysAgo }
+                }
+            }),
+            prisma.candidate.findMany({
+                where: {
+                    recruitmentjob: { companyId },
+                    status: 'HIRED'
+                },
+                select: { createdAt: true, updatedAt: true },
+                take: 50
+            })
+        ]);
 
-        // 2. Interviews conducted this week
-        const totalInterviews = await prisma.interview.count({
-            where: {
-                companyId,
-                createdAt: { gte: sevenDaysAgo }
-            }
-        });
-
-        // 3. Candidates hired this week
-        const totalHired = await prisma.candidate.count({
-            where: {
-                recruitmentjob: { companyId },
-                status: 'HIRED',
-                updatedAt: { gte: sevenDaysAgo }
-            }
-        });
-
-        // 4. Open jobs count
-        const totalOpenJobs = await prisma.recruitmentJob.count({
-            where: { companyId, status: 'OPEN', deletedAt: null }
-        });
-
-        // 5. Calculate Average Time-to-Hire (Mocked/Derived from DB candidate hire dates)
-        const hiredCandidates = await prisma.candidate.findMany({
-            where: {
-                recruitmentjob: { companyId },
-                status: 'HIRED'
-            },
-            select: { createdAt: true, updatedAt: true },
-            take: 10
-        });
-
-        let avgTimeToHireDays = 18; // Standard baseline
-        if (hiredCandidates.length > 0) {
-            const sumDays = hiredCandidates.reduce((acc, curr) => {
-                const diff = (curr.updatedAt.getTime() - curr.createdAt.getTime()) / (1000 * 3600 * 24);
-                return acc + (diff > 0 ? diff : 1);
+        // Calculate avg Time-to-Hire in days
+        let avgTimeToHireDays = 0;
+        if (allCandidates.length > 0) {
+            const totalDays = allCandidates.reduce((acc, c) => {
+                const diff = (c.updatedAt.getTime() - c.createdAt.getTime()) / (1000 * 3600 * 24);
+                return acc + Math.max(1, Math.round(diff));
             }, 0);
-            avgTimeToHireDays = Math.round(sumDays / hiredCandidates.length);
+            avgTimeToHireDays = Math.round(totalDays / allCandidates.length);
         }
 
-        const metrics = {
-            period: 'الأسبوع المنصرم',
-            totalApplications,
-            totalInterviews,
-            totalHired,
-            totalOpenJobs,
-            avgTimeToHireDays,
-            throughputRate: totalApplications > 0 ? Math.round((totalInterviews / totalApplications) * 100) : 0
+        // Generate dynamic explainable insights
+        const bottlenecks = [];
+        if (openJobsCount > 0 && weeklyApplicationsCount === 0) {
+            bottlenecks.push('انخفاض معدل التقديم على الوظائف المفتوحة خلال الأسبوع الماضي');
+        }
+        if (weeklyApplicationsCount > 5 && weeklyInterviewsCount === 0) {
+            bottlenecks.push('تأخر في جدولة المقابلات للمرشحين المتقدمين الجدد');
+        }
+
+        const reportData = {
+            period: {
+                from: sevenDaysAgo.toISOString(),
+                to: now.toISOString()
+            },
+            metrics: {
+                openJobsCount,
+                weeklyApplicationsCount,
+                weeklyInterviewsCount,
+                weeklyHiresCount,
+                avgTimeToHireDays
+            },
+            bottlenecks,
+            recommendation: bottlenecks.length > 0
+                ? 'يوصى بمراجعة وتحديث قنوات الاستقطاب وتسريع جدولة المقابلات لتفادي خسارة الكفاءات.'
+                : 'أداء دورة التوظيف الأسبوعية يسير وفق المستهدف بمعدل تحويل ممتاز.'
         };
-
-        // Decision Engine Analysis & AI strategic assessment
-        const strategicSummary = `خلال هذا الأسبوع، تم استلام ${totalApplications} طلب تقديم جديد، وعقد ${totalInterviews} مقابلة وظيفية، مع إتمام تعيين ${totalHired} كفاءات. بلغ متوسط زمن الإغلاق والتعيين ${avgTimeToHireDays} يوماً.`;
-        const actionPoints = [];
-
-        if (totalApplications < 5) {
-            actionPoints.push('ملاحظة انخفاض في حجم التقديمات الجديدة، يُنصح بتوسيع نطاق الإعلانات الوظيفية.');
-        }
-        if (totalInterviews > 10 && totalHired === 0) {
-            actionPoints.push('كثافة في المقابلات المنعقدة دون إغلاق عروض وظيفية؛ يُوصى بتسريع وتيرة اتخاذ قرارات القبول النهائي.');
-        }
-        if (actionPoints.length === 0) {
-            actionPoints.push('معدلات تحويل مستقرة وتوافق جيد بين فرق التوظيف والمدراء الفنيين.');
-        }
 
         const log = await prisma.agentLog.create({
             data: {
@@ -460,21 +490,17 @@ class RecruitmentAgentService {
                 taskId,
                 action: 'GENERATE_WEEKLY_REPORT',
                 actionStatus: 'EXECUTED',
-                input: { period: 'LAST_7_DAYS' },
-                output: { metrics, strategicSummary, actionPoints },
+                output: reportData,
                 evidence: {
-                    dbVerified: true,
-                    calculatedAt: new Date().toISOString()
+                    metricsSnapshot: reportData.metrics,
+                    source: 'DATABASE_LIVE_AGGREGATION'
                 },
                 performedBy: userId || 'SYSTEM_AGENT'
             }
         });
 
         return {
-            reportTitle: `تقرير التوظيف الأسبوعي المعتمد — ${new Date().toLocaleDateString('ar-SA')}`,
-            metrics,
-            strategicSummary,
-            actionPoints,
+            report: reportData,
             logId: log.id
         };
     }
@@ -554,22 +580,35 @@ class RecruitmentAgentService {
 
         const createdLogs = [];
         for (const top of top5) {
-            const log = await prisma.agentLog.create({
-                data: {
+            // Deduplication: check if an unresolved recommendation already exists for this candidate & action
+            let log = await prisma.agentLog.findFirst({
+                where: {
                     companyId,
-                    taskId,
                     action: 'PROPOSE_TOP_5_CANDIDATE',
                     actionStatus: 'RECOMMENDED',
-                    input: { candidateId: top.candidateId, name: top.fullName, targetJob: top.jobTitle },
-                    output: { recommendedAction: 'DISPATCH_INTERVIEW_OFFER', score: top.calculatedScore },
-                    evidence: {
-                        score: top.calculatedScore,
-                        reasons: top.explainableReasons,
-                        guarantee: 'يتطلب موافقة بشرية مسبقة قبل إرسال العرض أو الانتقال'
-                    },
-                    performedBy: userId || 'SYSTEM_AGENT'
+                    input: { path: ['candidateId'], equals: top.candidateId }
                 }
             });
+
+            if (!log) {
+                log = await prisma.agentLog.create({
+                    data: {
+                        companyId,
+                        taskId,
+                        action: 'PROPOSE_TOP_5_CANDIDATE',
+                        actionStatus: 'RECOMMENDED',
+                        input: { candidateId: top.candidateId, name: top.fullName, targetJob: top.jobTitle },
+                        output: { recommendedAction: 'DISPATCH_INTERVIEW_OFFER', score: top.calculatedScore },
+                        evidence: {
+                            score: top.calculatedScore,
+                            reasons: top.explainableReasons,
+                            guarantee: 'يتطلب موافقة بشرية مسبقة قبل إرسال العرض أو الانتقال'
+                        },
+                        performedBy: userId || 'SYSTEM_AGENT'
+                    }
+                });
+            }
+
             top.logId = log.id;
             createdLogs.push(log);
         }

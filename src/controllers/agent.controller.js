@@ -95,7 +95,7 @@ export const getAgentLogs = async (req, res, next) => {
         const where = { companyId };
         if (actionStatus) where.actionStatus = actionStatus;
 
-        const logs = await prisma.agentLog.findMany({
+        let logs = await prisma.agentLog.findMany({
             where,
             orderBy: { timestamp: 'desc' },
             take: Number(limit),
@@ -105,6 +105,20 @@ export const getAgentLogs = async (req, res, next) => {
                 }
             }
         });
+
+        // Deduplicate RECOMMENDED logs by unique target (candidateId or jobId) so the manager sees one actionable item per entity
+        if (actionStatus === 'RECOMMENDED' || !actionStatus) {
+            const seenRecommendations = new Set();
+            logs = logs.filter(log => {
+                if (log.actionStatus !== 'RECOMMENDED') return true;
+                const targetKey = `${log.action}_${log.input?.candidateId || log.input?.jobId || log.id}`;
+                if (seenRecommendations.has(targetKey)) {
+                    return false;
+                }
+                seenRecommendations.add(targetKey);
+                return true;
+            });
+        }
 
         res.status(200).json({
             status: 'success',
