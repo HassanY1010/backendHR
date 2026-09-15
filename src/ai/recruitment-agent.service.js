@@ -499,8 +499,21 @@ class RecruitmentAgentService {
             }
         });
 
+        const metrics = {
+            totalApplications: weeklyApplicationsCount,
+            totalInterviews: weeklyInterviewsCount,
+            totalHired: weeklyHiresCount,
+            totalOpenJobs: openJobsCount,
+            avgTimeToHireDays,
+            throughputRate: weeklyApplicationsCount > 0 ? Math.round((weeklyInterviewsCount / weeklyApplicationsCount) * 100) : 0,
+            ...reportData.metrics
+        };
+
         return {
             report: reportData,
+            reportTitle: `تقرير التوظيف الأسبوعي المعتمد — ${new Date().toLocaleDateString('ar-SA')}`,
+            metrics,
+            strategicSummary: reportData.recommendation,
             logId: log.id
         };
     }
