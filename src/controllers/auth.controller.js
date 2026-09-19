@@ -15,9 +15,12 @@ const COOKIE_OPTIONS = {
 export const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
+        const normalizedEmail = (email || '').trim().toLowerCase();
 
-        const user = await prisma.user.findUnique({
-            where: { email },
+        const user = await prisma.user.findFirst({
+            where: {
+                email: { equals: normalizedEmail, mode: 'insensitive' }
+            },
             include: { company: true },
         });
 
