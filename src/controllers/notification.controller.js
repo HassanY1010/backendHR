@@ -33,6 +33,21 @@ export const getNotifications = async (req, res, next) => {
 export const markAsRead = async (req, res, next) => {
     try {
         const { id } = req.params;
+
+        const notif = await prisma.notification.findUnique({
+            where: { id },
+            include: { employee: true }
+        });
+
+        if (!notif) {
+            return res.status(404).json({ status: 'error', message: 'Notification not found' });
+        }
+
+        const isOwner = notif.userId === req.user.id || (notif.employee && notif.employee.userId === req.user.id);
+        if (!isOwner && req.user.role !== 'SUPER_ADMIN') {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح بتعديل هذا الإشعار' });
+        }
+
         await prisma.notification.update({
             where: { id },
             data: {
@@ -53,7 +68,7 @@ export const markAllAsRead = async (req, res, next) => {
         });
 
         const whereCondition = employee
-            ? { employeeId: employee.id, isRead: false }
+            ? { OR: [{ employeeId: employee.id }, { userId: req.user.id }], isRead: false }
             : { userId: req.user.id, isRead: false };
 
         await prisma.notification.updateMany({
@@ -72,6 +87,21 @@ export const markAllAsRead = async (req, res, next) => {
 export const deleteNotification = async (req, res, next) => {
     try {
         const { id } = req.params;
+
+        const notif = await prisma.notification.findUnique({
+            where: { id },
+            include: { employee: true }
+        });
+
+        if (!notif) {
+            return res.status(404).json({ status: 'error', message: 'Notification not found' });
+        }
+
+        const isOwner = notif.userId === req.user.id || (notif.employee && notif.employee.userId === req.user.id);
+        if (!isOwner && req.user.role !== 'SUPER_ADMIN') {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح بحذف هذا الإشعار' });
+        }
+
         await prisma.notification.delete({
             where: { id }
         });
@@ -86,9 +116,18 @@ export const updateNotificationMetadata = async (req, res, next) => {
         const { id } = req.params;
         const { metadata } = req.body;
 
-        const existing = await prisma.notification.findUnique({ where: { id } });
+        const existing = await prisma.notification.findUnique({
+            where: { id },
+            include: { employee: true }
+        });
+
         if (!existing) {
             return res.status(404).json({ status: 'error', message: 'Notification not found' });
+        }
+
+        const isOwner = existing.userId === req.user.id || (existing.employee && existing.employee.userId === req.user.id);
+        if (!isOwner && req.user.role !== 'SUPER_ADMIN') {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح بتعديل هذا الإشعار' });
         }
 
         const newMetadata = typeof existing.metadata === 'object' && existing.metadata !== null

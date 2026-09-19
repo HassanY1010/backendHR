@@ -4,6 +4,7 @@ import { aiService } from '../ai/ai-service.js';
 import { createNotification } from './notification.controller.js';
 import { SearchService } from '../services/search.service.js';
 import { QueueService } from '../services/queue.service.js';
+import { auditService } from '../services/audit.service.js';
 
 // --- Course Repository Management (Admin) ---
 
@@ -198,6 +199,16 @@ export const assignTraining = async (req, res, next) => {
             return res.status(400).json({ status: 'error', message: 'يرجى تحديد دورة موجودة أو إدخال بيانات دورة جديدة' });
         }
 
+        // Fetch full employee details for AI and verify company isolation FIRST
+        const employee = await prisma.employee.findUnique({
+            where: { id: employeeId },
+            include: { user: true }
+        });
+
+        if (!employee || (req.user.role !== 'SUPER_ADMIN' && employee.companyId !== req.user.companyId)) {
+            return res.status(404).json({ status: 'error', message: 'الموظف غير موجود أو غير تابع لشركتك' });
+        }
+
         // Prevent Duplicate Active Assignment
         const existing = await prisma.trainingAssignment.findFirst({
             where: {
@@ -209,16 +220,6 @@ export const assignTraining = async (req, res, next) => {
 
         if (existing) {
             return res.status(400).json({ status: 'error', message: 'الموظف لديه تعيين نشط لهذه الدورة بالفعل' });
-        }
-
-        // Fetch full employee details for AI
-        const employee = await prisma.employee.findUnique({
-            where: { id: employeeId },
-            include: { user: true }
-        });
-
-        if (!employee) {
-            return res.status(404).json({ status: 'error', message: 'الموظف غير موجود' });
         }
 
         // Fetch course details
@@ -244,21 +245,41 @@ export const assignTraining = async (req, res, next) => {
         });
 
         // Generate Plan & Quiz (Async Background Job)
-        // We do NOT wait for this anymore to prevent timeout
-        await QueueService.addJob('generateTrainingPlan', {
-            assignmentId: assignment.id,
-            courseId: targetCourseId,
-            employeeId
-        });
+        try {
+            await QueueService.addJob('generateTrainingPlan', {
+                assignmentId: assignment.id,
+                courseId: targetCourseId,
+                employeeId
+            });
+        } catch (queueErr) {
+            logger.warn('QueueService job failed to enqueue (non-fatal)', { error: queueErr.message });
+        }
 
         // Notify employee
-        await createNotification({
-            employeeId,
-            title: 'توصية تدريب ذكية',
-            message: `تم اختيار دورة "${assignment.course.title}" لك لتحسين مهاراتك. جاري إعداد الخطة الدراسية...`,
-            type: 'training',
-            priority: 'high',
-            metadata: { courseId: targetCourseId, assignmentId: assignment.id }
+        try {
+            await createNotification({
+                employeeId,
+                title: 'توصية تدريب ذكية',
+                message: `تم اختيار دورة "${assignment.course.title}" لك لتحسين مهاراتك. جاري إعداد الخطة الدراسية...`,
+                type: 'training',
+                priority: 'high',
+                metadata: { courseId: targetCourseId, assignmentId: assignment.id }
+            });
+        } catch (notifErr) {
+            logger.warn('Notification failed (non-fatal)', { error: notifErr.message });
+        }
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'TRAINING_ASSIGNED',
+            actionType: 'TRAINING_MANAGEMENT',
+            severity: 'LOW',
+            target: `Assignment:${assignment.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { employeeId, courseId: targetCourseId, courseTitle: assignment.course?.title }
         });
 
         res.status(201).json({ status: 'success', data: assignment, message: 'Training assigned. AI is generating the plan in the background.' });
@@ -442,9 +463,15 @@ export const evaluateTraining = async (req, res, next) => {
 
 export const getTrainingAnalytics = async (req, res, next) => {
     try {
-        // Impact Analysis Dashboard
+        const companyId = req.user.companyId;
+        // Impact Analysis Dashboard - Scoped to company
         const completed = await prisma.trainingAssignment.findMany({
-            where: { status: { in: ['COMPLETED', 'EVALUATED'] } },
+            where: {
+                status: { in: ['COMPLETED', 'EVALUATED'] },
+                employee: {
+                    companyId: req.user.role === 'SUPER_ADMIN' ? undefined : companyId
+                }
+            },
             include: { course: true, employee: { include: { user: true } } },
             take: 20
         });
@@ -469,7 +496,36 @@ export const getTrainingAnalytics = async (req, res, next) => {
 export const deleteAssignment = async (req, res, next) => {
     try {
         const { id } = req.params;
+
+        // Verify assignment belongs to company before deletion
+        const existing = await prisma.trainingAssignment.findFirst({
+            where: {
+                id,
+                employee: {
+                    companyId: req.user.role === 'SUPER_ADMIN' ? undefined : req.user.companyId
+                }
+            }
+        });
+
+        if (!existing) {
+            return res.status(404).json({ status: 'error', message: 'التعيين غير موجود أو غير مصرح بحذفه' });
+        }
+
         await prisma.trainingAssignment.delete({ where: { id } });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'TRAINING_ASSIGNMENT_DELETED',
+            actionType: 'TRAINING_MANAGEMENT',
+            severity: 'MEDIUM',
+            target: `Assignment:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { assignmentId: id }
+        });
+
         res.status(204).json({ status: 'success', data: null });
     } catch (error) {
         next(error);
@@ -537,10 +593,15 @@ export const enrollInCourse = async (req, res, next) => {
 
 export const getTrainingNeeds = async (req, res, next) => {
     try {
+        const companyId = req.user.companyId;
         // Fetch training needs for the company/team
-        // For now, return a placeholder or recent analysis
         const needs = await prisma.trainingRequest.findMany({
-            where: { status: 'PENDING' },
+            where: {
+                status: 'PENDING',
+                employee: {
+                    companyId: req.user.role === 'SUPER_ADMIN' ? undefined : companyId
+                }
+            },
             include: { employee: { include: { user: true } }, course: true }
         });
         res.status(200).json({ status: 'success', data: needs });
@@ -559,8 +620,8 @@ export const approveTrainingRequest = async (req, res, next) => {
             include: { employee: { include: { user: true } }, course: true }
         });
 
-        if (!request) {
-            return res.status(404).json({ status: 'error', message: 'طلب التدريب غير موجود' });
+        if (!request || (req.user.role !== 'SUPER_ADMIN' && request.employee.companyId !== req.user.companyId)) {
+            return res.status(404).json({ status: 'error', message: 'طلب التدريب غير موجود أو غير تابع لشركتك' });
         }
 
         if (status === 'REJECTED') {
@@ -645,6 +706,19 @@ export const approveTrainingRequest = async (req, res, next) => {
             type: 'training',
             priority: 'high',
             metadata: { courseId: targetCourseId, assignmentId: assignment.id }
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: status === 'REJECTED' ? 'TRAINING_REQUEST_REJECTED' : 'TRAINING_REQUEST_APPROVED',
+            actionType: 'TRAINING_MANAGEMENT',
+            severity: 'LOW',
+            target: `Request:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { requestId: id, status, courseId: targetCourseId }
         });
 
         res.status(200).json({ status: 'success', data: assignment });

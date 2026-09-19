@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import logger from '../utils/logger.js';
 import OpenAI from 'openai';
+import { CandidateStateMachine, NORMALIZE_STATUS } from '../services/candidateStateMachine.js';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || 'mock-key'
@@ -673,11 +674,30 @@ class RecruitmentAgentService {
             updatedStatus = 'EXECUTED';
             // Perform actual database updates based on action type
             if (log.action === 'PROPOSE_TOP_5_CANDIDATE' && log.input?.candidateId) {
-                // Update candidate status to SHORTLISTED
-                await prisma.candidate.update({
-                    where: { id: log.input.candidateId },
-                    data: { status: 'SHORTLISTED', updatedAt: new Date() }
+                // Verify candidate exists and belongs to this company
+                const candidate = await prisma.candidate.findFirst({
+                    where: { id: log.input.candidateId, recruitmentjob: { companyId }, deletedAt: null }
                 });
+                if (candidate) {
+                    // Enforce candidate state machine
+                    CandidateStateMachine.validateTransition(candidate.status, 'SHORTLISTED', {
+                        comment: 'ترشيح واعتماد بواسطة وكيل التوظيف الذكي'
+                    });
+                    await prisma.candidate.update({
+                        where: { id: log.input.candidateId },
+                        data: { status: 'SHORTLISTED', updatedAt: new Date() }
+                    });
+                    await prisma.candidateHistory.create({
+                        data: {
+                            candidateId: candidate.id,
+                            action: 'ترشيح للقائمة المختصرة (وكيل التوظيف الذكي)',
+                            oldStatus: candidate.status,
+                            newStatus: 'SHORTLISTED',
+                            comment: 'تم النقل للقائمة المختصرة بعد اعتماد توصية الذكاء الاصطناعي',
+                            performedBy: userId || 'RECRUITMENT_AI_AGENT'
+                        }
+                    });
+                }
                 executionOutput = { statusChangedTo: 'SHORTLISTED', candidateId: log.input.candidateId };
             } else if (log.action === 'RECOMMEND_CANDIDATE_FOLLOWUP' && log.input?.candidateId) {
                 // Add a CandidateNote

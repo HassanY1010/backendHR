@@ -16,6 +16,29 @@ const prismaClient = globalForPrisma.prisma || new PrismaClient({
 globalForPrisma.prisma = prismaClient;
 
 /**
+ * Executes a database operation with retries for transient pooler connection resets.
+ */
+const executeWithRetry = async (fn, maxRetries = 4, delayMs = 1000) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (error) {
+            const isTransient = error.message && (
+                error.message.includes('Can\'t reach database server') ||
+                error.message.includes('ConnectionReset') ||
+                error.message.includes('connection was forcibly closed') ||
+                error.message.includes('Timed out fetching a new connection')
+            );
+            if (isTransient && attempt < maxRetries) {
+                await new Promise(res => setTimeout(res, delayMs * attempt));
+                continue;
+            }
+            throw error;
+        }
+    }
+};
+
+/**
  * Recursively injects UUIDs into any object lacking an 'id' within a 'create' context.
  */
 const injectIds = (obj) => {
@@ -64,54 +87,54 @@ const prisma = prismaClient.$extends({
                 if (isSoftDeleteModel(model)) {
                     args.where = { ...args.where, deletedAt: null };
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async findFirst({ model, args, query }) {
                 if (isSoftDeleteModel(model)) {
                     args.where = { ...args.where, deletedAt: null };
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async count({ model, args, query }) {
                 if (isSoftDeleteModel(model)) {
                     args.where = { ...args.where, deletedAt: null };
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async findUnique({ model, args, query }) {
                 // Prisma findUnique doesn't support complex where clauses (must be ID/Unique fields)
                 // We convert it to findFirst to allow filtering by deletedAt: null
                 if (isSoftDeleteModel(model)) {
                     args.where = { ...args.where, deletedAt: null };
-                    return prismaClient[model].findFirst(args);
+                    return executeWithRetry(() => prismaClient[model].findFirst(args));
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
 
             // Convert DELETE to SOFT DELETE (Update)
             async delete({ model, args, query }) {
                 if (isSoftDeleteModel(model)) {
-                    return prismaClient[model].update({
+                    return executeWithRetry(() => prismaClient[model].update({
                         where: args.where,
                         data: { deletedAt: new Date() }
-                    });
+                    }));
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async deleteMany({ model, args, query }) {
                 if (isSoftDeleteModel(model)) {
-                    return prismaClient[model].updateMany({
+                    return executeWithRetry(() => prismaClient[model].updateMany({
                         where: args.where,
                         data: { deletedAt: new Date() }
-                    });
+                    }));
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
 
             // ID Injection for CREATE operations
             async create({ args, query }) {
                 injectIds(args.data);
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async createMany({ args, query }) {
                 if (Array.isArray(args.data)) {
@@ -121,11 +144,17 @@ const prisma = prismaClient.$extends({
                 } else if (args.data && typeof args.data === 'object') {
                     if (!args.data.id) args.data.id = crypto.randomUUID();
                 }
-                return query(args);
+                return executeWithRetry(() => query(args));
             },
             async upsert({ args, query }) {
                 if (args.create) injectIds(args.create);
-                return query(args);
+                return executeWithRetry(() => query(args));
+            },
+            async update({ args, query }) {
+                return executeWithRetry(() => query(args));
+            },
+            async updateMany({ args, query }) {
+                return executeWithRetry(() => query(args));
             }
         }
     }

@@ -10,6 +10,7 @@ import { aiService } from '../ai/ai-service.js';
 import { extractTextFromPDF } from '../utils/pdfExtractor.js';
 import { isAllowedCV, getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
 import { auditService } from '../services/audit.service.js';
+import { CandidateStateMachine, NORMALIZE_STATUS } from '../services/candidateStateMachine.js';
 
 const resolveCompanyId = (req) => {
     const companyId = req.user?.companyId || req.user?.company?.id;
@@ -21,6 +22,8 @@ const resolveCompanyId = (req) => {
     return companyId;
 };
 
+const _candidateCreationLocks = new Set();
+
 // Sanitization and validation helpers
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -29,6 +32,7 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
  * Create candidate profile with full personal & professional details in an Atomic Transaction
  */
 export const createCandidate = async (req, res, next) => {
+    let lockKey = null;
     try {
         const companyId = resolveCompanyId(req);
         const {
@@ -53,7 +57,8 @@ export const createCandidate = async (req, res, next) => {
             resumeUrl,
             coverLetter,
             skillsList,
-            experiencesList
+            experiencesList,
+            source
         } = req.body;
 
         const candidateName = (fullName || name || '').trim();
@@ -103,10 +108,34 @@ export const createCandidate = async (req, res, next) => {
             }
         }
 
+        // Concurrency lock per job + email to prevent race conditions during parallel submissions
+        lockKey = `${targetJobId}:${candidateEmail.toLowerCase()}`;
+        if (_candidateCreationLocks.has(lockKey)) {
+            const conflictError = new Error('المرشح مسجل بالفعل على هذه الوظيفة بنفس البريد الإلكتروني (طلب متزامن قيد المعالجة).');
+            conflictError.statusCode = 409;
+            throw conflictError;
+        }
+        _candidateCreationLocks.add(lockKey);
+
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         // Perform creation inside an atomic Prisma Transaction
         const fullCandidate = await prisma.$transaction(async (tx) => {
+            // Duplicate Candidate check for this specific job
+            const existingDuplicate = await tx.candidate.findFirst({
+                where: {
+                    jobId: targetJobId,
+                    email: { equals: candidateEmail, mode: 'insensitive' },
+                    deletedAt: null
+                }
+            });
+
+            if (existingDuplicate) {
+                const conflictError = new Error('المرشح مسجل بالفعل على هذه الوظيفة بنفس البريد الإلكتروني.');
+                conflictError.statusCode = 409;
+                throw conflictError;
+            }
+
             const createdCandidate = await tx.candidate.create({
                 data: {
                     jobId: targetJobId,
@@ -169,14 +198,24 @@ export const createCandidate = async (req, res, next) => {
                 });
             }
 
-            // Log CandidateHistory
+            // Determine candidate source
+            const sanitizedSource = ['DIRECT_ATS_ENTRY', 'CV_PARSER_AI', 'PUBLIC_PORTAL'].includes(source)
+                ? source
+                : 'DIRECT_ATS_ENTRY';
+            const sourceComment = sanitizedSource === 'CV_PARSER_AI'
+                ? 'تم إنشاء ملف المرشح آلياً عبر تفريغ السيرة الذاتية بالذكاء الاصطناعي (CV Parser AI)'
+                : (sanitizedSource === 'PUBLIC_PORTAL'
+                    ? 'تم التقديم عبر بوابة التوظيف العامة (Public Careers Portal)'
+                    : 'تم إنشاء ملف المرشح يدوياً عبر لوحة تحكم التوظيف (Direct HR Entry)');
+
+            // Log CandidateHistory with structured Source metadata
             await tx.candidateHistory.create({
                 data: {
                     candidateId: createdCandidate.id,
-                    action: 'إنشاء ملف مرشح جديد',
+                    action: `CANDIDATE_CREATED:${sanitizedSource}`,
                     oldStatus: null,
                     newStatus: 'APPLIED',
-                    comment: 'تم تقديم طلب جديد وإنشاء ملف المرشح في نظام ATS',
+                    comment: sourceComment,
                     performedBy: req.user?.id || 'SYSTEM'
                 }
             });
@@ -197,6 +236,10 @@ export const createCandidate = async (req, res, next) => {
     } catch (error) {
         logger.error('[ATS] createCandidate error:', error.message);
         next(error);
+    } finally {
+        if (lockKey) {
+            _candidateCreationLocks.delete(lockKey);
+        }
     }
 };
 
@@ -350,14 +393,14 @@ export const uploadAndParseCV = async (req, res, next) => {
             });
         }
 
-        // Log history
+        // Log history with structured Source metadata
         await prisma.candidateHistory.create({
             data: {
                 candidateId: candidate.id,
-                action: 'رفع وتفكيك السيرة الذاتية CV',
+                action: 'CANDIDATE_CREATED:CV_PARSER_AI',
                 oldStatus: null,
                 newStatus: 'SCREENING',
-                comment: 'تم تحليل الـ CV بالذكاء الاصطناعي وتحويله لبيانات هيكلية منظمة',
+                comment: 'تم تحليل الـ CV بالذكاء الاصطناعي وتحويله لبيانات هيكلية منظمة (AI CV Parser)',
                 performedBy: req.user?.id || 'SYSTEM'
             }
         });
@@ -454,7 +497,12 @@ export const getCandidates = async (req, res, next) => {
                     createdAt: true,
                     updatedAt: true,
                     recruitmentjob: { select: { id: true, title: true, location: true } },
-                    candidateSkills: { select: { id: true, skillName: true, level: true } }
+                    candidateSkills: { select: { id: true, skillName: true, level: true } },
+                    candidateHistories: {
+                        select: { action: true, comment: true, createdAt: true },
+                        orderBy: { createdAt: 'asc' },
+                        take: 1
+                    }
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
@@ -462,13 +510,33 @@ export const getCandidates = async (req, res, next) => {
             })
         ]);
 
+        const enrichedCandidates = candidates.map(cand => {
+            const firstHistory = cand.candidateHistories?.[0];
+            let source = 'DIRECT_ATS_ENTRY';
+            let sourceLabel = 'إدخال مباشر HR';
+
+            if (firstHistory?.action?.includes('PUBLIC_PORTAL') || firstHistory?.comment?.includes('بوابة التوظيف العامة')) {
+                source = 'PUBLIC_PORTAL';
+                sourceLabel = 'بوابة التوظيف العامة';
+            } else if (firstHistory?.action?.includes('CV_PARSER_AI') || firstHistory?.comment?.includes('الـ CV بالذكاء الاصطناعي')) {
+                source = 'CV_PARSER_AI';
+                sourceLabel = 'تفريغ السيرة الذاتية (AI)';
+            }
+
+            return {
+                ...cand,
+                source,
+                sourceLabel
+            };
+        });
+
         res.status(200).json({
             status: 'success',
-            count: candidates.length,
+            count: enrichedCandidates.length,
             total,
             page: pageNum,
             totalPages: Math.ceil(total / take),
-            data: candidates
+            data: enrichedCandidates
         });
     } catch (error) {
         logger.error('[ATS] getCandidates error:', error.message);
@@ -505,7 +573,20 @@ export const getCandidateById = async (req, res, next) => {
             return res.status(404).json({ status: 'error', message: 'المرشح غير موجود أو لا تملك صلاحية الوصول إليه' });
         }
 
-        res.status(200).json({ status: 'success', data: candidate });
+        // Determine source reliably from initial history
+        const initialHistory = [...(candidate.candidateHistories || [])].reverse()[0];
+        let source = 'DIRECT_ATS_ENTRY';
+        let sourceLabel = 'إدخال مباشر HR';
+
+        if (initialHistory?.action?.includes('PUBLIC_PORTAL') || initialHistory?.comment?.includes('بوابة التوظيف العامة')) {
+            source = 'PUBLIC_PORTAL';
+            sourceLabel = 'بوابة التوظيف العامة';
+        } else if (initialHistory?.action?.includes('CV_PARSER_AI') || initialHistory?.comment?.includes('الـ CV بالذكاء الاصطناعي')) {
+            source = 'CV_PARSER_AI';
+            sourceLabel = 'تفريغ السيرة الذاتية (AI)';
+        }
+
+        res.status(200).json({ status: 'success', data: { ...candidate, source, sourceLabel } });
     } catch (error) {
         logger.error('[ATS] getCandidateById error:', error.message);
         next(error);
@@ -769,7 +850,7 @@ export const updateCandidateStatus = async (req, res, next) => {
             'INTERVIEWING', 'HIRED', 'REJECTED', 'WITHDRAWN', 'NO_RESPONSE'
         ];
 
-        const targetStatus = status.toUpperCase();
+        const targetStatus = NORMALIZE_STATUS(status);
         if (!validStatuses.includes(targetStatus)) {
             return res.status(400).json({ status: 'error', message: `حالة المرحلة (${status}) غير صحيحة أو غير مدعومة` });
         }
@@ -787,6 +868,15 @@ export const updateCandidateStatus = async (req, res, next) => {
             }
 
             const oldStatus = candidate.status;
+
+            // Enforce Candidate State Machine transition rules & guards
+            CandidateStateMachine.validateTransition(oldStatus, targetStatus, { comment });
+
+            // If status is identical, return early without duplicate logs
+            if (oldStatus === targetStatus) {
+                return candidate;
+            }
+
             const updated = await tx.candidate.update({
                 where: { id },
                 data: {
@@ -795,7 +885,7 @@ export const updateCandidateStatus = async (req, res, next) => {
                 }
             });
 
-            // Audit Trail in CandidateHistory
+            // 1. Audit Trail in CandidateHistory
             await tx.candidateHistory.create({
                 data: {
                     candidateId: id,
@@ -807,7 +897,29 @@ export const updateCandidateStatus = async (req, res, next) => {
                 }
             });
 
-            // 🔄 Atomic Sync with JobRequest & HiringPlan based on candidate progression & vacancies
+            // 2. Tenant-Isolated AuditLog for sensitive stage transitions
+            await tx.auditLog.create({
+                data: {
+                    userId: req.user?.id || null,
+                    companyId,
+                    action: `CANDIDATE_STATUS_CHANGED`,
+                    actionType: 'ATS_PIPELINE',
+                    severity: ['HIRED', 'REJECTED'].includes(targetStatus) ? 'high' : 'medium',
+                    target: id,
+                    status: 'success',
+                    ip: req.ip || null,
+                    details: JSON.stringify({
+                        candidateId: id,
+                        candidateName: candidate.fullName,
+                        jobId: candidate.jobId,
+                        oldStatus,
+                        newStatus: targetStatus,
+                        comment: comment || null
+                    })
+                }
+            });
+
+            // 3. 🔄 Atomic Sync with JobRequest & HiringPlan based on candidate progression & vacancies
             try {
                 await jobRequestSyncService.syncOnCandidateStatusChange({
                     candidateId: id,
@@ -821,7 +933,7 @@ export const updateCandidateStatus = async (req, res, next) => {
             }
 
             return updated;
-        }, { timeout: 15000, maxWait: 10000 });
+        }, { timeout: 35000, maxWait: 15000 });
 
         res.status(200).json({
             status: 'success',
@@ -830,6 +942,12 @@ export const updateCandidateStatus = async (req, res, next) => {
         });
     } catch (error) {
         logger.error('[ATS] updateCandidateStatus error:', error.message);
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                status: 'error',
+                message: error.message
+            });
+        }
         next(error);
     }
 };
@@ -1117,6 +1235,21 @@ export const createCandidateApplication = async (req, res, next) => {
             : `تم تقديم طلب للمرشح ${candidate.fullName} على وظيفة (${jobTitle}) (بانتظار إجراء مطابقة الذكاء الاصطناعي)`;
 
         const appStatus = (status || 'APPLIED').toUpperCase();
+
+        // Prevent duplicate application for the exact same candidate and job
+        const existingApp = await prisma.candidateApplication.findFirst({
+            where: {
+                candidateId: id,
+                ...(rJob?.id ? { jobId: rJob.id } : { jobRequestId: jRequest.id })
+            }
+        });
+
+        if (existingApp) {
+            return res.status(409).json({
+                status: 'error',
+                message: `المرشح مسجل بالفعل في طلب تقديم على وظيفة (${jobTitle}).`
+            });
+        }
 
         const application = await prisma.candidateApplication.create({
             data: {

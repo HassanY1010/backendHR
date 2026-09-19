@@ -1,4 +1,5 @@
 import prisma from '../config/db.js';
+import crypto from 'crypto';
 import { JobRequestStateMachine, JOB_REQUEST_STATUS } from '../services/jobRequestStateMachine.js';
 import { initWorkflowInstance } from './workflow.controller.js';
 
@@ -63,8 +64,36 @@ const recordAuditLog = async ({ userId, companyId, action, oldStatus, newStatus,
  * POST /api/job-requests
  */
 export const createJobRequest = async (req, res) => {
+  const { companyId, id: userId } = req.user;
+  const idempotencyKey = req.headers['idempotency-key'] || req.body.idempotencyKey || req.body.clientRequestId;
+  const lockKey = idempotencyKey ? getCreationLockKey(companyId, idempotencyKey) : null;
+
+  // 1. Idempotency Check (Payload-aware Cache Replay)
+  const payloadHash = crypto.createHash('sha256').update(JSON.stringify(req.body || {})).digest('hex');
+
+  if (lockKey) {
+    const cachedEntry = getIdempotentResponse(lockKey);
+    if (cachedEntry) {
+      // Validate that identical key is not reused with different payload
+      if (cachedEntry.payloadHash && cachedEntry.payloadHash !== payloadHash) {
+        return res.status(409).json({
+          error: 'تم استخدام نفس مفتاح Idempotency-Key مع بيانات مختلفة (Payload mismatch). يرجى توليد مفتاح جديد.',
+          code: 'IDEMPOTENCY_PAYLOAD_MISMATCH'
+        });
+      }
+      return res.status(200).json(cachedEntry.response.body);
+    }
+
+    // Acquire lock against concurrent double-click
+    if (!acquireCreationLock(lockKey)) {
+      return res.status(409).json({
+        error: 'طلب قيد المعالجة حالياً، يرجى عدم تكرار النقر (Concurrent request in progress)',
+        code: 'CONCURRENT_REQUEST'
+      });
+    }
+  }
+
   try {
-    const { companyId, id: userId } = req.user;
     const {
       jobTitle,
       departmentId,
@@ -97,31 +126,47 @@ export const createJobRequest = async (req, res) => {
       submitDirectly = false
     } = req.body;
 
+    // Field-level Validation
+    const fieldErrors = {};
+
     if (!jobTitle || typeof jobTitle !== 'string' || !jobTitle.trim()) {
-      return res.status(400).json({ error: 'المسمى الوظيفي مطلوب ولا يمكن أن يكون فارغاً' });
+      fieldErrors.jobTitle = 'المسمى الوظيفي مطلوب ولا يمكن أن يكون فارغاً';
+    }
+
+    if (!departmentId || typeof departmentId !== 'string' || !departmentId.trim()) {
+      fieldErrors.departmentId = 'القسم أو الإدارة مطلوبة';
     }
 
     if (vacancies !== undefined && (isNaN(Number(vacancies)) || Number(vacancies) <= 0)) {
-      return res.status(400).json({ error: 'عدد الشواغر يجب أن يكون رقماً صحيحاً موجباً أكبر من الصفر' });
+      fieldErrors.vacancies = 'عدد الشواغر يجب أن يكون رقماً صحيحاً موجباً أكبر من الصفر';
     }
 
     if (salaryMin && salaryMax && parseFloat(salaryMin) > parseFloat(salaryMax)) {
-      return res.status(400).json({ error: 'الحد الأدنى للراتب لا يمكن أن يتجاوز الحد الأعلى للراتب' });
+      fieldErrors.salaryMin = 'الحد الأدنى للراتب لا يمكن أن يتجاوز الحد الأعلى للراتب';
+      fieldErrors.salaryMax = 'الحد الأعلى للراتب يجب أن يكون أكبر من أو يساوي الحد الأدنى';
     }
 
     const validEmploymentTypes = ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'REMOTE', 'HYBRID'];
     if (employmentType && !validEmploymentTypes.includes(employmentType)) {
-      return res.status(400).json({ error: 'نوع التوظيف المحدد غير صالح' });
+      fieldErrors.employmentType = 'نوع التوظيف المحدد غير صالح';
     }
 
     const validPriorities = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
     if (priority && !validPriorities.includes(priority)) {
-      return res.status(400).json({ error: 'مستوى الأولوية المحدد غير صالح' });
+      fieldErrors.priority = 'مستوى الأولوية المحدد غير صالح';
     }
 
     const validHiringReasons = ['NEW_POSITION', 'REPLACEMENT', 'EXPANSION', 'PROJECT_BASED', 'SEASONAL'];
     if (hiringReason && !validHiringReasons.includes(hiringReason)) {
-      return res.status(400).json({ error: 'سبب التوظيف المحدد غير صالح' });
+      fieldErrors.hiringReason = 'سبب التوظيف المحدد غير صالح';
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
+      if (lockKey) releaseCreationLock(lockKey);
+      return res.status(400).json({
+        error: Object.values(fieldErrors)[0],
+        fieldErrors
+      });
     }
 
     // -------------------------------------------------------------
@@ -381,8 +426,16 @@ export const createJobRequest = async (req, res) => {
       }
     });
 
-    return res.status(201).json({ message: 'تم إنشاء طلب التوظيف بنجاح', data: result });
+    const responsePayload = { message: 'تم إنشاء طلب التوظيف بنجاح', data: result };
+
+    if (lockKey) {
+      setIdempotentResponse(lockKey, { status: 201, body: responsePayload }, payloadHash, 120000);
+      releaseCreationLock(lockKey);
+    }
+
+    return res.status(201).json(responsePayload);
   } catch (err) {
+    if (lockKey) releaseCreationLock(lockKey);
     console.error('Error creating job request:', err);
     return res.status(500).json({ error: err.message || 'حدث خطأ أثناء إنشاء طلب التوظيف' });
   }
@@ -1159,72 +1212,97 @@ export const transitionState = async (req, res) => {
  * POST /api/job-requests/:id/convert-to-job
  */
 export const convertToRecruitmentJob = async (req, res) => {
+  const { companyId, id: userId } = req.user;
+  const { id } = req.params;
+
+  // 1. Concurrency Lock check: prevent concurrent double-click conversion
+  if (!acquireConversionLock(id)) {
+    return res.status(409).json({
+      error: 'عملية تحويل هذا الطلب قيد التنفيذ حالياً، يرجى الانتظار (Concurrent conversion in progress)',
+      code: 'CONCURRENT_CONVERSION'
+    });
+  }
+
   try {
-    const { companyId, id: userId } = req.user;
-    const { id } = req.params;
-
-    const jobRequest = await prisma.jobRequest.findFirst({
-      where: { id, companyId, deletedAt: null },
-      include: { skills: true, department: true }
-    });
-
-    if (!jobRequest) {
-      return res.status(404).json({ error: 'طلب التوظيف غير موجود' });
-    }
-
-    if (!['APPROVED', 'RECRUITMENT_STARTED'].includes(jobRequest.status)) {
-      return res.status(400).json({ error: 'يجب أن يكون طلب التوظيف معتمداً لتحويله إلى وظيفة نشطة' });
-    }
-
-    // Double Action / Idempotency Safety Check:
-    // Check if an active recruitment job was already created for this job request
-    const existingRecruitmentJob = await prisma.recruitmentJob.findFirst({
-      where: {
-        companyId,
-        title: jobRequest.jobTitle,
-        departmentId: jobRequest.departmentId,
-        deletedAt: null,
-        status: { not: 'CLOSED' }
-      }
-    });
-
-    if (existingRecruitmentJob && jobRequest.status === 'RECRUITMENT_STARTED') {
-      return res.status(200).json({
-        message: 'تم تحويل هذا الطلب إلى وظيفة توظيف نشطة بالفعل مسبقاً',
-        data: existingRecruitmentJob
+    const result = await prisma.$transaction(async (tx) => {
+      // 2. Fetch fresh job request inside transaction
+      const jobRequest = await tx.jobRequest.findFirst({
+        where: { id, companyId, deletedAt: null },
+        include: { skills: true, department: true }
       });
-    }
 
+      if (!jobRequest) {
+        const error = new Error('طلب التوظيف غير موجود');
+        error.statusCode = 404;
+        throw error;
+      }
 
-    // Prepare rich requirements list
-    const reqList = [];
-    if (jobRequest.educationLevel) reqList.push(`• المؤهل العلمي المطلوب: ${jobRequest.educationLevel}`);
-    if (jobRequest.requiredExperience) reqList.push(`• سنوات الخبرة المطلوبة: ${jobRequest.requiredExperience}`);
-    if (Array.isArray(jobRequest.skills) && jobRequest.skills.length > 0) {
-      const skillNames = jobRequest.skills.map(s => s.skillName || s).join('، ');
-      reqList.push(`• المهارات الأساسية المطلوبة: ${skillNames}`);
-    }
-    if (jobRequest.certifications) reqList.push(`• الشهادات والاعتمادات: ${jobRequest.certifications}`);
-    if (jobRequest.languages) reqList.push(`• اللغات المفضلة: ${jobRequest.languages}`);
+      // Check if already converted and find existing vacancy (Idempotent replay)
+      const existingRecruitmentJob = await tx.recruitmentJob.findFirst({
+        where: {
+          companyId,
+          title: jobRequest.jobTitle,
+          departmentId: jobRequest.departmentId,
+          deletedAt: null,
+          status: { not: 'CLOSED' }
+        }
+      });
 
-    const formattedRequirements = reqList.length > 0 ? reqList.join('\n') : (jobRequest.requiredExperience || 'حسب المتطلبات والتخصص');
+      if (jobRequest.status === 'RECRUITMENT_STARTED') {
+        if (existingRecruitmentJob) {
+          return {
+            isAlreadyConverted: true,
+            job: existingRecruitmentJob
+          };
+        }
+      }
 
-    // Prepare rich responsibilities list
-    let formattedResponsibilities = jobRequest.responsibilities;
-    if (Array.isArray(jobRequest.responsibilities) && jobRequest.responsibilities.length > 0) {
-      formattedResponsibilities = jobRequest.responsibilities.map(r => `• ${r}`).join('\n');
-    }
+      if (jobRequest.status !== 'APPROVED') {
+        const error = new Error(`لا يمكن تحويل طلب التوظيف في حالته الحالية (${jobRequest.status}). يجب أن يكون معتمداً (APPROVED)`);
+        error.statusCode = 400;
+        throw error;
+      }
 
-    // Prepare rich description
-    const descParts = [];
-    if (jobRequest.jobSummary) descParts.push(jobRequest.jobSummary);
-    if (jobRequest.educationLevel) descParts.push(`المؤهل العلمي: ${jobRequest.educationLevel}`);
-    if (jobRequest.salaryMin && jobRequest.salaryMax) {
-      descParts.push(`نطاق الراتب المخصص: ${Math.round(jobRequest.salaryMin).toLocaleString('ar-SA')} - ${Math.round(jobRequest.salaryMax).toLocaleString('ar-SA')} ريال`);
-    }
-    const formattedDescription = descParts.join('\n\n') || jobRequest.jobTitle;
+      // If a vacancy already exists with this title & department while APPROVED, link idempotently
+      if (existingRecruitmentJob) {
+        await tx.jobRequest.update({
+          where: { id },
+          data: { status: 'RECRUITMENT_STARTED' }
+        });
+        return {
+          isAlreadyConverted: true,
+          job: existingRecruitmentJob
+        };
+      }
 
-    const createdJob = await prisma.$transaction(async (tx) => {
+      // Prepare rich requirements list
+      const reqList = [];
+      if (jobRequest.educationLevel) reqList.push(`• المؤهل العلمي المطلوب: ${jobRequest.educationLevel}`);
+      if (jobRequest.requiredExperience) reqList.push(`• سنوات الخبرة المطلوبة: ${jobRequest.requiredExperience}`);
+      if (Array.isArray(jobRequest.skills) && jobRequest.skills.length > 0) {
+        const skillNames = jobRequest.skills.map(s => s.skillName || s).join('، ');
+        reqList.push(`• المهارات الأساسية المطلوبة: ${skillNames}`);
+      }
+      if (jobRequest.certifications) reqList.push(`• الشهادات والاعتمادات: ${jobRequest.certifications}`);
+      if (jobRequest.languages) reqList.push(`• اللغات المفضلة: ${jobRequest.languages}`);
+
+      const formattedRequirements = reqList.length > 0 ? reqList.join('\n') : (jobRequest.requiredExperience || 'حسب المتطلبات والتخصص');
+
+      // Prepare rich responsibilities list
+      let formattedResponsibilities = jobRequest.responsibilities;
+      if (Array.isArray(jobRequest.responsibilities) && jobRequest.responsibilities.length > 0) {
+        formattedResponsibilities = jobRequest.responsibilities.map(r => `• ${r}`).join('\n');
+      }
+
+      // Prepare rich description
+      const descParts = [];
+      if (jobRequest.jobSummary) descParts.push(jobRequest.jobSummary);
+      if (jobRequest.educationLevel) descParts.push(`المؤهل العلمي: ${jobRequest.educationLevel}`);
+      if (jobRequest.salaryMin && jobRequest.salaryMax) {
+        descParts.push(`نطاق الراتب المخصص: ${Math.round(jobRequest.salaryMin).toLocaleString('ar-SA')} - ${Math.round(jobRequest.salaryMax).toLocaleString('ar-SA')} ريال`);
+      }
+      const formattedDescription = descParts.join('\n\n') || jobRequest.jobTitle;
+
       const recruitmentJob = await tx.recruitmentJob.create({
         data: {
           companyId,
@@ -1260,16 +1338,37 @@ export const convertToRecruitmentJob = async (req, res) => {
         }
       });
 
-      return recruitmentJob;
-    });
+      return {
+        isAlreadyConverted: false,
+        job: recruitmentJob
+      };
+    }, { timeout: 15000, maxWait: 10000 });
+
+    releaseConversionLock(id);
+
+    if (result.isAlreadyConverted) {
+      return res.status(200).json({
+        success: true,
+        message: 'تم تحويل هذا الطلب إلى وظيفة توظيف نشطة بالفعل مسبقاً',
+        data: {
+          vacancy: result.job,
+          jobRequest: { id, status: 'RECRUITMENT_STARTED' }
+        }
+      });
+    }
 
     return res.status(201).json({
+      success: true,
       message: 'تم تحويل طلب التوظيف بنجاح ونشر الوظيفة في قسم Recruitment',
-      data: createdJob
+      data: {
+        vacancy: result.job,
+        jobRequest: { id, status: 'RECRUITMENT_STARTED' }
+      }
     });
   } catch (err) {
+    releaseConversionLock(id);
     console.error('Error converting job request:', err);
-    return res.status(500).json({ error: err.message || 'حدث خطأ أثناء تحويل طلب التوظيف' });
+    return res.status(err.statusCode || 500).json({ error: err.message || 'حدث خطأ أثناء تحويل طلب التوظيف' });
   }
 };
 
@@ -1441,4 +1540,51 @@ export const unfreezeJobRequest = async (req, res) => {
     console.error('Error unfreezing job request:', err);
     return res.status(500).json({ error: err.message || 'فشل في فك تجميد طلب التوظيف' });
   }
+};
+
+// ============================================================================
+// Phase 2 Idempotency & Concurrency In-Memory Engine
+// ============================================================================
+const _idempotencyStore = new Map();
+const _conversionLocks = new Set();
+const _creationLocks = new Set();
+
+export const getCreationLockKey = (companyId, idempotencyKey) => `${companyId}:${idempotencyKey}`;
+export const acquireCreationLock = (key) => {
+  if (_creationLocks.has(key)) return false;
+  _creationLocks.add(key);
+  return true;
+};
+export const releaseCreationLock = (key) => {
+  _creationLocks.delete(key);
+};
+
+export const getIdempotentResponse = (key) => {
+  const cached = _idempotencyStore.get(key);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    _idempotencyStore.delete(key);
+    return null;
+  }
+  return cached.data;
+};
+
+export const setIdempotentResponse = (key, response, payloadHash = null, ttlMs = 60000) => {
+  _idempotencyStore.set(key, {
+    data: {
+      response,
+      payloadHash
+    },
+    expiresAt: Date.now() + ttlMs
+  });
+};
+
+export const acquireConversionLock = (jobRequestId) => {
+  if (_conversionLocks.has(jobRequestId)) return false;
+  _conversionLocks.add(jobRequestId);
+  return true;
+};
+
+export const releaseConversionLock = (jobRequestId) => {
+  _conversionLocks.delete(jobRequestId);
 };

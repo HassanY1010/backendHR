@@ -2,6 +2,7 @@ import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import { createNotification } from './notification.controller.js';
 import logger from '../utils/logger.js';
+import { auditService } from '../services/audit.service.js';
 
 // apps/api/src/controllers/employee.controller.js
 export const getAllEmployees = async (req, res, next) => {
@@ -47,6 +48,7 @@ export const createEmployee = async (req, res, next) => {
         const { name, email, department, position, startDate, password } = req.body;
         const companyId = req.user.companyId;
 
+        const hashedPassword = await bcrypt.hash(password || 'password123', 10);
         // Use transaction to ensure both user and employee are created
         const result = await prisma.$transaction(async (tx) => {
             let user = await tx.user.findUnique({ where: { email } });
@@ -56,7 +58,7 @@ export const createEmployee = async (req, res, next) => {
                     data: {
                         name,
                         email,
-                        passwordHash: await bcrypt.hash(password || 'password123', 12),
+                        passwordHash: hashedPassword,
                         initialPassword: password || 'password123',
                         role: 'EMPLOYEE',
                         companyId,
@@ -86,6 +88,22 @@ export const createEmployee = async (req, res, next) => {
             });
 
             return employee;
+        }, {
+            maxWait: 15000,
+            timeout: 30000
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'EMPLOYEE_CREATED',
+            actionType: 'HR_MANAGEMENT',
+            severity: 'LOW',
+            target: `Employee:${result.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { name: result.user?.name, email: result.user?.email, department: result.department, position: result.position }
         });
 
         res.status(201).json({ status: 'success', data: { employee: result } });
@@ -157,6 +175,19 @@ export const bulkCreateEmployees = async (req, res, next) => {
                 errors.push({ email: empData.email, error: err.message });
             }
         }
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'EMPLOYEE_BULK_IMPORT',
+            actionType: 'HR_MANAGEMENT',
+            severity: 'MEDIUM',
+            target: `Company:${companyId}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { createdCount: results.length, errorCount: errors.length }
+        });
 
         res.status(200).json({
             status: 'success',
@@ -303,6 +334,19 @@ export const changePassword = async (req, res, next) => {
                 passwordHash,
                 updatedAt: new Date()
             }
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId,
+            companyId: req.user.companyId,
+            action: 'USER_PASSWORD_CHANGED',
+            actionType: 'AUTH_SECURITY',
+            severity: 'MEDIUM',
+            target: `User:${userId}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { changedBy: 'Self-Service' }
         });
 
         res.status(200).json({ status: 'success', message: 'تم تغيير كلمة المرور بنجاح' });
@@ -740,6 +784,20 @@ export const updateEmployee = async (req, res, next) => {
         });
 
         logger.info('Update successful for employee', { id });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'EMPLOYEE_UPDATED',
+            actionType: 'HR_MANAGEMENT',
+            severity: 'LOW',
+            target: `Employee:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(req.body) }
+        });
+
         res.status(200).json({ status: 'success', data: result });
     } catch (error) {
         logger.error('Update failed for employee', { id, error: error.message });
@@ -798,6 +856,19 @@ export const deleteEmployee = async (req, res, next) => {
                 where: { id: employee.userId },
                 data: { deletedAt: now }
             });
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'EMPLOYEE_DELETED',
+            actionType: 'HR_MANAGEMENT',
+            severity: 'HIGH',
+            target: `Employee:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { employeeId: id, userId: employee.userId }
         });
 
         res.status(200).json({ status: 'success', message: 'Employee deleted successfully' });

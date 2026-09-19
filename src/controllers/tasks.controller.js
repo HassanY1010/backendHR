@@ -2,6 +2,7 @@ import prisma from '../config/db.js';
 import { createNotification } from './notification.controller.js';
 import { SearchService } from '../services/search.service.js';
 import logger from '../utils/logger.js';
+import { auditService } from '../services/audit.service.js';
 
 export const createTask = async (req, res, next) => {
     try {
@@ -71,6 +72,19 @@ export const createTask = async (req, res, next) => {
         } catch (idxError) {
             logger.error('Indexing failed for task', { taskId: task.id, error: idxError.message });
         }
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'TASK_CREATED',
+            actionType: 'TASK_MANAGEMENT',
+            severity: 'LOW',
+            target: `Task:${task.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { title: task.title, projectId: task.projectId, employeeId: task.employeeId }
+        });
 
         res.status(201).json({ status: 'success', data: { task } });
     } catch (error) {
@@ -155,6 +169,7 @@ export const getTask = async (req, res, next) => {
 
 export const updateTask = async (req, res, next) => {
     try {
+        const { id } = req.params;
         const { title, description, status, priority, progress, dueDate, estimatedTime, estimatedTimeUnit, attachments, dependencies } = req.body;
 
         const updateData = {};
@@ -238,6 +253,19 @@ export const updateTask = async (req, res, next) => {
             logger.error('Indexing failed for task update', { taskId: task.id, error: idxError.message });
         }
 
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'TASK_UPDATED',
+            actionType: 'TASK_MANAGEMENT',
+            severity: 'LOW',
+            target: `Task:${task.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(req.body) }
+        });
+
         res.status(200).json({ status: 'success', data: { task: formattedTask } });
     } catch (error) {
         next(error);
@@ -264,6 +292,20 @@ export const deleteTask = async (req, res, next) => {
             where: { id },
             data: { deletedAt: new Date() }
         });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'TASK_DELETED',
+            actionType: 'TASK_MANAGEMENT',
+            severity: 'HIGH',
+            target: `Task:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { title: task.title }
+        });
+
         res.status(204).json({ status: 'success', data: null });
     } catch (error) {
         next(error);

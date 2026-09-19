@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { aiService } from '../ai/ai-service.js';
+import { auditService } from '../services/audit.service.js';
 
 export const createProject = async (req, res, next) => {
     try {
@@ -21,6 +22,19 @@ export const createProject = async (req, res, next) => {
                 updatedAt: new Date()
             },
             include: { employee: { include: { user: { select: { name: true, avatar: true } } } } }
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId,
+            action: 'PROJECT_CREATED',
+            actionType: 'PROJECT_MANAGEMENT',
+            severity: 'LOW',
+            target: `Project:${project.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { name: project.name, budget: project.budget }
         });
 
         // Map employee to manager for frontend
@@ -135,6 +149,19 @@ export const updateProject = async (req, res, next) => {
         const projectWithManager = { ...project, manager: project.employee };
         delete projectWithManager.employee;
 
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'PROJECT_UPDATED',
+            actionType: 'PROJECT_MANAGEMENT',
+            severity: 'LOW',
+            target: `Project:${project.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(req.body) }
+        });
+
         res.status(200).json({ status: 'success', data: { project: projectWithManager } });
     } catch (error) {
         next(error);
@@ -158,6 +185,20 @@ export const deleteProject = async (req, res, next) => {
         }
 
         await prisma.project.delete({ where: { id } });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.user.companyId,
+            action: 'PROJECT_DELETED',
+            actionType: 'PROJECT_MANAGEMENT',
+            severity: 'HIGH',
+            target: `Project:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { name: project.name }
+        });
+
         res.status(204).json({ status: 'success', data: null });
     } catch (error) {
         next(error);

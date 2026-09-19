@@ -57,6 +57,20 @@ export const createCompany = async (req, res, next) => {
                 updatedAt: new Date()
             }
         });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user?.id,
+            companyId: company.id,
+            action: 'COMPANY_CREATED',
+            actionType: 'ADMIN_GOVERNANCE',
+            severity: 'HIGH',
+            target: `Company:${company.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { name: company.name, subscriptionStatus: company.subscriptionStatus }
+        });
+
         res.status(201).json({ status: 'success', data: { company } });
     } catch (error) {
         next(error);
@@ -158,6 +172,20 @@ export const updateCompany = async (req, res, next) => {
                 updatedAt: new Date()
             }
         });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.params.id,
+            action: 'COMPANY_UPDATED',
+            actionType: 'ADMIN_GOVERNANCE',
+            severity: 'MEDIUM',
+            target: `Company:${req.params.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(cleanData) }
+        });
+
         res.status(200).json({ status: 'success', data: { company } });
     } catch (error) {
         next(error);
@@ -190,6 +218,20 @@ export const updateMyCompany = async (req, res, next) => {
                 updatedAt: new Date()
             }
         });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: companyId,
+            action: 'MY_COMPANY_SETTINGS_UPDATED',
+            actionType: 'COMPANY_SETTINGS',
+            severity: 'LOW',
+            target: `Company:${companyId}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(updateData) }
+        });
+
         res.status(200).json({ status: 'success', data: { company } });
     } catch (error) {
         next(error);
@@ -215,6 +257,20 @@ export const deleteCompany = async (req, res, next) => {
         await prisma.company.delete({
             where: { id: req.params.id }
         });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user.id,
+            companyId: req.params.id,
+            action: 'COMPANY_DELETED',
+            actionType: 'ADMIN_GOVERNANCE',
+            severity: 'CRITICAL',
+            target: `Company:${req.params.id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { deletedCompanyId: req.params.id }
+        });
+
         res.status(204).json({ status: 'success', data: null });
     } catch (error) {
         next(error);

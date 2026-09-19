@@ -48,11 +48,17 @@ export const protect = async (req, res, next) => {
             throw error;
         }
 
-        const currentStatus = user.company?.status?.toLowerCase() || 'active';
-        const isCompanyActive = currentStatus === 'active';
+        if (user.company) {
+            const currentStatus = user.company?.status?.toLowerCase() || 'active';
+            const isCompanyActive = currentStatus === 'active';
 
-        if (!isCompanyActive) {
-            const error = new Error('Your company is no longer active.');
+            if (!isCompanyActive) {
+                const error = new Error('Your company is no longer active.');
+                error.statusCode = 401;
+                throw error;
+            }
+        } else if (user.role !== 'SUPER_ADMIN') {
+            const error = new Error('Your account or company is no longer active.');
             error.statusCode = 401;
             throw error;
         }
@@ -78,11 +84,11 @@ export const protect = async (req, res, next) => {
 };
 
 export const authorize = (...roles) => {
-    return (req, res, next) => {
+    return async (req, res, next) => {
         // SUPER_ADMIN always has access
         if (req.user.role !== 'SUPER_ADMIN' && !roles.includes(req.user.role)) {
 
-            auditService.log({
+            await auditService.log({
                 userId: req.user.id,
                 companyId: req.user.companyId,
                 action: 'UNAUTHORIZED_ACCESS_ATTEMPT',
@@ -96,7 +102,7 @@ export const authorize = (...roles) => {
 
             const error = new Error('You do not have permission to perform this action');
             error.statusCode = 403;
-            throw error;
+            return next(error);
         }
         next();
     };

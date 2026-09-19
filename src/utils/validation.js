@@ -60,5 +60,19 @@ export const authSchemas = {
             position: z.string().optional(),
             status: z.string().optional(),
         })
+    }),
+    updateEmployee: z.object({
+        body: z.object({
+            name: z.string().min(2).optional(),
+            email: z.string().email().optional(),
+            department: z.string().optional(),
+            position: z.string().optional(),
+            status: z.string().optional(),
+            riskLevel: z.union([z.number(), z.string(), z.null()]).optional(),
+            performanceScore: z.union([z.number(), z.string(), z.null()]).optional(),
+            phone: z.string().optional(),
+            bio: z.string().optional(),
+            avatar: z.string().optional(),
+        })
     })
 };

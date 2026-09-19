@@ -1,6 +1,7 @@
 import prisma from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import logger from '../utils/logger.js';
+import { auditService } from '../services/audit.service.js';
 
 export const getMe = async (req, res, next) => {
     try {
@@ -80,6 +81,19 @@ export const updateMe = async (req, res, next) => {
 
         const results = await Promise.all(updatePromises);
         const updatedUser = results[0];
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId,
+            companyId: req.user.companyId,
+            action: password ? 'USER_PASSWORD_CHANGED' : 'USER_PROFILE_UPDATED',
+            actionType: 'AUTH_SECURITY',
+            severity: password ? 'MEDIUM' : 'LOW',
+            target: `User:${userId}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { updatedFields: Object.keys(data).filter(k => k !== 'passwordHash') }
+        });
 
         delete updatedUser.passwordHash;
 

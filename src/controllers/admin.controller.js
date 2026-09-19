@@ -1,5 +1,6 @@
 import prisma from '../config/db.js';
 import { memoryCache } from '../utils/cache.js';
+import { auditService } from '../services/audit.service.js';
 
 export const getAllCompanies = async (req, res, next) => {
     try {
@@ -143,6 +144,19 @@ export const updateCompanyStatus = async (req, res, next) => {
             return memoryCache.delete(`user_auth_${user.id}`);
         });
         await Promise.all(clearCachePromises);
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user?.id,
+            companyId: id,
+            action: 'COMPANY_STATUS_UPDATED',
+            actionType: 'ADMIN_GOVERNANCE',
+            severity: 'HIGH',
+            target: `Company:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { newStatus: normalizedStatus, affectedUsers: users.length }
+        });
 
         res.status(200).json({ status: 'success', data: company });
     } catch (error) {
@@ -334,6 +348,19 @@ export const updateCompanyPlan = async (req, res, next) => {
                     take: 1
                 }
             }
+        });
+
+        // Centralized Audit Log
+        await auditService.log({
+            userId: req.user?.id,
+            companyId: id,
+            action: 'COMPANY_PLAN_UPDATED',
+            actionType: 'ADMIN_GOVERNANCE',
+            severity: 'HIGH',
+            target: `Company:${id}`,
+            status: 'SUCCESS',
+            ip: req.ip,
+            details: { newPlan: normalizedPlan, employeeLimit: seatsCount }
         });
 
         res.status(200).json({ status: 'success', data: company });

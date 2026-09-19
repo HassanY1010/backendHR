@@ -4,6 +4,7 @@ import logger from '../utils/logger.js';
 import InterviewAvailabilityService from '../services/interview-availability.service.js';
 import CalendarService from '../services/calendar.service.js';
 import { emailService } from '../services/email.service.js';
+import { auditService } from '../services/audit.service.js';
 
 /**
  * Controller for Candidate Self-Service and Recruiter Managed Interview Scheduling
@@ -111,6 +112,26 @@ export const createSchedulingSession = async (req, res, next) => {
                 action: 'INTERVIEW_LINK_GENERATED',
                 comment: `تم إنشاء وإرسال رابط حجز المقابلة (صالح لمدة ${expiryHours} ساعة)`,
                 performedBy: req.user.name || 'System'
+            }
+        });
+
+        // Centralized AuditLog for Compliance & Security
+        await auditService.log({
+            userId: req.user.id,
+            companyId,
+            action: 'INTERVIEW_SESSION_CREATED',
+            actionType: 'INTERVIEW_SCHEDULING',
+            severity: 'low',
+            target: `SchedulingSession:${session.id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                sessionId: session.id,
+                candidateId,
+                interviewerId: interviewer.id,
+                interviewType,
+                duration,
+                expiresAt
             }
         });
 
@@ -557,6 +578,25 @@ export const rescheduleInterview = async (req, res, next) => {
             'RESCHEDULED'
         ).catch(err => logger.error('[Email] Reschedule notification error:', err));
 
+        // Centralized AuditLog
+        await auditService.log({
+            userId: user?.id,
+            companyId: interview.companyId,
+            action: 'INTERVIEW_RESCHEDULED',
+            actionType: 'INTERVIEW_SCHEDULING',
+            severity: 'medium',
+            target: `Interview:${id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: id,
+                candidateId: interview.candidateId,
+                oldTime: interview.startTime,
+                newTime: slotStart,
+                reason: reason || null
+            }
+        });
+
         res.status(200).json({
             status: 'success',
             message: 'تمت إعادة جدولة المقابلة بنجاح',
@@ -630,6 +670,24 @@ export const cancelInterview = async (req, res, next) => {
             'CANCELLED'
         ).catch(err => logger.error('[Email] Cancellation notification error:', err));
 
+        // Centralized AuditLog
+        const targetCompanyId = interview.companyId || user?.companyId || interview.candidate?.recruitmentjob?.companyId;
+        await auditService.log({
+            userId: user?.id,
+            companyId: targetCompanyId,
+            action: 'INTERVIEW_CANCELLED',
+            actionType: 'INTERVIEW_SCHEDULING',
+            severity: 'medium',
+            target: `Interview:${id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: id,
+                candidateId: interview.candidateId,
+                reason: reason || 'Cancelled by recruiter'
+            }
+        });
+
         res.status(200).json({
             status: 'success',
             message: 'تم إلغاء المقابلة بنجاح',
@@ -679,6 +737,24 @@ export const updateInterviewStatus = async (req, res, next) => {
                 action: `INTERVIEW_${status.toUpperCase()}`,
                 comment: `تم تحديث حالة المقابلة إلى ${status}`,
                 performedBy: user.name
+            }
+        });
+
+        // Centralized AuditLog
+        await auditService.log({
+            userId: user?.id,
+            companyId: interview.companyId,
+            action: 'INTERVIEW_STATUS_UPDATED',
+            actionType: 'INTERVIEW_SCHEDULING',
+            severity: 'low',
+            target: `Interview:${id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: id,
+                candidateId: interview.candidateId,
+                newStatus: status,
+                score: score !== undefined ? parseFloat(score) : undefined
             }
         });
 

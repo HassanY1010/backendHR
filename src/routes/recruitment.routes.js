@@ -90,11 +90,11 @@ router.put('/candidates/:id', authorize('MANAGER', 'SUPER_ADMIN'), updateCandida
 router.delete('/candidates/:id', authorize('MANAGER', 'SUPER_ADMIN'), deleteCandidate); // ADDED
 router.post('/candidates/:candidateId/resume', authorize('MANAGER', 'SUPER_ADMIN'), uploadResume);
 
-router.get('/interviews', authorize('MANAGER', 'SUPER_ADMIN'), getInterviews);
-router.post('/interviews', authorize('MANAGER', 'SUPER_ADMIN'), scheduleInterview);
-router.put('/interviews/:id', authorize('MANAGER', 'SUPER_ADMIN'), updateInterview);
-router.delete('/interviews/:id', authorize('MANAGER', 'SUPER_ADMIN'), deleteInterview);
-router.get('/interviews/ai/smart-notes', authorize('MANAGER', 'SUPER_ADMIN'), getSmartInterviewNotes);
+router.get('/interviews', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER'), getInterviews);
+router.post('/interviews', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER'), scheduleInterview);
+router.put('/interviews/:id', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER'), updateInterview);
+router.delete('/interviews/:id', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER'), deleteInterview);
+router.get('/interviews/ai/smart-notes', authorize('MANAGER', 'SUPER_ADMIN', 'ADMIN', 'HR_MANAGER', 'RECRUITER'), getSmartInterviewNotes);
 
 // Resume routes
 // Moved to public section

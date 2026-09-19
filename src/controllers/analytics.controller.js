@@ -5,22 +5,14 @@ export const getDashboardStats = async (req, res, next) => {
     try {
         const companyId = req.user.companyId;
 
-        // Parallelize data fetching for performance
-        const [
-            totalEmployees,
-            activeJobs,
-            totalApplications,
-            employeesInTraining,
-            highRiskEmployees,
-            activeInterviews,
-            hiredCandidates,
-            rejectedCandidates,
-            completedTraining,
-            totalTrainingRecords
-        ] = await Promise.all([
+        // Batch queries in smaller chunks to prevent Supabase connection pooler exhaustion
+        const [totalEmployees, activeJobs, totalApplications] = await Promise.all([
             prisma.user.count({ where: { companyId, role: 'EMPLOYEE', deletedAt: null } }),
             prisma.recruitmentJob.count({ where: { companyId, status: 'OPEN' } }),
-            prisma.candidate.count({ where: { recruitmentjob: { companyId }, deletedAt: null } }),
+            prisma.candidate.count({ where: { recruitmentjob: { companyId }, deletedAt: null } })
+        ]);
+
+        const [employeesInTraining, highRiskEmployees, activeInterviews] = await Promise.all([
             prisma.trainingAssignment.count({
                 where: {
                     employee: { user: { companyId }, deletedAt: null },
@@ -42,7 +34,10 @@ export const getDashboardStats = async (req, res, next) => {
                     },
                     completed: false
                 }
-            }),
+            })
+        ]);
+
+        const [hiredCandidates, rejectedCandidates, completedTraining, totalTrainingRecords] = await Promise.all([
             prisma.candidate.count({ where: { recruitmentjob: { companyId }, status: 'HIRED', deletedAt: null } }),
             prisma.candidate.count({ where: { recruitmentjob: { companyId }, status: 'REJECTED', deletedAt: null } }),
             prisma.trainingAssignment.count({
@@ -58,19 +53,55 @@ export const getDashboardStats = async (req, res, next) => {
             })
         ]);
 
-        // Calculate rates
+        const [satisfactionAgg, impactAgg] = await Promise.all([
+            prisma.checkInAssessment.aggregate({
+                where: {
+                    employee: { user: { companyId }, deletedAt: null },
+                    status: 'COMPLETED',
+                    score: { not: null }
+                },
+                _avg: { score: true },
+                _count: { score: true }
+            }),
+            prisma.trainingAssignment.aggregate({
+                where: {
+                    employee: { user: { companyId }, deletedAt: null },
+                    impactScore: { not: null },
+                    deletedAt: null
+                },
+                _avg: { impactScore: true },
+                _count: { impactScore: true }
+            })
+        ]);
+
+        // Calculate rates & metrics based strictly on authentic DB records
         const trainingCompletionRate = totalTrainingRecords > 0
             ? Math.round((completedTraining / totalTrainingRecords) * 100)
             : 0;
+
+        // Real Satisfaction calculation
+        const hasSatisfactionData = (satisfactionAgg._count?.score || 0) > 0;
+        const realSatisfaction = hasSatisfactionData && satisfactionAgg._avg?.score !== null
+            ? Math.round(satisfactionAgg._avg.score)
+            : null;
+
+        // Real Training Impact calculation
+        const hasImpactData = (impactAgg._count?.impactScore || 0) > 0;
+        const realImpact = hasImpactData && impactAgg._avg?.impactScore !== null
+            ? Math.round(impactAgg._avg.impactScore)
+            : null;
 
         res.status(200).json({
             status: 'success',
             data: {
                 hr: {
                     totalEmployees,
-                    satisfaction: 82, // Still mock until we have enough survey data
+                    satisfaction: realSatisfaction,
+                    satisfactionInsufficientData: !hasSatisfactionData,
+                    satisfactionSampleCount: satisfactionAgg._count?.score || 0,
+                    satisfactionSource: hasSatisfactionData ? 'استبيانات Check-in الدورية للموظفين' : null,
                     stressHigh: highRiskEmployees,
-                    attritionRisk: Math.round(highRiskEmployees * 0.4) // Estimated logic
+                    attritionRisk: Math.round(highRiskEmployees * 0.4)
                 },
                 recruitment: {
                     activeJobs,
@@ -80,10 +111,13 @@ export const getDashboardStats = async (req, res, next) => {
                     interviews: activeInterviews
                 },
                 training: {
-                    needsTraining: Math.round(totalEmployees * 0.2), // Approx 20% need training
+                    needsTraining: Math.round(totalEmployees * 0.2),
                     inProgress: employeesInTraining,
                     completionRate: trainingCompletionRate,
-                    impact: 12 // Requires complex pre/post analysis, keep static for now
+                    impact: realImpact,
+                    impactInsufficientData: !hasImpactData,
+                    impactSampleCount: impactAgg._count?.impactScore || 0,
+                    impactSource: hasImpactData ? 'تقييمات أثر الدورات التدريبية المكتملة' : null
                 }
             }
         });

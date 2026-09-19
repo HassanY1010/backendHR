@@ -65,6 +65,10 @@ const parseRedisUrl = (url) => {
 };
 
 const getRedisConnection = () => {
+    if (process.env.NODE_ENV === 'test') {
+        return null;
+    }
+
     const url = process.env.REDIS_PUBLIC_URL || process.env.REDIS_URL;
 
     if (url && url !== 'undefined') {

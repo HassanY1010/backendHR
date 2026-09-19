@@ -11,6 +11,8 @@ import { getMimeTypeFromBuffer } from '../utils/magic-bytes.js';
 import { uploadFileToSupabase } from '../utils/supabase.js';
 import { emailService } from '../services/email.service.js';
 import { jobRequestSyncService } from '../services/jobRequestSync.service.js';
+import { CandidateStateMachine, NORMALIZE_STATUS } from '../services/candidateStateMachine.js';
+import { auditService } from '../services/audit.service.js';
 import logger from '../utils/logger.js';
 
 // Helper to check file security
@@ -151,13 +153,39 @@ export const createJob = async (req, res, next) => {
             salaryMin,
             salaryMax,
             workEnvironment,
-            openingReason
+            openingReason,
+            status
         } = req.body;
+
+        const companyId = req.user.companyId;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
+        // Validate title
+        if (!title || typeof title !== 'string' || !title.trim()) {
+            return res.status(400).json({ status: 'error', message: 'عنوان الوظيفة مطلوب ولا يمكن أن يكون فارغاً' });
+        }
+
+        // Normalize status: 'draft' -> 'ON_HOLD', 'published' -> 'OPEN', 'OPEN' -> 'OPEN', 'ON_HOLD' -> 'ON_HOLD'
+        let finalStatus = 'OPEN';
+        if (status === 'draft' || status === 'ON_HOLD') {
+            finalStatus = 'ON_HOLD';
+        } else if (status === 'published' || status === 'OPEN') {
+            finalStatus = 'OPEN';
+        } else if (status === 'CLOSED') {
+            finalStatus = 'CLOSED';
+        }
+
+        // If publishing directly (OPEN), require description
+        if (finalStatus === 'OPEN' && (!description || !description.trim())) {
+            return res.status(400).json({ status: 'error', message: 'لا يمكن نشر الوظيفة بدون كتابة الوصف الوظيفي' });
+        }
 
         const job = await prisma.recruitmentJob.create({
             data: {
-                title,
-                description,
+                title: title.trim(),
+                description: description || '',
                 department,
                 departmentId,
                 location,
@@ -178,7 +206,9 @@ export const createJob = async (req, res, next) => {
                 salaryMax,
                 workEnvironment,
                 openingReason,
-                companyId: req.user.companyId,
+                status: finalStatus,
+                createdBy: req.user.id,
+                companyId,
                 updatedAt: new Date()
             },
         });
@@ -360,7 +390,18 @@ export const applyToJob = async (req, res, next) => {
         const { name, fullName, email, phone, resumeUrl, location } = req.body;
         const jobId = req.params.id;
 
-        const candidateName = fullName || name || 'مرشح جديد';
+        const candidateName = (fullName || name || '').trim();
+        const candidateEmail = (email || '').trim().toLowerCase();
+
+        if (!candidateName || !candidateEmail) {
+            return res.status(400).json({ status: 'error', message: 'الاسم والبريد الإلكتروني مطلوبان لإتمام التقديم' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(candidateEmail)) {
+            return res.status(400).json({ status: 'error', message: 'صيغة البريد الإلكتروني غير صحيحة' });
+        }
+
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
         // Find linked recruitment job or job request fallback
@@ -391,19 +432,51 @@ export const applyToJob = async (req, res, next) => {
             return res.status(404).json({ status: 'error', message: 'الوظيفة غير موجودة أو معلقة' });
         }
 
-        const candidate = await prisma.candidate.create({
-            data: {
-                fullName: candidateName,
-                email: email || '',
-                phone: phone || '',
-                resumeUrl: resumeUrl || null,
-                location: location || null,
+        // Check for duplicate application on the exact same job
+        const existingApplicant = await prisma.candidate.findFirst({
+            where: {
                 jobId: recJob.id,
-                interviewCode,
-                status: 'NEW',
-                updatedAt: new Date()
+                email: { equals: candidateEmail, mode: 'insensitive' },
+                deletedAt: null
             }
         });
+
+        if (existingApplicant) {
+            return res.status(409).json({
+                status: 'error',
+                message: 'لقد قمت بالتقديم على هذه الوظيفة مسبقاً بنفس البريد الإلكتروني.'
+            });
+        }
+
+        const candidate = await prisma.$transaction(async (tx) => {
+            const created = await tx.candidate.create({
+                data: {
+                    fullName: candidateName,
+                    email: candidateEmail,
+                    phone: phone ? String(phone).trim() : '',
+                    resumeUrl: resumeUrl || null,
+                    location: location || null,
+                    jobId: recJob.id,
+                    interviewCode,
+                    status: 'NEW',
+                    updatedAt: new Date()
+                }
+            });
+
+            // Log source accurately in CandidateHistory
+            await tx.candidateHistory.create({
+                data: {
+                    candidateId: created.id,
+                    action: 'CANDIDATE_CREATED:PUBLIC_PORTAL',
+                    oldStatus: null,
+                    newStatus: 'NEW',
+                    comment: `تقديم طلب وظيفي ذاتي عبر بوابة التوظيف العامة (وظيفة: ${recJob.title})`,
+                    performedBy: 'CANDIDATE_PORTAL'
+                }
+            });
+
+            return created;
+        }, { timeout: 15000, maxWait: 10000 });
 
         // Instant response to user
         res.status(201).json({
@@ -671,39 +744,44 @@ export const submitInterviewAnswer = async (req, res, next) => {
             }
         }
 
-        // 2. Fallback to candidate-based lookup if no token (backward compatibility)
+        // 2. Enforce token or valid interviewCode requirement (no anonymous backdoors)
         if (!interview && candidateId) {
-            interview = await prisma.interview.findFirst({
-                where: { candidateId, completed: false },
-                orderBy: { createdAt: 'desc' }
+            // Require valid interviewCode matching candidate
+            const candidate = await prisma.candidate.findUnique({
+                where: { id: candidateId },
+                include: { recruitmentjob: true }
             });
+            if (candidate) {
+                interview = await prisma.interview.findFirst({
+                    where: { candidateId, completed: false },
+                    orderBy: { createdAt: 'desc' }
+                });
+            }
         }
 
         if (!interview) {
-            // If still no interview, create a new one (legacy behavior)
-            interview = await prisma.interview.create({
-                data: {
-                    candidateId,
-                    type: type || 'VIDEO',
-                    videoUrl,
-                    notes,
-                    completed: true,
-                    status: 'completed'
-                }
-            });
-        } else {
-            // Update existing interview
-            interview = await prisma.interview.update({
-                where: { id: interview.id },
-                data: {
-                    videoUrl,
-                    notes,
-                    completed: true,
-                    status: 'completed',
-                    completedAt: new Date()
-                }
-            });
+            return res.status(404).json({ status: 'error', message: 'لم يتم العثور على مقابلة نشطة ومصرح بها لهذا المرشح' });
         }
+
+        if (interview.completed) {
+            return res.status(400).json({ status: 'error', message: 'تم إرسال هذه المقابلة مسبقاً' });
+        }
+
+        if (interview.expiresAt && new Date() > new Date(interview.expiresAt)) {
+            return res.status(410).json({ status: 'error', message: 'انتهت صلاحية رابط المقابلة' });
+        }
+
+        // Update existing interview to completed
+        interview = await prisma.interview.update({
+            where: { id: interview.id },
+            data: {
+                videoUrl,
+                notes,
+                completed: true,
+                status: 'completed',
+                completedAt: new Date()
+            }
+        });
 
         // 3. AI Evaluation (run asynchronously to avoid timeout on Render free tier)
         const candidate = await prisma.candidate.findUnique({
@@ -729,7 +807,7 @@ export const submitInterviewAnswer = async (req, res, next) => {
             const evaluationResult = await aiService.evaluateInterview(
                 questions,
                 answers,
-                candidate.recruitmentjob.companyId,
+                candidate.recruitmentjob?.companyId,
                 jobTitle,
                 candidate.skills ? (typeof candidate.skills === 'string' ? candidate.skills.split(',') : candidate.skills) : []
             );
@@ -759,14 +837,21 @@ export const submitInterviewAnswer = async (req, res, next) => {
                 }
             });
 
-            await prisma.candidate.update({
-                where: { id: interview.candidateId },
-                data: {
-                    status: 'INTERVIEW_COMPLETED',
-                    aiScore: score,
-                    aiSummary: summary
+            // Enforce candidate state machine and HIRED lockdown
+            if (candidate && candidate.status !== 'HIRED') {
+                const canTransition = CandidateStateMachine.canTransition(candidate.status, 'INTERVIEW_COMPLETED');
+                if (canTransition) {
+                    await prisma.candidate.update({
+                        where: { id: interview.candidateId },
+                        data: {
+                            status: 'INTERVIEW_COMPLETED',
+                            aiScore: score,
+                            aiSummary: summary,
+                            updatedAt: new Date()
+                        }
+                    });
                 }
-            });
+            }
 
             // 🔄 Automatic sync to linked JobRequest on interview completion
             if (candidate && candidate.recruitmentjob) {
@@ -805,23 +890,81 @@ export const submitInterviewAnswer = async (req, res, next) => {
 
 export const createCandidate = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
         const { name, fullName, email, phone, resumeUrl, jobId } = req.body;
+
+        const candidateName = (fullName || name || '').trim();
+        const candidateEmail = (email || '').trim().toLowerCase();
+
+        if (!candidateName || !candidateEmail || !jobId) {
+            return res.status(400).json({ status: 'error', message: 'الاسم والبريد الإلكتروني والوظيفة مطلوبة لإتمام التسجيل' });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(candidateEmail)) {
+            return res.status(400).json({ status: 'error', message: 'صيغة البريد الإلكتروني غير صحيحة' });
+        }
+
+        // Strict Tenant Isolation: Ensure target job belongs to user's company
+        const targetJob = await prisma.recruitmentJob.findFirst({
+            where: { id: jobId, companyId, deletedAt: null }
+        });
+
+        if (!targetJob) {
+            return res.status(404).json({ status: 'error', message: 'الوظيفة المحددة غير موجودة أو غير تابعة لشركتكم' });
+        }
+
+        // Check duplicate applicant on the same job
+        const existingApplicant = await prisma.candidate.findFirst({
+            where: {
+                jobId,
+                email: { equals: candidateEmail, mode: 'insensitive' },
+                deletedAt: null
+            }
+        });
+
+        if (existingApplicant) {
+            return res.status(409).json({
+                status: 'error',
+                message: 'المرشح مسجل بالفعل على هذه الوظيفة بنفس البريد الإلكتروني.'
+            });
+        }
 
         const interviewCode = crypto.randomBytes(4).toString('hex').toUpperCase();
 
-        const candidate = await prisma.candidate.create({
-            data: {
-                fullName: fullName || name,
-                email,
-                phone,
-                resumeUrl,
-                jobId,
-                interviewCode,
-                status: 'NEW',
-                updatedAt: new Date()
-            },
-            include: { recruitmentjob: true }
-        });
+        const candidate = await prisma.$transaction(async (tx) => {
+            const created = await tx.candidate.create({
+                data: {
+                    fullName: candidateName,
+                    email: candidateEmail,
+                    phone: phone ? String(phone).trim() : null,
+                    resumeUrl: resumeUrl || null,
+                    jobId,
+                    interviewCode,
+                    status: 'NEW',
+                    updatedAt: new Date()
+                },
+                include: { recruitmentjob: true }
+            });
+
+            // Record source accurately in CandidateHistory
+            await tx.candidateHistory.create({
+                data: {
+                    candidateId: created.id,
+                    action: 'CANDIDATE_CREATED:DIRECT_ATS_ENTRY',
+                    oldStatus: null,
+                    newStatus: 'NEW',
+                    comment: `تم تسجيل المرشح يدوياً عبر لوحة التحكم (وظيفة: ${targetJob.title})`,
+                    performedBy: req.user?.id || 'SYSTEM'
+                }
+            });
+
+            return created;
+        }, { timeout: 15000, maxWait: 10000 });
 
         // 🔄 Auto sync JobRequest status when a candidate applies/created
         if (candidate.recruitmentjob) {
@@ -875,39 +1018,121 @@ export const getCandidates = async (req, res, next) => {
 
 export const updateCandidate = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId;
+        const candidateId = req.params.id;
         const data = { ...req.body };
-        if (data.status && typeof data.status === 'string') {
-            data.status = data.status.toUpperCase();
-        }
 
-        const candidate = await prisma.candidate.update({
-            where: { id: req.params.id },
-            data: {
-                ...data,
-                updatedAt: new Date()
+        // 1. Company boundary check
+        const existingCandidate = await prisma.candidate.findFirst({
+            where: {
+                id: candidateId,
+                recruitmentjob: { companyId },
+                deletedAt: null
             },
             include: { recruitmentjob: true }
         });
 
-        // 🔄 Centralized Atomic Sync with JobRequest & HiringPlan based on candidate progression & vacancies
-        try {
-            await jobRequestSyncService.syncOnCandidateStatusChange({
-                candidateId: candidate.id,
-                newCandidateStatus: candidate.status,
-                performedBy: req.user?.id || 'SYSTEM'
+        if (!existingCandidate) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'المرشح غير موجود أو لا تملك صلاحية الوصول إليه'
             });
-        } catch (syncErr) {
-            logger.warn('[Recruitment] Sync error in jobRequestSyncService:', syncErr.message);
         }
+
+        // 2. State Machine validation if status is changing
+        if (data.status) {
+            const targetStatus = NORMALIZE_STATUS(data.status);
+            CandidateStateMachine.validateTransition(existingCandidate.status, targetStatus, { comment: data.comment });
+            data.status = targetStatus;
+        }
+
+        const { comment, ...updateFields } = data;
+
+        const candidate = await prisma.$transaction(async (tx) => {
+            const updated = await tx.candidate.update({
+                where: { id: candidateId },
+                data: {
+                    ...updateFields,
+                    updatedAt: new Date()
+                },
+                include: { recruitmentjob: true }
+            });
+
+            if (data.status && data.status !== existingCandidate.status) {
+                // Audit in CandidateHistory
+                await tx.candidateHistory.create({
+                    data: {
+                        candidateId,
+                        action: `تغيير مرحلة المرشح إلى ${data.status}`,
+                        oldStatus: existingCandidate.status,
+                        newStatus: data.status,
+                        comment: (data.comment || `تحديث المرشح إلى ${data.status}`).substring(0, 500),
+                        performedBy: req.user?.id || 'SYSTEM'
+                    }
+                });
+
+                // AuditLog
+                await tx.auditLog.create({
+                    data: {
+                        userId: req.user?.id || null,
+                        companyId,
+                        action: 'CANDIDATE_STATUS_CHANGED',
+                        actionType: 'ATS_PIPELINE',
+                        severity: ['HIRED', 'REJECTED'].includes(data.status) ? 'high' : 'medium',
+                        target: candidateId,
+                        status: 'success',
+                        ip: req.ip || null,
+                        details: JSON.stringify({
+                            candidateId,
+                            candidateName: existingCandidate.fullName,
+                            jobId: existingCandidate.jobId,
+                            oldStatus: existingCandidate.status,
+                            newStatus: data.status,
+                            comment: data.comment || null
+                        })
+                    }
+                });
+
+                // Sync with JobRequest
+                try {
+                    await jobRequestSyncService.syncOnCandidateStatusChange({
+                        candidateId: updated.id,
+                        newCandidateStatus: updated.status,
+                        oldCandidateStatus: existingCandidate.status,
+                        performedBy: req.user?.id || 'SYSTEM',
+                        tx
+                    });
+                } catch (syncErr) {
+                    logger.warn('[Recruitment] Sync error in jobRequestSyncService:', syncErr.message);
+                }
+            }
+
+            return updated;
+        }, { timeout: 15000, maxWait: 10000 });
 
         res.status(200).json({ status: 'success', data: { candidate } });
     } catch (error) {
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                status: 'error',
+                message: error.message
+            });
+        }
         next(error);
     }
 };
 
 export const updateJob = async (req, res, next) => {
     try {
+        const companyId = req.user.companyId;
+        const existingJob = await prisma.recruitmentJob.findFirst({
+            where: { id: req.params.id, companyId, deletedAt: null }
+        });
+
+        if (!existingJob) {
+            return res.status(404).json({ status: 'error', message: 'الوظيفة غير موجودة أو غير مصرح بتعديلها' });
+        }
+
         const updateData = { ...req.body };
 
         const fieldsToStringify = ['salaryRange', 'requirements', 'responsibilities'];
@@ -916,6 +1141,15 @@ export const updateJob = async (req, res, next) => {
                 updateData[field] = JSON.stringify(updateData[field]);
             }
         });
+
+        // Normalize status if updated
+        if (updateData.status) {
+            if (updateData.status === 'draft' || updateData.status === 'ON_HOLD') {
+                updateData.status = 'ON_HOLD';
+            } else if (updateData.status === 'published' || updateData.status === 'OPEN') {
+                updateData.status = 'OPEN';
+            }
+        }
 
         const job = await prisma.recruitmentJob.update({
             where: { id: req.params.id },
@@ -932,9 +1166,17 @@ export const updateJob = async (req, res, next) => {
 
 export const deleteJob = async (req, res, next) => {
     try {
+        const companyId = req.user.companyId;
         const jobId = req.params.id;
-        const now = new Date();
+        const existingJob = await prisma.recruitmentJob.findFirst({
+            where: { id: jobId, companyId, deletedAt: null }
+        });
 
+        if (!existingJob) {
+            return res.status(404).json({ status: 'error', message: 'الوظيفة غير موجودة أو غير مصرح بحذفها' });
+        }
+
+        const now = new Date();
         await prisma.recruitmentJob.update({
             where: { id: jobId },
             data: { deletedAt: now }
@@ -949,12 +1191,41 @@ export const deleteJob = async (req, res, next) => {
 
 export const deleteCandidate = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId || req.user?.company?.id;
         const { id } = req.params;
-        await prisma.candidate.update({
-            where: { id },
-            data: { deletedAt: new Date() }
+
+        const candidate = await prisma.candidate.findFirst({
+            where: {
+                id,
+                recruitmentjob: { companyId },
+                deletedAt: null
+            }
         });
-        res.status(204).json({ status: 'success', data: null });
+
+        if (!candidate) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'المرشح غير موجود أو لا تملك صلاحية الوصول إليه'
+            });
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.candidate.update({
+                where: { id },
+                data: { deletedAt: new Date() }
+            });
+
+            await tx.candidateHistory.create({
+                data: {
+                    candidateId: id,
+                    action: 'CANDIDATE_DELETED',
+                    comment: 'تم حذف ملف المرشح من المنصة',
+                    performedBy: req.user?.id || 'SYSTEM'
+                }
+            });
+        });
+
+        res.status(200).json({ status: 'success', message: 'تم حذف المرشح بنجاح' });
     } catch (error) {
         next(error);
     }
@@ -962,10 +1233,23 @@ export const deleteCandidate = async (req, res, next) => {
 
 export const getCandidate = async (req, res, next) => {
     try {
-        const candidate = await prisma.candidate.findUnique({
-            where: { id: req.params.id },
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        const candidate = await prisma.candidate.findFirst({
+            where: {
+                id: req.params.id,
+                recruitmentjob: { companyId },
+                deletedAt: null
+            },
             include: { interviews: true, recruitmentjob: true },
         });
+
+        if (!candidate) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'المرشح غير موجود أو لا تملك صلاحية الوصول إليه'
+            });
+        }
+
         res.status(200).json({ status: 'success', data: { candidate } });
     } catch (error) {
         next(error);
@@ -1048,6 +1332,20 @@ export const getSmartInterviewNotes = async (req, res, next) => {
 
 export const publishJob = async (req, res, next) => {
     try {
+        const companyId = req.user.companyId;
+        const existingJob = await prisma.recruitmentJob.findFirst({
+            where: { id: req.params.id, companyId, deletedAt: null }
+        });
+
+        if (!existingJob) {
+            return res.status(404).json({ status: 'error', message: 'الوظيفة غير موجودة أو غير مصرح بنشرها' });
+        }
+
+        // Validation: Cannot publish job without description
+        if (!existingJob.description || !existingJob.description.trim()) {
+            return res.status(400).json({ status: 'error', message: 'لا يمكن نشر الوظيفة بدون كتابة الوصف الوظيفي' });
+        }
+
         const job = await prisma.recruitmentJob.update({
             where: { id: req.params.id },
             data: {
@@ -1131,7 +1429,45 @@ export const uploadInterviewVideo = async (req, res, next) => {
 
 export const deleteInterview = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
+        const interview = await prisma.interview.findFirst({
+            where: {
+                id: req.params.id,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            },
+            include: { candidate: true }
+        });
+
+        if (!interview) {
+            return res.status(404).json({ status: 'error', message: 'المقابلة غير موجودة أو تابعة لشركة أخرى' });
+        }
+
         await prisma.interview.delete({ where: { id: req.params.id } });
+
+        // Record Centralized AuditLog
+        await auditService.log({
+            userId: req.user?.id,
+            companyId,
+            action: 'INTERVIEW_DELETED',
+            actionType: 'RECRUITMENT',
+            severity: 'medium',
+            target: `Interview:${req.params.id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: req.params.id,
+                candidateId: interview.candidateId,
+                deletedBy: req.user?.name || req.user?.id
+            }
+        });
+
         res.status(204).json({ status: 'success', data: null });
     } catch (error) {
         next(error);
@@ -1140,23 +1476,38 @@ export const deleteInterview = async (req, res, next) => {
 
 export const scheduleInterview = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
         const { candidateId, type, scheduledAt, notes, interviewerName } = req.body;
 
         const token = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        const candidate = await prisma.candidate.findUnique({
-            where: { id: candidateId }
+        // Verify Candidate belongs to user's company
+        const candidate = await prisma.candidate.findFirst({
+            where: {
+                id: candidateId,
+                recruitmentjob: { companyId },
+                deletedAt: null
+            },
+            include: { recruitmentjob: true }
         });
-        if (!candidate) return res.status(404).json({ status: 'error', message: 'المرشح غير موجود' });
+
+        if (!candidate) {
+            return res.status(404).json({ status: 'error', message: 'المرشح غير موجود أو تابع لشركة أخرى' });
+        }
 
         const interview = await prisma.interview.create({
             data: {
+                companyId,
                 candidateId,
                 jobId: candidate.jobId,
                 type: type || 'VIDEO',
-                interviewerName: interviewerName || null,
+                interviewerName: interviewerName || req.user?.name || 'تلقائي',
                 scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
                 notes,
                 status: 'scheduled',
@@ -1171,13 +1522,19 @@ export const scheduleInterview = async (req, res, next) => {
             }
         });
 
-        await prisma.candidate.update({
-            where: { id: candidateId },
-            data: {
-                status: 'INTERVIEW_SENT',
-                updatedAt: new Date()
+        // Enforce candidate state machine if transitioning to INTERVIEW_SENT
+        if (candidate.status !== 'HIRED') {
+            const canTransition = CandidateStateMachine.canTransition(candidate.status, 'INTERVIEW_SENT');
+            if (canTransition) {
+                await prisma.candidate.update({
+                    where: { id: candidateId },
+                    data: {
+                        status: 'INTERVIEW_SENT',
+                        updatedAt: new Date()
+                    }
+                });
             }
-        });
+        }
 
         // 🔄 Automatic sync to JobRequest on scheduling interview
         if (interview.candidate && interview.candidate.recruitmentjob) {
@@ -1207,34 +1564,6 @@ export const scheduleInterview = async (req, res, next) => {
             }
         }
 
-        // Auto transition linked JobRequest to INTERVIEW_PROCESS
-        if (candidate.jobId) {
-            const jobReq = await prisma.jobRequest.findFirst({
-                where: {
-                    jobTitle: candidate.recruitmentjob?.title,
-                    companyId: candidate.recruitmentjob?.companyId,
-                    deletedAt: null
-                }
-            });
-
-            if (jobReq && ['APPROVED', 'RECRUITMENT_STARTED'].includes(jobReq.status)) {
-                await prisma.jobRequest.update({
-                    where: { id: jobReq.id },
-                    data: { status: 'INTERVIEW_PROCESS' }
-                });
-
-                await prisma.jobRequestHistory.create({
-                    data: {
-                        jobRequestId: jobReq.id,
-                        action: 'بدء المقابلات',
-                        oldStatus: jobReq.status,
-                        newStatus: 'INTERVIEW_PROCESS',
-                        comment: `تمت جدولة مقابلة جديدة للمرشح ${candidate.fullName}`
-                    }
-                });
-            }
-        }
-
         // Send Email
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         const interviewLink = `${frontendUrl}/interview/${token}`;
@@ -1250,6 +1579,24 @@ export const scheduleInterview = async (req, res, next) => {
             // Non-blocking error for email
         }
 
+        // Centralized AuditLog
+        await auditService.log({
+            userId: req.user?.id,
+            companyId,
+            action: 'INTERVIEW_SCHEDULED',
+            actionType: 'RECRUITMENT',
+            severity: 'low',
+            target: `Interview:${interview.id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: interview.id,
+                candidateId,
+                jobId: candidate.jobId,
+                scheduledAt
+            }
+        });
+
         res.status(201).json({ status: 'success', data: { interview } });
     } catch (error) {
         next(error);
@@ -1258,22 +1605,45 @@ export const scheduleInterview = async (req, res, next) => {
 
 export const updateInterview = async (req, res, next) => {
     try {
+        const companyId = req.user?.companyId || req.user?.company?.id;
+        if (!companyId) {
+            return res.status(403).json({ status: 'error', message: 'غير مصرح: الحساب غير مرتبط بشركة' });
+        }
+
         const { id } = req.params;
         const updateData = { ...req.body };
 
-        if (updateData.status === 'completed') {
-            const interview = await prisma.interview.findUnique({
-                where: { id },
-                select: { candidateId: true }
-            });
-            if (interview) {
-                await prisma.candidate.update({
-                    where: { id: interview.candidateId },
-                    data: {
-                        status: 'SCREENING', // Or should check score first
-                        updatedAt: new Date()
-                    }
-                });
+        // Verify Interview belongs to user's company
+        const existingInterview = await prisma.interview.findFirst({
+            where: {
+                id,
+                OR: [
+                    { companyId },
+                    { candidate: { recruitmentjob: { companyId } } }
+                ]
+            },
+            include: { candidate: true }
+        });
+
+        if (!existingInterview) {
+            return res.status(404).json({ status: 'error', message: 'المقابلة غير موجودة أو تابعة لشركة أخرى' });
+        }
+
+        // Check completion state transition without violating HIRED lockdown
+        if (updateData.status === 'completed' && existingInterview.candidate) {
+            const cand = existingInterview.candidate;
+            // Strict HIRED lockdown guard
+            if (cand.status !== 'HIRED') {
+                const canTransition = CandidateStateMachine.canTransition(cand.status, 'INTERVIEW_COMPLETED');
+                if (canTransition) {
+                    await prisma.candidate.update({
+                        where: { id: cand.id },
+                        data: {
+                            status: 'INTERVIEW_COMPLETED',
+                            updatedAt: new Date()
+                        }
+                    });
+                }
             }
         }
 
@@ -1281,6 +1651,23 @@ export const updateInterview = async (req, res, next) => {
             where: { id },
             data: updateData,
             include: { candidate: true }
+        });
+
+        // Centralized AuditLog
+        await auditService.log({
+            userId: req.user?.id,
+            companyId,
+            action: 'INTERVIEW_UPDATED',
+            actionType: 'RECRUITMENT',
+            severity: 'low',
+            target: `Interview:${id}`,
+            status: 'success',
+            ip: req.ip,
+            details: {
+                interviewId: id,
+                candidateId: existingInterview.candidateId,
+                updatedFields: Object.keys(updateData)
+            }
         });
 
         res.status(200).json({ status: 'success', data: { interview } });

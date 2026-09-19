@@ -39,7 +39,7 @@ router.post('/change-password', changePassword);
 router.get('/', authorize('MANAGER', 'SUPER_ADMIN'), getAllEmployees);
 router.post('/', authorize('MANAGER', 'SUPER_ADMIN'), validate(authSchemas.employee), createEmployee);
 router.post('/bulk', authorize('MANAGER', 'SUPER_ADMIN'), bulkCreateEmployees);
-router.patch('/:id', authorize('MANAGER', 'SUPER_ADMIN'), validate(authSchemas.employee), updateEmployee);
+router.patch('/:id', authorize('MANAGER', 'SUPER_ADMIN'), validate(authSchemas.updateEmployee), updateEmployee);
 router.delete('/:id', authorize('MANAGER', 'SUPER_ADMIN'), deleteEmployee);
 
 // Employee-specific routes

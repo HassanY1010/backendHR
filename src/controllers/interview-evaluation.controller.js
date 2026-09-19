@@ -569,6 +569,9 @@ export const evaluateInterview = async (req, res, next) => {
             });
 
             return created;
+        }, {
+            maxWait: 10000,
+            timeout: 25000
         });
 
         const durationSec = ((Date.now() - startTime) / 1000).toFixed(2);
